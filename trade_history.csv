@@ -1,0 +1,3 @@
+Timestamp,Symbol,Action,Theo_Price,Real_Price,Slippage_Pts,Qty,SL_Points,Engine,Telemetry,Status,Account_PnL_Context,Trade_Exact_PnL
+2026-06-28 17:16:19,MNQ,BUY,20000.5,0.0,0.0,0,500.0,AUDITOR_BOT,Test_Data|A:1|B:2,REJECTED_SL_EXCEEDS_BASE_RISK,0.0,0.0
+2026-06-28 17:16:21,MCL,UNKNOWN,80.5,0.0,0.0,0,10.0,AUDITOR_BOT,N/A,REJECTED_UNKNOWN_CMD,0.0,0.0
