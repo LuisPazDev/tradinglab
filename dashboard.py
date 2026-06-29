@@ -13,41 +13,7 @@ LIVE_DATA_FILE = "trade_history.csv"
 DATA_LAKE_DIR = "data_lake"
 
 # =========================================================================
-# MATRIZ DE CONTINGENCIA EXPLÍCITA (FALLBACK MATRIX)
-# =========================================================================
-# Si el JSON viene sin símbolo, el sistema lo resolverá usando el nombre del motor aquí
-FALLBACK_ASSET_MAP = {
-    'asia_brk_l': 'MCL',
-    'asia_bullet_l': 'MCL',
-    'ib_l': 'MNQ_DAY',
-    'creep_s': 'MNQ_DAY',
-    'london_brk_l': 'MNQ_DAY'
-}
-
-def resolve_symbol(engine_name, stats_dict):
-    """Resuelve de forma robusta el símbolo de un motor táctico aplicando redundancia."""
-    # 1. Intentar buscar variaciones comunes de llaves en el JSON del ML
-    for key in ['symbol', 'Symbol', 'asset', 'Asset', 'ticker', 'Ticker', 'underlying']:
-        if key in stats_dict and stats_dict[key]:
-            return str(stats_dict[key]).upper()
-            
-    # 2. Buscar en nuestro mapa de contingencia explícito de la interfaz
-    engine_clean = str(engine_name).strip().lower()
-    if engine_clean in FALLBACK_ASSET_MAP:
-        return FALLBACK_ASSET_MAP[engine_clean]
-        
-    # 3. Heurística avanzada por palabras clave de texto (Búsqueda por patrones)
-    if 'asia' in engine_clean or 'bullet' in engine_clean: return 'MCL'
-    if 'gc' in engine_clean or 'gold' in engine_clean: return 'MGC'
-    if 'mes' in engine_clean or 'spy' in engine_clean: return 'MES'
-    if 'mnq' in engine_clean or 'qqq' in engine_clean:
-        if 'night' in engine_clean: return 'MNQ_NIGHT'
-        return 'MNQ_DAY'
-        
-    return '⚠️ REVISAR'
-
-# =========================================================================
-# EXTRACCIÓN DE DATOS (LECTURA EN TIEMPO REAL)
+# EXTRACCIÓN DE DATOS Y MAPEO DINÁMICO
 # =========================================================================
 @st.cache_data(ttl=30)
 def load_json():
@@ -67,14 +33,52 @@ def get_datalake_files():
         return [f for f in os.listdir(DATA_LAKE_DIR) if f.endswith(".csv")]
     return []
 
+@st.cache_data(ttl=3600)
+def build_engine_to_asset_map():
+    """Lee los archivos CSV del Data Lake y crea un diccionario exacto Motor -> Instrumento"""
+    mapping = {}
+    if os.path.exists(DATA_LAKE_DIR):
+        for file in os.listdir(DATA_LAKE_DIR):
+            if file.endswith(".csv"):
+                # Extraer el símbolo del nombre del archivo (ej. mnq_day_historical_clean.csv -> MNQ_DAY)
+                symbol = file.replace('_historical_clean.csv', '').replace('_clean.csv', '').upper()
+                try:
+                    # Leer solo la columna Engine para ser ultrarrápidos y no consumir memoria
+                    df = pd.read_csv(os.path.join(DATA_LAKE_DIR, file), usecols=['Engine'])
+                    for engine in df['Engine'].dropna().unique():
+                        mapping[engine] = symbol
+                except:
+                    pass
+    return mapping
+
+def resolve_symbol(engine_name, stats_dict, dynamic_map):
+    """Resuelve el símbolo usando el diccionario creado por los CSVs reales."""
+    # 1. Intentar buscar en el JSON
+    for key in ['symbol', 'Symbol', 'asset', 'Asset']:
+        if key in stats_dict and stats_dict[key]:
+            return str(stats_dict[key]).upper()
+            
+    # 2. REFERENCIA CRUZADA EXACTA (La magia ocurre aquí)
+    if engine_name in dynamic_map:
+        return dynamic_map[engine_name]
+        
+    # 3. Fallback de emergencia por texto
+    engine_clean = str(engine_name).strip().lower()
+    if 'asia' in engine_clean or 'bullet' in engine_clean: return 'MCL'
+    if 'gc' in engine_clean or 'gold' in engine_clean: return 'MGC'
+    if 'mes' in engine_clean or 'spy' in engine_clean: return 'MES'
+    
+    return '⚠️ REVISAR'
+
 data = load_json()
 df_live = load_live_csv()
 datalake_files = get_datalake_files()
+dynamic_asset_map = build_engine_to_asset_map()
 
 st.title("🛡️ OMNI-SWARM: Execution Management System")
 
 # =========================================================================
-# BARRA LATERAL - GOBERNANZA DE MEMORIA
+# BARRA LATERAL
 # =========================================================================
 st.sidebar.header("Gobernanza del Sistema")
 if st.sidebar.button("🔄 Forzar Recarga Completa (Limpiar Caché)"):
@@ -82,7 +86,7 @@ if st.sidebar.button("🔄 Forzar Recarga Completa (Limpiar Caché)"):
     st.rerun()
 
 # =========================================================================
-# NAVEGACIÓN PRINCIPAL (3 PESTAÑAS)
+# NAVEGACIÓN PRINCIPAL
 # =========================================================================
 tab1, tab2, tab3 = st.tabs(["📊 Telemetría en Vivo", "🧠 Inteligencia y Exclusiones", "🗄️ Data Lake (Históricos)"])
 
@@ -154,8 +158,8 @@ with tab2:
         engines = data.get("Micro_Engines", {})
         df_list = []
         for engine, stats in engines.items():
-            # APLICACIÓN DEL MOTOR DE RESOLUCIÓN COMPLETA EN LUGAR DEL GET TRADICIONAL
-            resolved_asset = resolve_symbol(engine, stats)
+            # Pasamos el mapa dinámico que creamos escaneando el Data Lake
+            resolved_asset = resolve_symbol(engine, stats, dynamic_asset_map)
             
             df_list.append({
                 "Símbolo": resolved_asset, 
