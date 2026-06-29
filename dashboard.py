@@ -53,7 +53,7 @@ if st.sidebar.button("🔄 Forzar Recarga Completa (Limpiar Caché)"):
 tab1, tab2, tab3 = st.tabs(["📊 Telemetría en Vivo", "🧠 Inteligencia y Exclusiones", "🗄️ Data Lake (Históricos)"])
 
 # -------------------------------------------------------------------------
-# PESTAÑA 1: TELEMETRÍA EN VIVO (CON MONITOR ETL)
+# PESTAÑA 1: TELEMETRÍA EN VIVO
 # -------------------------------------------------------------------------
 with tab1:
     st.header("Operativa de la Sesión")
@@ -76,10 +76,8 @@ with tab1:
         losses = total_trades - wins
         wr_session = (wins / total_trades * 100) if total_trades > 0 else 0.0
         
-        # Monitor de Calidad de Datos (ETL)
         enrichment_ratio = 0.0
         if 'Regime_Dist' in df_closed.columns:
-            # Reemplazar el texto 'None' por verdaderos valores nulos de Pandas para poder contarlos
             df_closed['Regime_Dist'] = df_closed['Regime_Dist'].replace(['None', 'nan', ''], pd.NA)
             enriched_count = df_closed['Regime_Dist'].notna().sum()
             enrichment_ratio = (enriched_count / total_trades * 100) if total_trades > 0 else 0.0
@@ -89,7 +87,6 @@ with tab1:
         c2.metric("Win Rate Sesión", f"{wr_session:.1f}%")
         c3.metric("Resultado Crudo", f"{wins}W - {losses}L")
         
-        # KPI Visual para el estado del puente ETL
         if enrichment_ratio == 100:
             c4.metric("Salud de Datos (ETL)", f"{enrichment_ratio:.0f}%", "Óptimo")
         else:
@@ -102,11 +99,9 @@ with tab1:
             if 'LOSS' in str(val): return 'color: #ff4b4b; font-weight: bold;'
             return ''
             
-        # Forzar que las columnas macro se muestren de forma destacada
         column_order = [c for c in df_filtered.columns if c not in ['Regime_Dist', 'Session_Range', 'Session_Volume']]
         macro_cols = [c for c in ['Regime_Dist', 'Session_Range', 'Session_Volume'] if c in df_filtered.columns]
         
-        # Insertamos las macro justo después del Status para fácil lectura
         if 'Status' in column_order:
             idx = column_order.index('Status') + 1
             final_order = column_order[:idx] + macro_cols + column_order[idx:]
@@ -116,7 +111,7 @@ with tab1:
         st.dataframe(df_filtered[final_order].style.map(color_status, subset=['Status']), use_container_width=True)
 
 # -------------------------------------------------------------------------
-# PESTAÑA 2: INTELIGENCIA 
+# PESTAÑA 2: INTELIGENCIA Y EXCLUSIONES (MONITOR DE DECAY CONSOLIDADO)
 # -------------------------------------------------------------------------
 with tab2:
     if not data:
@@ -127,18 +122,38 @@ with tab2:
         for engine, stats in engines.items():
             df_list.append({
                 "Símbolo": stats.get("symbol", "N/A"), 
-                "Motor": engine, 
+                "Motor Táctico": engine, 
                 "WR (%)": round(stats.get("win_rate", 0) * 100, 1), 
-                "Salud": stats.get("pre_flight_status", "N/A")
+                "Salud Actual": stats.get("pre_flight_status", "⚪ SIN DATOS")
             })
         df_overview = pd.DataFrame(df_list)
         
-        selected_engine = st.selectbox("Inspeccionar Regímenes del Motor", df_overview["Motor"].tolist())
+        # =========================================================================
+        # SECCIÓN CRÍTICA: LISTA DE CONTROL DE DECAY (NUEVO)
+        # =========================================================================
+        st.header("🚨 Monitoreo de Pérdida de Ventaja (Decay System)")
+        
+        # Filtramos la tabla general buscando palabras clave de alerta calculadas por el Z-Score
+        df_decay = df_overview[df_overview["Salud Actual"].astype(str).str.contains("CRÍTICO|ADVERTENCIA", na=False)]
+        
+        if not df_decay.empty:
+            st.error(f"⚠️ ATENCIÓN: Se han detectado {len(df_decay)} motores operando fuera de sus parámetros estadísticos base.")
+            # Mostramos exclusivamente la lista negra de motores caídos para toma de decisiones rápida
+            st.dataframe(df_decay, use_container_width=True)
+        else:
+            st.success("✅ OPTIMAL STATUS: Todos los motores de la flota se encuentran estables o en rendimiento Alpha (Z-Score dentro de los rangos de control).")
+        
+        st.divider()
+        
+        # Continuación de la interfaz estándar de inspección por regímenes
+        st.header("🔍 Inspección Analítica por Motor")
+        selected_engine = st.selectbox("Seleccionar Motor para ver su matriz de regímenes", df_overview["Motor Táctico"].tolist())
         
         if selected_engine:
             stats = engines[selected_engine]
             matrix = stats.get("conditional_matrix", {})
             if matrix:
+                st.subheader(f"Desglose de Probabilidad Condicional: {selected_engine}")
                 reg_cols = st.columns(len(matrix))
                 for i, (regime, info) in enumerate(matrix.items()):
                     with reg_cols[i]:
@@ -150,25 +165,23 @@ with tab2:
                             st.success(f"**✅ ÓPTIMO** (WR: {info.get('win_rate',0)*100:.1f}%)")
             
             st.divider()
+            st.subheader("🌍 Panorama General de la Flota Activa")
             def color_wr(val):
                 return 'color: #ff4b4b' if val < 65.0 else 'color: #00cc96'
             st.dataframe(df_overview.style.map(color_wr, subset=['WR (%)']), use_container_width=True)
 
 # -------------------------------------------------------------------------
-# PESTAÑA 3: DATA LAKE (EL HISTÓRICO)
+# PESTAÑA 3: DATA LAKE
 # -------------------------------------------------------------------------
 with tab3:
     st.header("🗄️ Explorador de Backtests (Data Lake)")
-    
     if not datalake_files:
-        st.warning("Esperando inicialización de archivos en el repositorio... Si ya ejecutaste el script, presiona el botón de recarga en la barra lateral.")
+        st.warning("Esperando inicialización de archivos...")
     else:
         selected_file = st.selectbox("Seleccionar Activo / Dataset", datalake_files)
-        
         if selected_file:
             file_path = os.path.join(DATA_LAKE_DIR, selected_file)
             df_hist = pd.read_csv(file_path)
-            
             motores_disponibles = df_hist['Engine'].unique() if 'Engine' in df_hist.columns else []
             selected_hist_engine = st.selectbox("Filtrar por Motor Táctico", ["Todos"] + list(motores_disponibles))
             
@@ -176,7 +189,6 @@ with tab3:
                 df_hist = df_hist[df_hist['Engine'] == selected_hist_engine]
             
             st.subheader(f"Métricas Históricas: {selected_file.replace('_historical_clean.csv', '').upper()}")
-            
             if 'Status' in df_hist.columns:
                 df_hist['Is_Win'] = df_hist['Status'].astype(str).str.contains('WIN').astype(int)
                 total_hist = len(df_hist)
@@ -186,9 +198,7 @@ with tab3:
                 hc1, hc2, hc3 = st.columns(3)
                 hc1.metric("Muestra Total", f"{total_hist} trades")
                 hc2.metric("Win Rate Histórico", f"{wr_hist:.1f}%")
-                
                 if 'Trade_Duration_Mins' in df_hist.columns:
                     avg_dur = df_hist['Trade_Duration_Mins'].mean()
                     hc3.metric("Duración Promedio", f"{avg_dur:.1f} mins")
-            
             st.dataframe(df_hist, use_container_width=True)
