@@ -13,6 +13,40 @@ LIVE_DATA_FILE = "trade_history.csv"
 DATA_LAKE_DIR = "data_lake"
 
 # =========================================================================
+# MATRIZ DE CONTINGENCIA EXPLÍCITA (FALLBACK MATRIX)
+# =========================================================================
+# Si el JSON viene sin símbolo, el sistema lo resolverá usando el nombre del motor aquí
+FALLBACK_ASSET_MAP = {
+    'asia_brk_l': 'MCL',
+    'asia_bullet_l': 'MCL',
+    'ib_l': 'MNQ_DAY',
+    'creep_s': 'MNQ_DAY',
+    'london_brk_l': 'MNQ_DAY'
+}
+
+def resolve_symbol(engine_name, stats_dict):
+    """Resuelve de forma robusta el símbolo de un motor táctico aplicando redundancia."""
+    # 1. Intentar buscar variaciones comunes de llaves en el JSON del ML
+    for key in ['symbol', 'Symbol', 'asset', 'Asset', 'ticker', 'Ticker', 'underlying']:
+        if key in stats_dict and stats_dict[key]:
+            return str(stats_dict[key]).upper()
+            
+    # 2. Buscar en nuestro mapa de contingencia explícito de la interfaz
+    engine_clean = str(engine_name).strip().lower()
+    if engine_clean in FALLBACK_ASSET_MAP:
+        return FALLBACK_ASSET_MAP[engine_clean]
+        
+    # 3. Heurística avanzada por palabras clave de texto (Búsqueda por patrones)
+    if 'asia' in engine_clean or 'bullet' in engine_clean: return 'MCL'
+    if 'gc' in engine_clean or 'gold' in engine_clean: return 'MGC'
+    if 'mes' in engine_clean or 'spy' in engine_clean: return 'MES'
+    if 'mnq' in engine_clean or 'qqq' in engine_clean:
+        if 'night' in engine_clean: return 'MNQ_NIGHT'
+        return 'MNQ_DAY'
+        
+    return '⚠️ REVISAR'
+
+# =========================================================================
 # EXTRACCIÓN DE DATOS (LECTURA EN TIEMPO REAL)
 # =========================================================================
 @st.cache_data(ttl=30)
@@ -111,7 +145,7 @@ with tab1:
         st.dataframe(df_filtered[final_order].style.map(color_status, subset=['Status']), use_container_width=True)
 
 # -------------------------------------------------------------------------
-# PESTAÑA 2: INTELIGENCIA Y EXCLUSIONES (MONITOR DE DECAY CONSOLIDADO)
+# PESTAÑA 2: INTELIGENCIA Y EXCLUSIONES
 # -------------------------------------------------------------------------
 with tab2:
     if not data:
@@ -120,32 +154,28 @@ with tab2:
         engines = data.get("Micro_Engines", {})
         df_list = []
         for engine, stats in engines.items():
+            # APLICACIÓN DEL MOTOR DE RESOLUCIÓN COMPLETA EN LUGAR DEL GET TRADICIONAL
+            resolved_asset = resolve_symbol(engine, stats)
+            
             df_list.append({
-                "Símbolo": stats.get("symbol", "N/A"), 
+                "Símbolo": resolved_asset, 
                 "Motor Táctico": engine, 
                 "WR (%)": round(stats.get("win_rate", 0) * 100, 1), 
                 "Salud Actual": stats.get("pre_flight_status", "⚪ SIN DATOS")
             })
         df_overview = pd.DataFrame(df_list)
         
-        # =========================================================================
-        # SECCIÓN CRÍTICA: LISTA DE CONTROL DE DECAY (NUEVO)
-        # =========================================================================
         st.header("🚨 Monitoreo de Pérdida de Ventaja (Decay System)")
-        
-        # Filtramos la tabla general buscando palabras clave de alerta calculadas por el Z-Score
         df_decay = df_overview[df_overview["Salud Actual"].astype(str).str.contains("CRÍTICO|ADVERTENCIA", na=False)]
         
         if not df_decay.empty:
             st.error(f"⚠️ ATENCIÓN: Se han detectado {len(df_decay)} motores operando fuera de sus parámetros estadísticos base.")
-            # Mostramos exclusivamente la lista negra de motores caídos para toma de decisiones rápida
             st.dataframe(df_decay, use_container_width=True)
         else:
             st.success("✅ OPTIMAL STATUS: Todos los motores de la flota se encuentran estables o en rendimiento Alpha (Z-Score dentro de los rangos de control).")
         
         st.divider()
         
-        # Continuación de la interfaz estándar de inspección por regímenes
         st.header("🔍 Inspección Analítica por Motor")
         selected_engine = st.selectbox("Seleccionar Motor para ver su matriz de regímenes", df_overview["Motor Táctico"].tolist())
         
