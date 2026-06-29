@@ -118,4 +118,4 @@ def color_wr(val):
     color = '#ff4b4b' if val < 65.0 else '#00cc96'
     return f'color: {color}'
 
-st.dataframe(df_overview.style.applymap(color_wr, subset=['Win Rate (%)']), use_container_width=True)
+st.dataframe(df_overview.style.map(color_wr, subset=['Win Rate (%)']), use_container_width=True)
