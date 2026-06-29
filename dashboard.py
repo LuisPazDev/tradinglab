@@ -1,7 +1,6 @@
 import streamlit as st
 import json
 import os
-import glob
 import pandas as pd
 
 st.set_page_config(page_title="OMNI-SWARM EMS", layout="wide", page_icon="🛡️")
@@ -14,25 +13,25 @@ LIVE_DATA_FILE = "trade_history.csv"
 DATA_LAKE_DIR = "data_lake"
 
 # =========================================================================
-# EXTRACCIÓN DE DATOS
+# EXTRACCIÓN DE DATOS (LECTURA AUTOMÁTICA O OPTIMIZADA)
 # =========================================================================
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=30)
 def load_json():
     if os.path.exists(INTELLIGENCE_FILE):
         with open(INTELLIGENCE_FILE, "r") as f:
             return json.load(f)
     return None
 
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=30)
 def load_live_csv():
     if os.path.exists(LIVE_DATA_FILE):
         return pd.read_csv(LIVE_DATA_FILE)
     return pd.DataFrame()
 
-@st.cache_data(ttl=60)
+# REMOVEMOS EL CACHÉ AQUÍ PARA QUE LA LECTURA DEL DISCO SEA EN TIEMPO REAL
 def get_datalake_files():
     if os.path.exists(DATA_LAKE_DIR):
-        return [f for f in os.listdir(DATA_LAKE_DIR) if f.endswith("_clean.csv")]
+        return [f for f in os.listdir(DATA_LAKE_DIR) if f.endswith(".csv")]
     return []
 
 data = load_json()
@@ -40,6 +39,14 @@ df_live = load_live_csv()
 datalake_files = get_datalake_files()
 
 st.title("🛡️ OMNI-SWARM: Execution Management System")
+
+# =========================================================================
+# BARRA LATERAL - GOBERNANZA DE MEMORIA
+# =========================================================================
+st.sidebar.header("Gobernanza del Sistema")
+if st.sidebar.button("🔄 Forzar Recarga Completa (Limpiar Caché)"):
+    st.cache_data.clear()
+    st.rerun()
 
 # =========================================================================
 # NAVEGACIÓN PRINCIPAL (3 PESTAÑAS)
@@ -127,24 +134,22 @@ with tab3:
     st.header("🗄️ Explorador de Backtests (Data Lake)")
     
     if not datalake_files:
-        st.warning("No se encontraron archivos de backtest en la carpeta 'data_lake'.")
+        st.warning("Esperando inicialización de archivos en el repositorio... Si ya ejecutaste el script, presiona el botón de recarga en la barra lateral.")
     else:
-        # Selector de activo
+        # Selector de activo basado en los archivos reales encontrados en la carpeta
         selected_file = st.selectbox("Seleccionar Activo / Dataset", datalake_files)
         
         if selected_file:
             file_path = os.path.join(DATA_LAKE_DIR, selected_file)
             df_hist = pd.read_csv(file_path)
             
-            # Selector secundario de motor dentro del archivo
             motores_disponibles = df_hist['Engine'].unique() if 'Engine' in df_hist.columns else []
             selected_hist_engine = st.selectbox("Filtrar por Motor Táctico", ["Todos"] + list(motores_disponibles))
             
             if selected_hist_engine != "Todos":
                 df_hist = df_hist[df_hist['Engine'] == selected_hist_engine]
             
-            # Cálculo de métricas históricas
-            st.subheader(f"Métricas Históricas: {selected_file.replace('_clean.csv', '')}")
+            st.subheader(f"Métricas Históricas: {selected_file.replace('_historical_clean.csv', '').upper()}")
             
             if 'Status' in df_hist.columns:
                 df_hist['Is_Win'] = df_hist['Status'].astype(str).str.contains('WIN').astype(int)
