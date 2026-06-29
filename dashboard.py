@@ -35,40 +35,61 @@ def get_datalake_files():
 
 @st.cache_data(ttl=3600)
 def build_engine_to_asset_map():
-    """Lee los archivos CSV del Data Lake y crea un diccionario exacto Motor -> Instrumento"""
     mapping = {}
     if os.path.exists(DATA_LAKE_DIR):
         for file in os.listdir(DATA_LAKE_DIR):
             if file.endswith(".csv"):
-                # Extraer el símbolo del nombre del archivo (ej. mnq_day_historical_clean.csv -> MNQ_DAY)
                 symbol = file.replace('_historical_clean.csv', '').replace('_clean.csv', '').upper()
                 try:
-                    # Leer solo la columna Engine para ser ultrarrápidos y no consumir memoria
                     df = pd.read_csv(os.path.join(DATA_LAKE_DIR, file), usecols=['Engine'])
                     for engine in df['Engine'].dropna().unique():
                         mapping[engine] = symbol
-                except:
-                    pass
+                except: pass
     return mapping
 
 def resolve_symbol(engine_name, stats_dict, dynamic_map):
-    """Resuelve el símbolo usando el diccionario creado por los CSVs reales."""
-    # 1. Intentar buscar en el JSON
     for key in ['symbol', 'Symbol', 'asset', 'Asset']:
-        if key in stats_dict and stats_dict[key]:
-            return str(stats_dict[key]).upper()
-            
-    # 2. REFERENCIA CRUZADA EXACTA (La magia ocurre aquí)
-    if engine_name in dynamic_map:
-        return dynamic_map[engine_name]
-        
-    # 3. Fallback de emergencia por texto
+        if key in stats_dict and stats_dict[key]: return str(stats_dict[key]).upper()
+    if engine_name in dynamic_map: return dynamic_map[engine_name]
+    
     engine_clean = str(engine_name).strip().lower()
     if 'asia' in engine_clean or 'bullet' in engine_clean: return 'MCL'
     if 'gc' in engine_clean or 'gold' in engine_clean: return 'MGC'
     if 'mes' in engine_clean or 'spy' in engine_clean: return 'MES'
-    
     return '⚠️ REVISAR'
+
+# =========================================================================
+# MICRO-ETL: EXTRACCIÓN DE INERCIA (ÚLTIMOS 5 TRADES)
+# =========================================================================
+def get_recent_sequence(engine, asset, df_live):
+    seq = []
+    
+    # 1. Buscar primero en la sesión en vivo (Lo más reciente)
+    if not df_live.empty and 'Engine' in df_live.columns:
+        live_trades = df_live[(df_live['Engine'] == engine) & (df_live['Status'].astype(str).str.contains('CLOSED_'))]
+        live_trades = live_trades.sort_values(by='Timestamp', ascending=False)
+        for status in live_trades['Status'].head(5):
+            seq.append('🟩' if 'WIN' in str(status) else '🟥')
+
+    # 2. Rellenar con histórico si faltan trades para completar los 5
+    if len(seq) < 5 and asset != '⚠️ REVISAR':
+        hist_file = os.path.join(DATA_LAKE_DIR, f"{asset.lower()}_historical_clean.csv")
+        if os.path.exists(hist_file):
+            try:
+                df_hist = pd.read_csv(hist_file, usecols=['Engine', 'Status'])
+                hist_trades = df_hist[df_hist['Engine'] == engine]
+                # Tomamos la cola (los más recientes del histórico) y los invertimos
+                for status in hist_trades['Status'].tail(5 - len(seq)).iloc[::-1]:
+                    seq.append('🟩' if 'WIN' in str(status) else '🟥')
+            except: pass
+
+    # 3. Rellenar con bloques vacíos si el motor es ultra nuevo
+    while len(seq) < 5:
+        seq.append('⬜')
+
+    # Invertir la lista final para que se lea cronológicamente (Izquierda = Más Antiguo, Derecha = Último Trade)
+    seq.reverse()
+    return " ".join(seq)
 
 data = load_json()
 df_live = load_live_csv()
@@ -149,7 +170,7 @@ with tab1:
         st.dataframe(df_filtered[final_order].style.map(color_status, subset=['Status']), use_container_width=True)
 
 # -------------------------------------------------------------------------
-# PESTAÑA 2: INTELIGENCIA Y EXCLUSIONES
+# PESTAÑA 2: INTELIGENCIA Y EXCLUSIONES (MATRIZ EXPANDIDA)
 # -------------------------------------------------------------------------
 with tab2:
     if not data:
@@ -158,15 +179,35 @@ with tab2:
         engines = data.get("Micro_Engines", {})
         df_list = []
         for engine, stats in engines.items():
-            # Pasamos el mapa dinámico que creamos escaneando el Data Lake
             resolved_asset = resolve_symbol(engine, stats, dynamic_asset_map)
+            
+            # Variables Críticas
+            n_trades = stats.get("n_trades", 0)
+            wr = round(stats.get("win_rate", 0) * 100, 1)
+            
+            # Clasificación de Tiers Autónoma
+            tier = stats.get("tier", None)
+            if not tier:
+                if wr >= 65.0 and n_trades >= 30:
+                    tier = "Tier 1 (Core)"
+                elif wr >= 65.0 and n_trades < 30:
+                    tier = "Tier 2 (Incubadora)"
+                else:
+                    tier = "Tier 3 (Observación)"
+            
+            # Inercia Reciente
+            recent_seq = get_recent_sequence(engine, resolved_asset, df_live)
             
             df_list.append({
                 "Símbolo": resolved_asset, 
                 "Motor Táctico": engine, 
-                "WR (%)": round(stats.get("win_rate", 0) * 100, 1), 
+                "Tier": tier,
+                "Trades": n_trades,
+                "WR (%)": wr,
+                "Últimos 5": recent_seq,
                 "Salud Actual": stats.get("pre_flight_status", "⚪ SIN DATOS")
             })
+            
         df_overview = pd.DataFrame(df_list)
         
         st.header("🚨 Monitoreo de Pérdida de Ventaja (Decay System)")
@@ -176,7 +217,7 @@ with tab2:
             st.error(f"⚠️ ATENCIÓN: Se han detectado {len(df_decay)} motores operando fuera de sus parámetros estadísticos base.")
             st.dataframe(df_decay, use_container_width=True)
         else:
-            st.success("✅ OPTIMAL STATUS: Todos los motores de la flota se encuentran estables o en rendimiento Alpha (Z-Score dentro de los rangos de control).")
+            st.success("✅ OPTIMAL STATUS: Todos los motores de la flota se encuentran estables o en rendimiento Alpha.")
         
         st.divider()
         
@@ -200,8 +241,11 @@ with tab2:
             
             st.divider()
             st.subheader("🌍 Panorama General de la Flota Activa")
+            
+            # Colorear condicionalmente la columna de Win Rate
             def color_wr(val):
                 return 'color: #ff4b4b' if val < 65.0 else 'color: #00cc96'
+                
             st.dataframe(df_overview.style.map(color_wr, subset=['WR (%)']), use_container_width=True)
 
 # -------------------------------------------------------------------------
