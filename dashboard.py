@@ -13,7 +13,7 @@ LIVE_DATA_FILE = "trade_history.csv"
 DATA_LAKE_DIR = "data_lake"
 
 # =========================================================================
-# EXTRACCIÓN DE DATOS (LECTURA AUTOMÁTICA O OPTIMIZADA)
+# EXTRACCIÓN DE DATOS (LECTURA EN TIEMPO REAL)
 # =========================================================================
 @st.cache_data(ttl=30)
 def load_json():
@@ -28,7 +28,6 @@ def load_live_csv():
         return pd.read_csv(LIVE_DATA_FILE)
     return pd.DataFrame()
 
-# REMOVEMOS EL CACHÉ AQUÍ PARA QUE LA LECTURA DEL DISCO SEA EN TIEMPO REAL
 def get_datalake_files():
     if os.path.exists(DATA_LAKE_DIR):
         return [f for f in os.listdir(DATA_LAKE_DIR) if f.endswith(".csv")]
@@ -54,7 +53,7 @@ if st.sidebar.button("🔄 Forzar Recarga Completa (Limpiar Caché)"):
 tab1, tab2, tab3 = st.tabs(["📊 Telemetría en Vivo", "🧠 Inteligencia y Exclusiones", "🗄️ Data Lake (Históricos)"])
 
 # -------------------------------------------------------------------------
-# PESTAÑA 1: TELEMETRÍA EN VIVO 
+# PESTAÑA 1: TELEMETRÍA EN VIVO (CON MONITOR ETL)
 # -------------------------------------------------------------------------
 with tab1:
     st.header("Operativa de la Sesión")
@@ -77,16 +76,44 @@ with tab1:
         losses = total_trades - wins
         wr_session = (wins / total_trades * 100) if total_trades > 0 else 0.0
         
-        c1, c2, c3 = st.columns(3)
+        # Monitor de Calidad de Datos (ETL)
+        enrichment_ratio = 0.0
+        if 'Regime_Dist' in df_closed.columns:
+            # Reemplazar el texto 'None' por verdaderos valores nulos de Pandas para poder contarlos
+            df_closed['Regime_Dist'] = df_closed['Regime_Dist'].replace(['None', 'nan', ''], pd.NA)
+            enriched_count = df_closed['Regime_Dist'].notna().sum()
+            enrichment_ratio = (enriched_count / total_trades * 100) if total_trades > 0 else 0.0
+        
+        c1, c2, c3, c4 = st.columns(4)
         c1.metric("Trades Cerrados", f"{total_trades}")
         c2.metric("Win Rate Sesión", f"{wr_session:.1f}%")
         c3.metric("Resultado Crudo", f"{wins}W - {losses}L")
+        
+        # KPI Visual para el estado del puente ETL
+        if enrichment_ratio == 100:
+            c4.metric("Salud de Datos (ETL)", f"{enrichment_ratio:.0f}%", "Óptimo")
+        else:
+            c4.metric("Salud de Datos (ETL)", f"{enrichment_ratio:.0f}%", "-Faltan Datos", delta_color="inverse")
+        
+        st.subheader("Bitácora de Ejecución (Enriquecida)")
         
         def color_status(val):
             if 'WIN' in str(val): return 'color: #00cc96; font-weight: bold;'
             if 'LOSS' in str(val): return 'color: #ff4b4b; font-weight: bold;'
             return ''
-        st.dataframe(df_filtered.style.map(color_status, subset=['Status']), use_container_width=True)
+            
+        # Forzar que las columnas macro se muestren de forma destacada
+        column_order = [c for c in df_filtered.columns if c not in ['Regime_Dist', 'Session_Range', 'Session_Volume']]
+        macro_cols = [c for c in ['Regime_Dist', 'Session_Range', 'Session_Volume'] if c in df_filtered.columns]
+        
+        # Insertamos las macro justo después del Status para fácil lectura
+        if 'Status' in column_order:
+            idx = column_order.index('Status') + 1
+            final_order = column_order[:idx] + macro_cols + column_order[idx:]
+        else:
+            final_order = column_order + macro_cols
+            
+        st.dataframe(df_filtered[final_order].style.map(color_status, subset=['Status']), use_container_width=True)
 
 # -------------------------------------------------------------------------
 # PESTAÑA 2: INTELIGENCIA 
@@ -136,7 +163,6 @@ with tab3:
     if not datalake_files:
         st.warning("Esperando inicialización de archivos en el repositorio... Si ya ejecutaste el script, presiona el botón de recarga en la barra lateral.")
     else:
-        # Selector de activo basado en los archivos reales encontrados en la carpeta
         selected_file = st.selectbox("Seleccionar Activo / Dataset", datalake_files)
         
         if selected_file:
