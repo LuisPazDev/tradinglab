@@ -6,14 +6,22 @@ import json
 import os
 
 # =========================================================================
-# CONFIGURACIÓN DE PÁGINA Y RUTAS
+# CONFIGURACIÓN DE PÁGINA Y RUTAS INTELIGENTES
 # =========================================================================
 st.set_page_config(page_title="TradingLab Quant", layout="wide", page_icon="📈")
 
-BASE_DIR = os.path.expanduser("~/mysite/")
-TRADE_FILE = os.path.join(BASE_DIR, "trade_history.csv")
-ALPHA_FILE = os.path.join(BASE_DIR, "alpha_dataset.csv")
-CONFIG_FILE = os.path.join(BASE_DIR, "engines_config.json")
+def get_file_path(filename):
+    """Detecta si está en Streamlit Cloud (raíz) o en PythonAnywhere (~/mysite/)"""
+    if os.path.exists(filename):
+        return filename
+    local_path = os.path.join(os.path.expanduser("~/mysite/"), filename)
+    if os.path.exists(local_path):
+        return local_path
+    return filename
+
+TRADE_FILE = get_file_path("trade_history.csv")
+ALPHA_FILE = get_file_path("alpha_dataset.csv")
+CONFIG_FILE = get_file_path("engines_config.json")
 
 # =========================================================================
 # FUNCIONES DE CARGA DE DATOS
@@ -83,7 +91,6 @@ st.title("🎛️ Centro de Mando Institucional")
 
 kill_switch_active = False
 if not df_t.empty:
-    # Revisamos si el último intento de ejecución real fue rechazado por inactividad
     last_trade = df_t.iloc[-1]
     if "REJECTED_ACCOUNT_INACTIVE" in str(last_trade.get('Status', '')):
         kill_switch_active = True
@@ -148,7 +155,6 @@ with tab_ml:
     if not engines_config:
         st.warning("El modelo de Machine Learning aún no ha generado el archivo de configuración (engines_config.json).")
     else:
-        # Aplanar el JSON para incluir la data de los regímenes si está disponible
         config_rows = []
         for eng, data in engines_config.items():
             row = {
@@ -188,7 +194,6 @@ with tab_ml:
             if not df_a_closed.empty:
                 df_a_closed = df_a_closed.sort_values('Timestamp')
 
-                # Convertimos el estado en una métrica binaria (+1 Win, -1 Loss, 0 BE) para medir probabilidad pura
                 df_a_closed['Hit_Score'] = df_a_closed['Status'].apply(lambda x: 1 if 'WIN' in str(x) else (-1 if 'LOSS' in str(x) else 0))
                 df_a_closed['Cumulative_Hits'] = df_a_closed['Hit_Score'].cumsum()
 
