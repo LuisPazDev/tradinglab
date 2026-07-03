@@ -43,6 +43,11 @@ def load_data():
         try:
             df_alpha = pd.read_csv(ALPHA_FILE, on_bad_lines='skip')
             df_alpha['Timestamp'] = pd.to_datetime(df_alpha['Timestamp'], errors='coerce')
+            # Asegurar que las columnas de PnL teórico sean numéricas
+            if 'Theoretical_USD_PnL' in df_alpha.columns:
+                df_alpha['Theoretical_USD_PnL'] = pd.to_numeric(df_alpha['Theoretical_USD_PnL'], errors='coerce').fillna(0)
+            if 'Theoretical_Points_PnL' in df_alpha.columns:
+                df_alpha['Theoretical_Points_PnL'] = pd.to_numeric(df_alpha['Theoretical_Points_PnL'], errors='coerce').fillna(0)
         except: pass
 
     if os.path.exists(CONFIG_FILE):
@@ -59,7 +64,7 @@ df_trades, df_alpha, engines_config = load_data()
 # UI: BARRA LATERAL (FILTROS)
 # =========================================================================
 st.sidebar.image("https://img.icons8.com/color/96/000000/artificial-intelligence.png", width=60)
-st.sidebar.title("Vigilante Quant V12")
+st.sidebar.title("Vigilante Quant V13")
 st.sidebar.markdown("---")
 
 # Filtro de Activo
@@ -92,18 +97,18 @@ st.title("🎛️ Centro de Mando Institucional")
 kill_switch_active = False
 if not df_t.empty:
     last_trade = df_t.iloc[-1]
-    if "REJECTED_ACCOUNT_INACTIVE" in str(last_trade.get('Status', '')):
+    if any(status in str(last_trade.get('Status', '')) for status in ["REJECTED_ACCOUNT_INACTIVE", "REJECTED_DD", "REJECTED_OVERLAP"]):
         kill_switch_active = True
 
 if kill_switch_active:
-    st.error("🚨 **SISTEMA EN ESPERA (KILL SWITCH ACTIVADO):** La cuenta de fondeo conectada registra un Poder de Compra (Buying Power) de $0. La Vía B está bloqueada para proteger la telemetría, pero la Vía A sigue recabando datos teóricos.")
+    st.error("🚨 **SISTEMA CON RESTRICCIONES DE RIESGO:** El último evento registró un bloqueo técnico de prop firm (Drawdown, Overlap o Cuenta Inactiva). La Vía B está protegiendo el capital, pero la Vía A sigue recabando datos teóricos en la sombra.")
 else:
-    st.success("✅ **SISTEMA EN LÍNEA:** Conexión a Bróker establecida. Cuenta activa con liquidez disponible para atacar.")
+    st.success("✅ **SISTEMA EN LÍNEA:** Conexión a Bróker establecida. Cuenta activa con liquidez y parámetros de riesgo óptimos para atacar.")
 
 # =========================================================================
 # TABS PRINCIPALES (LA BIFURCACIÓN)
 # =========================================================================
-tab_fin, tab_ml = st.tabs(["💰 Realidad Bróker (Finanzas)", "🧠 Salud Sistémica (Machine Learning)"])
+tab_fin, tab_ml = st.tabs(["💰 Realidad Bróker (Finanzas Vía B)", "🧠 Salud Sistémica & Jerarquía (ML Vía A)"])
 
 # -------------------------------------------------------------------------
 # PESTAÑA 1: FINANZAS (CARRIL B)
@@ -137,7 +142,7 @@ with tab_fin:
 
             st.markdown("#### Curva de Equity (Realidad)")
             fig_equity = px.area(reales_cerrados, x='Timestamp', y='Cumulative_PnL',
-                                 title="Crecimiento de Capital Neto",
+                                 title="Crecimiento de Capital Neto (Vía B)",
                                  labels={'Cumulative_PnL':'Capital USD', 'Timestamp':'Fecha'},
                                  color_discrete_sequence=['#00C853'])
             st.plotly_chart(fig_equity, use_container_width=True)
@@ -147,29 +152,39 @@ with tab_fin:
             st.dataframe(reales_cerrados[show_cols_fin].tail(15).sort_values('Timestamp', ascending=False), use_container_width=True)
 
 # -------------------------------------------------------------------------
-# PESTAÑA 2: MACHINE LEARNING (CARRIL A & BUCKETS)
+# PESTAÑA 2: MACHINE LEARNING (CARRIL A & JERARQUÍA DE BUCKETS)
 # -------------------------------------------------------------------------
 with tab_ml:
-    st.markdown("### 🧬 Análisis Predictivo y Distribución de Riesgo")
+    st.markdown("### 🧬 Auditoría Cuantitativa y Momentum de Motores")
 
     if not engines_config:
         st.warning("El modelo de Machine Learning aún no ha generado el archivo de configuración (engines_config.json).")
     else:
         config_rows = []
         for eng, data in engines_config.items():
+            # Formateo visual de los últimos 5 trades
+            raw_last_5 = data.get('last_5', data.get('last_5_trades', []))
+            if isinstance(raw_last_5, list):
+                last_5_visual = " ".join(["🟢 W" if str(x).upper() == "W" else ("🔴 L" if str(x).upper() == "L" else "⚪ BE") for x in raw_last_5])
+            else:
+                last_5_visual = str(raw_last_5) if raw_last_5 else "N/A"
+
             row = {
                 'Engine': eng,
+                'Instrumento': data.get('instrument', data.get('symbol', 'N/A')),
                 'Bucket': data.get('bucket', 'B'),
-                'WR_Global': data.get('wr', 'N/A'),
+                'WinRate': f"{data.get('wr', 0):.1f}%" if isinstance(data.get('wr'), (int, float)) else str(data.get('wr', 'N/A')),
                 'Trades': data.get('trades', 0),
-                'R0': data.get('r0_wr', data.get('r0', 'N/A')),
-                'R1': data.get('r1_wr', data.get('r1', 'N/A')),
-                'R2': data.get('r2_wr', data.get('r2', 'N/A')),
-                'Reason': data.get('reason', '')
+                'Momentum (Últimos 5)': last_5_visual,
+                'Diagnóstico ML': data.get('reason', 'Sin observaciones predictivas.')
             }
             config_rows.append(row)
 
         df_config = pd.DataFrame(config_rows)
+
+        # Filtrar también la configuración por el símbolo seleccionado en la barra lateral
+        if selected_symbol != "TODOS":
+            df_config = df_config[df_config['Instrumento'] == selected_symbol]
 
         bucket_counts = df_config['Bucket'].value_counts().to_dict()
         b_a = bucket_counts.get("A", 0)
@@ -177,42 +192,74 @@ with tab_ml:
         b_c = bucket_counts.get("C", 0)
 
         col1, col2, col3 = st.columns(3)
-        col1.metric("🟢 BUCKET A (Riesgo Full)", f"{b_a} Motores", "Listos para atacar")
-        col2.metric("🟡 BUCKET B (Limitados)", f"{b_b} Motores", "En fase de maduración/fricción", delta_color="off")
-        col3.metric("🔴 BUCKET C (Cuarentena)", f"{b_c} Motores", "Freno de emergencia / Decay", delta_color="inverse")
+        col1.metric("🟢 BUCKET A (Riesgo Full)", f"{b_a} Motores", "Óptimos / Listos para atacar")
+        col2.metric("🟡 BUCKET B (Limitados)", f"{b_b} Motores", "Fricción / Exposición reducida", delta_color="off")
+        col3.metric("🔴 BUCKET C (Cuarentena)", f"{b_c} Motores", "Alpha Decay / Laboratorio", delta_color="inverse")
 
         st.markdown("---")
 
-        fig_buckets = px.pie(names=['Bucket A (Óptimos)', 'Bucket B (Fricción)', 'Bucket C (Cuarentena)'],
-                             values=[b_a, b_b, b_c],
-                             color_discrete_sequence=['#00C853', '#FFD600', '#D50000'],
-                             hole=0.4, title="Distribución de Salud del Ecosistema")
-
-        fig_alpha = go.Figure()
-        if not df_a.empty:
-            df_a_closed = df_a[df_a['Status'].astype(str).str.contains('ALPHA_CLOSED')].copy()
-            if not df_a_closed.empty:
-                df_a_closed = df_a_closed.sort_values('Timestamp')
-
-                df_a_closed['Hit_Score'] = df_a_closed['Status'].apply(lambda x: 1 if 'WIN' in str(x) else (-1 if 'LOSS' in str(x) else 0))
-                df_a_closed['Cumulative_Hits'] = df_a_closed['Hit_Score'].cumsum()
-
-                fig_alpha = px.line(df_a_closed, x='Timestamp', y='Cumulative_Hits',
-                                    title="Curva de Efectividad Pura (Acumulación de Victorias Teóricas)",
-                                    labels={'Cumulative_Hits': 'Balance de Aciertos (Hits)', 'Timestamp': 'Fecha'},
-                                    color_discrete_sequence=['#2962FF'])
-
         col_graf1, col_graf2 = st.columns(2)
-        with col_graf1: st.plotly_chart(fig_buckets, use_container_width=True)
-        with col_graf2: st.plotly_chart(fig_alpha, use_container_width=True)
 
-        st.markdown("#### 🔬 Matriz de Regímenes (Rayos X del Pipeline)")
+        with col_graf1:
+            fig_buckets = px.pie(names=['Bucket A (Óptimos)', 'Bucket B (Fricción)', 'Bucket C (Cuarentena)'],
+                                 values=[b_a, b_b, b_c],
+                                 color_discrete_sequence=['#00C853', '#FFD600', '#D50000'],
+                                 hole=0.4, title="Distribución de Salud del Ecosistema")
+            st.plotly_chart(fig_buckets, use_container_width=True)
 
-        def highlight_buckets(val):
-            if val == "A": return 'background-color: rgba(0, 200, 83, 0.2); color: #00C853; font-weight: bold;'
-            if val == "B": return 'background-color: rgba(255, 214, 0, 0.2); color: #FFD600; font-weight: bold;'
-            if val == "C": return 'background-color: rgba(213, 0, 0, 0.2); color: #D50000; font-weight: bold;'
-            return ''
+        with col_graf2:
+            fig_alpha = go.Figure()
+            if not df_a.empty:
+                df_a_closed = df_a[df_a['Status'].astype(str).str.contains('ALPHA_CLOSED|LIQUIDATE', na=False)].copy()
+                if not df_a_closed.empty:
+                    df_a_closed = df_a_closed.sort_values('Timestamp')
 
-        styled_config = df_config.style.map(highlight_buckets, subset=['Bucket'])
-        st.dataframe(styled_config, use_container_width=True, height=400)
+                    # Graficar capital teórico real si existe, o puntos en su defecto
+                    if 'Theoretical_USD_PnL' in df_a_closed.columns and df_a_closed['Theoretical_USD_PnL'].sum() != 0:
+                        df_a_closed['Cumulative_Alpha'] = df_a_closed['Theoretical_USD_PnL'].cumsum()
+                        y_label = 'Capital Teórico USD'
+                        title_chart = "Curva de Alpha Puro (USD Teórico Vía A)"
+                    elif 'Theoretical_Points_PnL' in df_a_closed.columns:
+                        df_a_closed['Cumulative_Alpha'] = df_a_closed['Theoretical_Points_PnL'].cumsum()
+                        y_label = 'Puntos Teóricos Acumulados'
+                        title_chart = "Curva de Alpha Puro (Puntos Teóricos Vía A)"
+                    else:
+                        df_a_closed['Hit_Score'] = df_a_closed['Status'].apply(lambda x: 1 if 'WIN' in str(x) else (-1 if 'LOSS' in str(x) else 0))
+                        df_a_closed['Cumulative_Alpha'] = df_a_closed['Hit_Score'].cumsum()
+                        y_label = 'Balance de Aciertos (Hits)'
+                        title_chart = "Curva de Efectividad Teórica"
+
+                    fig_alpha = px.line(df_a_closed, x='Timestamp', y='Cumulative_Alpha',
+                                        title=title_chart,
+                                        labels={'Cumulative_Alpha': y_label, 'Timestamp': 'Fecha'},
+                                        color_discrete_sequence=['#2962FF'])
+            st.plotly_chart(fig_alpha, use_container_width=True)
+
+        st.markdown("#### 🏛️ Jerarquía Operativa por Buckets (Rayos X del Ecosistema)")
+        st.caption("Los motores están organizados por prioridad institucional. Revisa el momentum reciente (Últimos 5) para evaluar la estabilidad de cada estrategia.")
+
+        # =========================================================================
+        # RENDERIZADO JERÁRQUICO POR ACORDEÓN
+        # =========================================================================
+        buckets_def = [
+            {"code": "A", "name": "🟢 BUCKET A: Óptimos & Riesgo Full", "desc": "Motores con Edge intacto y momentum favorable. Ejecutan al 100% del tamaño asignado.", "default_open": True},
+            {"code": "B", "name": "🟡 BUCKET B: Exposición Reducida & Fricción", "desc": "Motores con ventaja teórica pero sufriendo latencia, slippage o volatilidad macro. Operan con lote escalado.", "default_open": True},
+            {"code": "C", "name": "🔴 BUCKET C: Cuarentena & Alpha Decay", "desc": "Motores bloqueados en la Vía B para proteger capital. Siguen corriendo exclusivamente en el Laboratorio (Vía A).", "default_open": False}
+        ]
+
+        show_cols_ml = ['Engine', 'Instrumento', 'WinRate', 'Trades', 'Momentum (Últimos 5)', 'Diagnóstico ML']
+
+        for b in buckets_def:
+            df_bucket = df_config[df_config['Bucket'] == b["code"]]
+            count = len(df_bucket)
+
+            with st.expander(f"{b['name']} ({count} Motores)", expanded=b["default_open"]):
+                st.markdown(f"*{b['desc']}*")
+                if count == 0:
+                    st.info(f"No hay motores asignados al Bucket {b['code']} en esta sesión.")
+                else:
+                    st.dataframe(
+                        df_bucket[show_cols_ml].sort_values(by='Trades', ascending=False),
+                        use_container_width=True,
+                        hide_index=True
+                    )
