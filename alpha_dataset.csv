@@ -1,0 +1,2 @@
+Timestamp,Symbol,Action,Entry_Price,Exit_Price,Engine,Telemetry,Status,Trade_Exact_PnL,Regime_Dist,Session_Range,Session_Volume,Regime_Executed
+2026-07-03 08:43:10,MNQ,SELL,29867.0,0.0,Pre_Rev_S,|A5:18.3|RV:1.8|Vw:0.56|NKD:1,ALPHA_OPEN,0.0,12.49,965.0,419894.0,2.0
