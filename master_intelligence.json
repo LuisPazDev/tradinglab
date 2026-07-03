@@ -199,7 +199,23 @@
             "n_trades": 33,
             "win_rate": 0.667,
             "bucket_assigned": "C",
-            "conditional_matrix": {}
+            "conditional_matrix": {
+                "Regime_0": {
+                    "n_trades_hist": 7,
+                    "win_rate_hist": 0.857,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                },
+                "Regime_1": {
+                    "n_trades_hist": 7,
+                    "win_rate_hist": 0.857,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                },
+                "Regime_2": {
+                    "n_trades_hist": 6,
+                    "win_rate_hist": 0.333,
+                    "regime_health": "\ud83d\udeab HOSTIL"
+                }
+            }
         },
         "COMEX_Swp_S_E": {
             "symbol": "MGC",
@@ -213,7 +229,13 @@
             "n_trades": 12,
             "win_rate": 0.75,
             "bucket_assigned": "B",
-            "conditional_matrix": {}
+            "conditional_matrix": {
+                "Regime_0": {
+                    "n_trades_hist": 8,
+                    "win_rate_hist": 0.75,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                }
+            }
         },
         "LP_Brk_S": {
             "symbol": "MGC",
@@ -260,35 +282,80 @@
             "n_trades": 16,
             "win_rate": 0.75,
             "bucket_assigned": "B",
-            "conditional_matrix": {}
+            "conditional_matrix": {
+                "Regime_0": {
+                    "n_trades_hist": 5,
+                    "win_rate_hist": 0.8,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                },
+                "Regime_1": {
+                    "n_trades_hist": 5,
+                    "win_rate_hist": 0.6,
+                    "regime_health": "\ud83d\udeab HOSTIL"
+                },
+                "Regime_2": {
+                    "n_trades_hist": 5,
+                    "win_rate_hist": 0.8,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                }
+            }
         },
         "Lon_Viper_L": {
             "symbol": "MGC",
             "n_trades": 19,
             "win_rate": 0.684,
             "bucket_assigned": "B",
-            "conditional_matrix": {}
+            "conditional_matrix": {
+                "Regime_0": {
+                    "n_trades_hist": 9,
+                    "win_rate_hist": 0.667,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                },
+                "Regime_1": {
+                    "n_trades_hist": 8,
+                    "win_rate_hist": 0.75,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                }
+            }
         },
         "Lon_Viper_S": {
             "symbol": "MGC",
             "n_trades": 11,
             "win_rate": 0.727,
             "bucket_assigned": "B",
-            "conditional_matrix": {}
+            "conditional_matrix": {
+                "Regime_2": {
+                    "n_trades_hist": 5,
+                    "win_rate_hist": 0.8,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                }
+            }
         },
         "V2_Rev_L": {
             "symbol": "MGC",
             "n_trades": 7,
             "win_rate": 0.714,
             "bucket_assigned": "B",
-            "conditional_matrix": {}
+            "conditional_matrix": {
+                "Regime_1": {
+                    "n_trades_hist": 5,
+                    "win_rate_hist": 0.8,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                }
+            }
         },
         "V2_Rev_S": {
             "symbol": "MGC",
             "n_trades": 8,
             "win_rate": 1.0,
             "bucket_assigned": "B",
-            "conditional_matrix": {}
+            "conditional_matrix": {
+                "Regime_1": {
+                    "n_trades_hist": 6,
+                    "win_rate_hist": 1.0,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                }
+            }
         },
         "AE_L": {
             "symbol": "MES",
@@ -302,14 +369,41 @@
             "n_trades": 26,
             "win_rate": 0.808,
             "bucket_assigned": "B",
-            "conditional_matrix": {}
+            "conditional_matrix": {
+                "Regime_0": {
+                    "n_trades_hist": 6,
+                    "win_rate_hist": 0.833,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                },
+                "Regime_1": {
+                    "n_trades_hist": 7,
+                    "win_rate_hist": 0.714,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                },
+                "Regime_2": {
+                    "n_trades_hist": 8,
+                    "win_rate_hist": 0.875,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                }
+            }
         },
         "Box_L": {
             "symbol": "MNQ_DAY",
             "n_trades": 18,
             "win_rate": 0.778,
             "bucket_assigned": "B",
-            "conditional_matrix": {}
+            "conditional_matrix": {
+                "Regime_0": {
+                    "n_trades_hist": 6,
+                    "win_rate_hist": 1.0,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                },
+                "Regime_1": {
+                    "n_trades_hist": 5,
+                    "win_rate_hist": 0.6,
+                    "regime_health": "\ud83d\udeab HOSTIL"
+                }
+            }
         },
         "Box_S": {
             "symbol": "MNQ_DAY",
@@ -352,7 +446,13 @@
             "n_trades": 27,
             "win_rate": 0.704,
             "bucket_assigned": "C",
-            "conditional_matrix": {}
+            "conditional_matrix": {
+                "Regime_1": {
+                    "n_trades_hist": 8,
+                    "win_rate_hist": 0.625,
+                    "regime_health": "\ud83d\udeab HOSTIL"
+                }
+            }
         },
         "Ext_ORB_S": {
             "symbol": "MNQ_DAY",
@@ -366,7 +466,13 @@
             "n_trades": 10,
             "win_rate": 0.7,
             "bucket_assigned": "B",
-            "conditional_matrix": {}
+            "conditional_matrix": {
+                "Regime_0": {
+                    "n_trades_hist": 5,
+                    "win_rate_hist": 0.8,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                }
+            }
         },
         "Grind_L": {
             "symbol": "MES",
@@ -398,14 +504,41 @@
             "n_trades": 27,
             "win_rate": 0.741,
             "bucket_assigned": "B",
-            "conditional_matrix": {}
+            "conditional_matrix": {
+                "Regime_0": {
+                    "n_trades_hist": 6,
+                    "win_rate_hist": 1.0,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                },
+                "Regime_1": {
+                    "n_trades_hist": 9,
+                    "win_rate_hist": 0.778,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                }
+            }
         },
         "Late_S": {
             "symbol": "MNQ_DAY",
             "n_trades": 24,
             "win_rate": 0.833,
             "bucket_assigned": "B",
-            "conditional_matrix": {}
+            "conditional_matrix": {
+                "Regime_0": {
+                    "n_trades_hist": 9,
+                    "win_rate_hist": 0.889,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                },
+                "Regime_1": {
+                    "n_trades_hist": 7,
+                    "win_rate_hist": 1.0,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                },
+                "Regime_2": {
+                    "n_trades_hist": 8,
+                    "win_rate_hist": 0.625,
+                    "regime_health": "\ud83d\udeab HOSTIL"
+                }
+            }
         },
         "M4_S": {
             "symbol": "MES",
@@ -413,6 +546,11 @@
             "win_rate": 0.773,
             "bucket_assigned": "B",
             "conditional_matrix": {
+                "Regime_0": {
+                    "n_trades_hist": 5,
+                    "win_rate_hist": 0.8,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                },
                 "Regime_1": {
                     "n_trades_hist": 13,
                     "win_rate_hist": 0.846,
@@ -432,28 +570,62 @@
             "n_trades": 23,
             "win_rate": 0.826,
             "bucket_assigned": "B",
-            "conditional_matrix": {}
+            "conditional_matrix": {
+                "Regime_0": {
+                    "n_trades_hist": 8,
+                    "win_rate_hist": 1.0,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                },
+                "Regime_1": {
+                    "n_trades_hist": 5,
+                    "win_rate_hist": 0.8,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                }
+            }
         },
         "PH_Rev_S": {
             "symbol": "MNQ_DAY",
             "n_trades": 17,
             "win_rate": 0.647,
             "bucket_assigned": "C",
-            "conditional_matrix": {}
+            "conditional_matrix": {
+                "Regime_0": {
+                    "n_trades_hist": 6,
+                    "win_rate_hist": 0.833,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                },
+                "Regime_1": {
+                    "n_trades_hist": 7,
+                    "win_rate_hist": 0.714,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                }
+            }
         },
         "Retest_L_E": {
             "symbol": "MES",
             "n_trades": 14,
             "win_rate": 0.857,
             "bucket_assigned": "B",
-            "conditional_matrix": {}
+            "conditional_matrix": {
+                "Regime_0": {
+                    "n_trades_hist": 9,
+                    "win_rate_hist": 0.889,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                }
+            }
         },
         "AM10_Swp_L": {
             "symbol": "MES",
             "n_trades": 11,
             "win_rate": 0.909,
             "bucket_assigned": "B",
-            "conditional_matrix": {}
+            "conditional_matrix": {
+                "Regime_2": {
+                    "n_trades_hist": 5,
+                    "win_rate_hist": 0.8,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                }
+            }
         },
         "AM10_Swp_S": {
             "symbol": "MES",
@@ -473,7 +645,18 @@
             "n_trades": 14,
             "win_rate": 0.643,
             "bucket_assigned": "C",
-            "conditional_matrix": {}
+            "conditional_matrix": {
+                "Regime_1": {
+                    "n_trades_hist": 6,
+                    "win_rate_hist": 0.5,
+                    "regime_health": "\ud83d\udeab HOSTIL"
+                },
+                "Regime_2": {
+                    "n_trades_hist": 5,
+                    "win_rate_hist": 1.0,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                }
+            }
         },
         "Gap_Fade_L": {
             "symbol": "MES",
@@ -499,9 +682,19 @@
             "win_rate": 0.828,
             "bucket_assigned": "B",
             "conditional_matrix": {
+                "Regime_0": {
+                    "n_trades_hist": 7,
+                    "win_rate_hist": 0.714,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                },
                 "Regime_1": {
                     "n_trades_hist": 15,
                     "win_rate_hist": 0.933,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                },
+                "Regime_2": {
+                    "n_trades_hist": 5,
+                    "win_rate_hist": 0.8,
                     "regime_health": "\u2705 \u00d3PTIMO"
                 }
             }
@@ -530,6 +723,11 @@
             "win_rate": 0.778,
             "bucket_assigned": "B",
             "conditional_matrix": {
+                "Regime_0": {
+                    "n_trades_hist": 5,
+                    "win_rate_hist": 0.8,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                },
                 "Regime_1": {
                     "n_trades_hist": 11,
                     "win_rate_hist": 0.818,
@@ -549,14 +747,31 @@
             "n_trades": 15,
             "win_rate": 0.8,
             "bucket_assigned": "B",
-            "conditional_matrix": {}
+            "conditional_matrix": {
+                "Regime_0": {
+                    "n_trades_hist": 5,
+                    "win_rate_hist": 0.8,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                },
+                "Regime_2": {
+                    "n_trades_hist": 5,
+                    "win_rate_hist": 0.8,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                }
+            }
         },
         "Frank_L": {
             "symbol": "MNQ_NIGHT",
             "n_trades": 14,
             "win_rate": 0.857,
             "bucket_assigned": "B",
-            "conditional_matrix": {}
+            "conditional_matrix": {
+                "Regime_2": {
+                    "n_trades_hist": 5,
+                    "win_rate_hist": 1.0,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                }
+            }
         },
         "Judas_L": {
             "symbol": "MNQ_NIGHT",
@@ -564,6 +779,11 @@
             "win_rate": 0.778,
             "bucket_assigned": "B",
             "conditional_matrix": {
+                "Regime_0": {
+                    "n_trades_hist": 6,
+                    "win_rate_hist": 0.833,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                },
                 "Regime_2": {
                     "n_trades_hist": 12,
                     "win_rate_hist": 0.833,
@@ -588,6 +808,16 @@
                     "n_trades_hist": 12,
                     "win_rate_hist": 0.833,
                     "regime_health": "\u2705 \u00d3PTIMO"
+                },
+                "Regime_1": {
+                    "n_trades_hist": 6,
+                    "win_rate_hist": 1.0,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                },
+                "Regime_2": {
+                    "n_trades_hist": 9,
+                    "win_rate_hist": 0.778,
+                    "regime_health": "\u2705 \u00d3PTIMO"
                 }
             }
         },
@@ -597,6 +827,11 @@
             "win_rate": 0.724,
             "bucket_assigned": "B",
             "conditional_matrix": {
+                "Regime_0": {
+                    "n_trades_hist": 7,
+                    "win_rate_hist": 0.857,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                },
                 "Regime_2": {
                     "n_trades_hist": 18,
                     "win_rate_hist": 0.667,
@@ -609,28 +844,72 @@
             "n_trades": 16,
             "win_rate": 0.75,
             "bucket_assigned": "B",
-            "conditional_matrix": {}
+            "conditional_matrix": {
+                "Regime_0": {
+                    "n_trades_hist": 6,
+                    "win_rate_hist": 0.667,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                },
+                "Regime_1": {
+                    "n_trades_hist": 5,
+                    "win_rate_hist": 0.6,
+                    "regime_health": "\ud83d\udeab HOSTIL"
+                }
+            }
         },
         "Pre_Rev_S": {
             "symbol": "MNQ_NIGHT",
             "n_trades": 14,
             "win_rate": 0.786,
             "bucket_assigned": "B",
-            "conditional_matrix": {}
+            "conditional_matrix": {
+                "Regime_0": {
+                    "n_trades_hist": 5,
+                    "win_rate_hist": 0.6,
+                    "regime_health": "\ud83d\udeab HOSTIL"
+                },
+                "Regime_2": {
+                    "n_trades_hist": 6,
+                    "win_rate_hist": 1.0,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                }
+            }
         },
         "Tokyo_L": {
             "symbol": "MNQ_NIGHT",
             "n_trades": 30,
             "win_rate": 0.767,
             "bucket_assigned": "A",
-            "conditional_matrix": {}
+            "conditional_matrix": {
+                "Regime_0": {
+                    "n_trades_hist": 7,
+                    "win_rate_hist": 0.857,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                },
+                "Regime_1": {
+                    "n_trades_hist": 9,
+                    "win_rate_hist": 0.556,
+                    "regime_health": "\ud83d\udeab HOSTIL"
+                },
+                "Regime_2": {
+                    "n_trades_hist": 5,
+                    "win_rate_hist": 1.0,
+                    "regime_health": "\u2705 \u00d3PTIMO"
+                }
+            }
         },
         "Tokyo_S": {
             "symbol": "MNQ_NIGHT",
             "n_trades": 15,
             "win_rate": 0.8,
             "bucket_assigned": "B",
-            "conditional_matrix": {}
+            "conditional_matrix": {
+                "Regime_1": {
+                    "n_trades_hist": 5,
+                    "win_rate_hist": 0.6,
+                    "regime_health": "\ud83d\udeab HOSTIL"
+                }
+            }
         }
     }
 }
