@@ -18,7 +18,7 @@ CONFIG_FILE = os.path.join(BASE_DIR, "engines_config.json")
 # =========================================================================
 # FUNCIONES DE CARGA DE DATOS
 # =========================================================================
-@st.cache_data(ttl=60) # Recarga cada minuto
+@st.cache_data(ttl=60)
 def load_data():
     df_trades = pd.DataFrame()
     df_alpha = pd.DataFrame()
@@ -35,7 +35,6 @@ def load_data():
         try:
             df_alpha = pd.read_csv(ALPHA_FILE, on_bad_lines='skip')
             df_alpha['Timestamp'] = pd.to_datetime(df_alpha['Timestamp'], errors='coerce')
-            df_alpha['Trade_Exact_PnL'] = pd.to_numeric(df_alpha.get('Trade_Exact_PnL', 0), errors='coerce').fillna(0)
         except: pass
 
     if os.path.exists(CONFIG_FILE):
@@ -52,14 +51,14 @@ df_trades, df_alpha, engines_config = load_data()
 # UI: BARRA LATERAL (FILTROS)
 # =========================================================================
 st.sidebar.image("https://img.icons8.com/color/96/000000/artificial-intelligence.png", width=60)
-st.sidebar.title("Vigilante Quant V10")
+st.sidebar.title("Vigilante Quant V12")
 st.sidebar.markdown("---")
 
 # Filtro de Activo
 symbols = ["TODOS"]
 if not df_trades.empty: symbols.extend(df_trades['Symbol'].dropna().unique().tolist())
 if not df_alpha.empty: symbols.extend(df_alpha['Symbol'].dropna().unique().tolist())
-symbols = list(set(symbols)) # Eliminar duplicados
+symbols = list(set(symbols))
 selected_symbol = st.sidebar.selectbox("🎯 Instrumento", symbols)
 
 st.sidebar.markdown("---")
@@ -78,9 +77,25 @@ if selected_symbol != "TODOS":
     if not df_a.empty: df_a = df_a[df_a['Symbol'] == selected_symbol]
 
 # =========================================================================
-# TABS PRINCIPALES (LA BIFURCACIÓN)
+# DETECCIÓN DE KILL SWITCH (ESTADO DE LA CUENTA)
 # =========================================================================
 st.title("🎛️ Centro de Mando Institucional")
+
+kill_switch_active = False
+if not df_t.empty:
+    # Revisamos si el último intento de ejecución real fue rechazado por inactividad
+    last_trade = df_t.iloc[-1]
+    if "REJECTED_ACCOUNT_INACTIVE" in str(last_trade.get('Status', '')):
+        kill_switch_active = True
+
+if kill_switch_active:
+    st.error("🚨 **SISTEMA EN ESPERA (KILL SWITCH ACTIVADO):** La cuenta de fondeo conectada registra un Poder de Compra (Buying Power) de $0. La Vía B está bloqueada para proteger la telemetría, pero la Vía A sigue recabando datos teóricos.")
+else:
+    st.success("✅ **SISTEMA EN LÍNEA:** Conexión a Bróker establecida. Cuenta activa con liquidez disponible para atacar.")
+
+# =========================================================================
+# TABS PRINCIPALES (LA BIFURCACIÓN)
+# =========================================================================
 tab_fin, tab_ml = st.tabs(["💰 Realidad Bróker (Finanzas)", "🧠 Salud Sistémica (Machine Learning)"])
 
 # -------------------------------------------------------------------------
@@ -92,13 +107,11 @@ with tab_fin:
     if df_t.empty:
         st.warning("No hay datos de ejecución real en el bróker registrados aún.")
     else:
-        # Aislar SOLO trades reales cerrados
         reales_cerrados = df_t[df_t['Status'].astype(str).str.contains('CLOSED_MANUAL|CLOSED_BY_BRACKET', na=False)].copy()
 
         if reales_cerrados.empty:
             st.info("Aún no hay operaciones físicas cerradas en el histórico.")
         else:
-            # Métricas Clave
             reales_cerrados = reales_cerrados.sort_values('Timestamp')
             reales_cerrados['Cumulative_PnL'] = reales_cerrados['Trade_Exact_PnL'].cumsum()
 
@@ -115,7 +128,6 @@ with tab_fin:
             rechazos = len(df_t[df_t['Status'].astype(str).str.contains('REJECTED')])
             col4.metric("Bloqueos por Riesgo", f"{rechazos}")
 
-            # Gráfica de Equity
             st.markdown("#### Curva de Equity (Realidad)")
             fig_equity = px.area(reales_cerrados, x='Timestamp', y='Cumulative_PnL',
                                  title="Crecimiento de Capital Neto",
@@ -123,7 +135,6 @@ with tab_fin:
                                  color_discrete_sequence=['#00C853'])
             st.plotly_chart(fig_equity, use_container_width=True)
 
-            # Tabla de Registros
             st.markdown("#### Últimas Ejecuciones Físicas")
             show_cols_fin = ['Timestamp', 'Symbol', 'Action', 'Qty', 'Status', 'Trade_Exact_PnL']
             st.dataframe(reales_cerrados[show_cols_fin].tail(15).sort_values('Timestamp', ascending=False), use_container_width=True)
@@ -135,13 +146,26 @@ with tab_ml:
     st.markdown("### 🧬 Análisis Predictivo y Distribución de Riesgo")
 
     if not engines_config:
-        st.warning("El modelo de Machine Learning aún no ha generado el archivo de Buckets (engines_config.json).")
+        st.warning("El modelo de Machine Learning aún no ha generado el archivo de configuración (engines_config.json).")
     else:
-        # Convertir JSON a DataFrame para fácil lectura
-        df_config = pd.DataFrame.from_dict(engines_config, orient='index').reset_index()
-        df_config.rename(columns={'index': 'Engine'}, inplace=True)
+        # Aplanar el JSON para incluir la data de los regímenes si está disponible
+        config_rows = []
+        for eng, data in engines_config.items():
+            row = {
+                'Engine': eng,
+                'Bucket': data.get('bucket', 'B'),
+                'WR_Global': data.get('wr', 'N/A'),
+                'Trades': data.get('trades', 0),
+                'R0': data.get('r0_wr', data.get('r0', 'N/A')),
+                'R1': data.get('r1_wr', data.get('r1', 'N/A')),
+                'R2': data.get('r2_wr', data.get('r2', 'N/A')),
+                'Reason': data.get('reason', '')
+            }
+            config_rows.append(row)
 
-        bucket_counts = df_config['bucket'].value_counts().to_dict()
+        df_config = pd.DataFrame(config_rows)
+
+        bucket_counts = df_config['Bucket'].value_counts().to_dict()
         b_a = bucket_counts.get("A", 0)
         b_b = bucket_counts.get("B", 0)
         b_c = bucket_counts.get("C", 0)
@@ -153,29 +177,31 @@ with tab_ml:
 
         st.markdown("---")
 
-        # Gráfica de Buckets
         fig_buckets = px.pie(names=['Bucket A (Óptimos)', 'Bucket B (Fricción)', 'Bucket C (Cuarentena)'],
                              values=[b_a, b_b, b_c],
                              color_discrete_sequence=['#00C853', '#FFD600', '#D50000'],
                              hole=0.4, title="Distribución de Salud del Ecosistema")
 
-        # Gráfica Teórica
         fig_alpha = go.Figure()
         if not df_a.empty:
             df_a_closed = df_a[df_a['Status'].astype(str).str.contains('ALPHA_CLOSED')].copy()
             if not df_a_closed.empty:
                 df_a_closed = df_a_closed.sort_values('Timestamp')
-                df_a_closed['Theo_Cum_PnL'] = df_a_closed['Trade_Exact_PnL'].cumsum()
-                fig_alpha = px.line(df_a_closed, x='Timestamp', y='Theo_Cum_PnL',
-                                    title="Curva de Edge Estadístico (Teoría Pura - Sin Fricción)",
+
+                # Convertimos el estado en una métrica binaria (+1 Win, -1 Loss, 0 BE) para medir probabilidad pura
+                df_a_closed['Hit_Score'] = df_a_closed['Status'].apply(lambda x: 1 if 'WIN' in str(x) else (-1 if 'LOSS' in str(x) else 0))
+                df_a_closed['Cumulative_Hits'] = df_a_closed['Hit_Score'].cumsum()
+
+                fig_alpha = px.line(df_a_closed, x='Timestamp', y='Cumulative_Hits',
+                                    title="Curva de Efectividad Pura (Acumulación de Victorias Teóricas)",
+                                    labels={'Cumulative_Hits': 'Balance de Aciertos (Hits)', 'Timestamp': 'Fecha'},
                                     color_discrete_sequence=['#2962FF'])
 
         col_graf1, col_graf2 = st.columns(2)
         with col_graf1: st.plotly_chart(fig_buckets, use_container_width=True)
         with col_graf2: st.plotly_chart(fig_alpha, use_container_width=True)
 
-        # Tabla Científica de Motores
-        st.markdown("#### 🔬 Matriz Científica (Reporte del Último Cierre)")
+        st.markdown("#### 🔬 Matriz de Regímenes (Rayos X del Pipeline)")
 
         def highlight_buckets(val):
             if val == "A": return 'background-color: rgba(0, 200, 83, 0.2); color: #00C853; font-weight: bold;'
@@ -183,5 +209,5 @@ with tab_ml:
             if val == "C": return 'background-color: rgba(213, 0, 0, 0.2); color: #D50000; font-weight: bold;'
             return ''
 
-        styled_config = df_config[['Engine', 'bucket', 'wr', 'trades', 'reason']].style.map(highlight_buckets, subset=['bucket'])
+        styled_config = df_config.style.map(highlight_buckets, subset=['Bucket'])
         st.dataframe(styled_config, use_container_width=True, height=400)
