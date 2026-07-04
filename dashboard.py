@@ -55,11 +55,15 @@ df_master, engines_config, kill_switch_active = load_data()
 # UI: BARRA LATERAL (CASCADA MACRO -> MICRO)
 # =========================================================================
 st.sidebar.image("https://img.icons8.com/color/96/000000/artificial-intelligence.png", width=60)
-st.sidebar.title("Quant Lab V14")
+st.sidebar.title("Quant Lab V14.1")
 st.sidebar.markdown("---")
 
 modules_list = ["SISTEMA COMPLETO", "MCL", "MGC", "MES", "MNQ_DAY", "MNQ_NIGHT"]
 selected_module = st.sidebar.selectbox("🔬 Módulo de Análisis", modules_list)
+
+st.sidebar.markdown("---")
+# FILTRO DE FECHA (El usuario puede limpiar el campo para ver todo)
+filter_date = st.sidebar.date_input("📅 Explorador Diario", value=None)
 
 st.sidebar.markdown("---")
 if st.sidebar.button("🔄 Forzar Recarga"):
@@ -91,16 +95,12 @@ for eng, data in engines_config.items():
         'R1': data.get('regimes_breakdown', {}).get('R1', 'N/A'),
         'R2': data.get('regimes_breakdown', {}).get('R2', 'N/A'),
         'Decay_Pts': data.get('execution_decay', 0.0),
-        'Trades_Vía_B': data.get('decay_samples', 0),
         'Diag': data.get('reason', '')
     }
     config_rows.append(row)
 
 df_config = pd.DataFrame(config_rows)
 
-# =========================================================================
-# FILTRADO POR MÓDULO
-# =========================================================================
 if selected_module != "SISTEMA COMPLETO":
     if not df_master.empty: df_master = df_master[df_master['Module'] == selected_module]
     if not df_config.empty: df_config = df_config[df_config['Módulo'] == selected_module]
@@ -123,47 +123,66 @@ if not df_config.empty:
     col3.metric("🟢 BUCKET A", f"{b_a} Motores")
     col4.metric("🟡 BUCKET B", f"{b_b} Motores")
     col5.metric("🔴 BUCKET C", f"{b_c} Motores")
-else:
-    st.warning("No hay datos de configuración para este módulo.")
 
 st.markdown("---")
 
 # =========================================================================
-# GRÁFICAS DE COMPORTAMIENTO VS TABLA DE MÓDULOS
+# GRÁFICA DE EFECTIVIDAD (FULL WIDTH)
 # =========================================================================
-col_g1, col_g2 = st.columns(2)
+if not df_master.empty:
+    df_m_closed = df_master[df_master['Status'].astype(str).str.contains('WIN|LOSS|CLOSED')].copy()
+    if not df_m_closed.empty:
+        df_m_closed = df_m_closed.sort_values('Timestamp')
+        df_m_closed['Hit_Score'] = df_m_closed['Status'].apply(lambda x: 1 if 'WIN' in str(x) else (-1 if 'LOSS' in str(x) else 0))
+        df_m_closed['Cumulative_Hits'] = df_m_closed['Hit_Score'].cumsum()
 
-with col_g1:
-    if not df_master.empty:
-        df_m_closed = df_master[df_master['Status'].astype(str).str.contains('WIN|LOSS|CLOSED')].copy()
-        if not df_m_closed.empty:
-            df_m_closed = df_m_closed.sort_values('Timestamp')
-            df_m_closed['Hit_Score'] = df_m_closed['Status'].apply(lambda x: 1 if 'WIN' in str(x) else (-1 if 'LOSS' in str(x) else 0))
-            df_m_closed['Cumulative_Hits'] = df_m_closed['Hit_Score'].cumsum()
+        fig_alpha = px.line(df_m_closed, x='Timestamp', y='Cumulative_Hits',
+                            title=f"Curva de Efectividad (Hits Netos) - {selected_module}",
+                            labels={'Cumulative_Hits': 'Balance de Aciertos', 'Timestamp': 'Fecha'},
+                            color_discrete_sequence=['#2962FF'])
+        st.plotly_chart(fig_alpha, use_container_width=True)
 
-            fig_alpha = px.line(df_m_closed, x='Timestamp', y='Cumulative_Hits',
-                                title=f"Curva de Efectividad (Hits Netos) - {selected_module}",
-                                labels={'Cumulative_Hits': 'Balance de Aciertos', 'Timestamp': 'Fecha'},
-                                color_discrete_sequence=['#2962FF'])
-            st.plotly_chart(fig_alpha, use_container_width=True)
+# =========================================================================
+# RESUMEN DE MÓDULOS (CENTRADO)
+# =========================================================================
+if not df_config.empty and selected_module == "SISTEMA COMPLETO":
+    st.markdown("<h4 style='text-align: center;'>🏢 Resumen de Rendimiento por Módulo</h4>", unsafe_allow_html=True)
+    df_config['Wins_Est'] = (df_config['WR_Global'] / 100) * df_config['Trades']
+    mod_summary = df_config.groupby('Módulo').agg(
+        Trades=('Trades', 'sum'),
+        Wins=('Wins_Est', 'sum'),
+        Motores=('Motor', 'count')
+    ).reset_index()
 
-with col_g2:
-    st.markdown("#### 🏢 Resumen de Módulos (Macro)")
-    if not df_config.empty:
-        # Calcular Wins estimados para sacar el WinRate real del módulo
-        df_config['Wins_Est'] = (df_config['WR_Global'] / 100) * df_config['Trades']
-        mod_summary = df_config.groupby('Módulo').agg(
-            Trades=('Trades', 'sum'),
-            Wins=('Wins_Est', 'sum'),
-            Motores=('Motor', 'count')
-        ).reset_index()
+    mod_summary['WinRate'] = (mod_summary['Wins'] / mod_summary['Trades'] * 100).round(1).astype(str) + "%"
+    mod_summary = mod_summary[['Módulo', 'WinRate', 'Trades', 'Motores']].sort_values('Trades', ascending=False)
 
-        mod_summary['WinRate'] = (mod_summary['Wins'] / mod_summary['Trades'] * 100).round(1)
-        # Formatear
-        mod_summary['WinRate'] = mod_summary['WinRate'].astype(str) + "%"
-        mod_summary = mod_summary[['Módulo', 'WinRate', 'Trades', 'Motores']].sort_values('Trades', ascending=False)
-
+    # Truco de columnas para forzar que la tabla quede al centro
+    col_izq, col_centro, col_der = st.columns([1, 2, 1])
+    with col_centro:
         st.dataframe(mod_summary, use_container_width=True, hide_index=True)
+
+st.markdown("---")
+
+# =========================================================================
+# EXPLORADOR DIARIO (NUEVA FUNCIÓN)
+# =========================================================================
+if filter_date is not None:
+    st.markdown(f"### 📅 Actividad del Día: {filter_date.strftime('%Y-%m-%d')}")
+    if not df_master.empty:
+        # Filtramos los trades por la fecha seleccionada
+        df_day = df_master[pd.to_datetime(df_master['Timestamp']).dt.date == filter_date].copy()
+        if not df_day.empty:
+            df_day['Régimen'] = df_day['Unified_Regime'].apply(lambda x: f"R{int(x)}" if pd.notnull(x) else "N/A")
+
+            show_cols = ['Timestamp', 'Module', 'Engine', 'Status', 'Régimen']
+            if 'Trade_Exact_PnL' in df_day.columns:
+                show_cols.append('Trade_Exact_PnL')
+
+            st.dataframe(df_day[show_cols].sort_values('Timestamp', ascending=False), use_container_width=True, hide_index=True)
+        else:
+            st.info(f"No hay operaciones registradas para el día {filter_date.strftime('%Y-%m-%d')} en el módulo seleccionado.")
+    st.markdown("---")
 
 # =========================================================================
 # MATRIZ CIENTÍFICA (RAYOS X)
@@ -176,7 +195,7 @@ if not df_config.empty:
         if val == "C": return 'background-color: rgba(213, 0, 0, 0.2); color: #D50000; font-weight: bold;'
         return ''
 
-    display_cols = ['Módulo', 'Motor', 'Últimos_5', 'Bucket', 'WR_Global', 'Trades', 'R0', 'R1', 'R2', 'Decay_Pts', 'Trades_Vía_B', 'Diag']
+    display_cols = ['Módulo', 'Motor', 'Últimos_5', 'Bucket', 'WR_Global', 'Trades', 'R0', 'R1', 'R2', 'Decay_Pts', 'Diag']
     df_display = df_config[display_cols].sort_values(by=['Bucket', 'WR_Global'], ascending=[True, False])
 
     styled_config = df_display.style.map(highlight_buckets, subset=['Bucket'])\
