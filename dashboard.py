@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 import json
 import os
+import re
 
 # =========================================================================
 # 1. CONFIGURACIÓN DE PÁGINA Y RUTAS
@@ -96,7 +97,7 @@ def plot_cumulative_hits(df, title):
 def render_top_metrics(df_c, title):
     st.markdown(f"### 📊 Rendimiento de Probabilidad Pura: {title}")
     if df_c.empty:
-        st.warning("No hay datos de configuración disponibles.")
+        st.warning("No hay datos disponibles.")
         return
 
     total_trades = df_c['Trades'].sum()
@@ -109,8 +110,8 @@ def render_top_metrics(df_c, title):
 
     col1, col2, col3, col4, col5, col6 = st.columns(6)
     col1.metric("Total Trades", f"{total_trades}")
-    col2.metric("WinRate Global", f"{avg_wr:.1f}%")
-    col3.metric("Total Motores", f"{total_motores}")
+    col2.metric("WinRate Promedio", f"{avg_wr:.1f}%")
+    col3.metric("Motores en Vista", f"{total_motores}")
     col4.metric("🟢 BUCKET A", f"{b_a}")
     col5.metric("🟡 BUCKET B", f"{b_b}")
     col6.metric("🔴 BUCKET C", f"{b_c}")
@@ -135,6 +136,8 @@ st.sidebar.markdown("---")
 
 menu_options = [
     "🏠 HOME (Visión Global)",
+    "🗂️ Visión por Buckets",
+    "🌤️ Visión por Regímenes",
     "🔬 Módulo: MCL",
     "🔬 Módulo: MGC",
     "🔬 Módulo: MES",
@@ -172,7 +175,54 @@ if selected_view == "🏠 HOME (Visión Global)":
     st.markdown("### 🔬 Radiografía Maestra (Todos los Motores)")
     render_engine_table(df_config)
 
-# ---> VISTA 2: MÓDULOS ESPECÍFICOS
+# ---> VISTA 2: VISIÓN POR BUCKETS
+elif selected_view == "🗂️ Visión por Buckets":
+    st.markdown("### 🗂️ Radiografía por Buckets de Riesgo")
+
+    bucket_map = {
+        "🟢 BUCKET A (Full Riesgo)": "A",
+        "🟡 BUCKET B (Limitados)": "B",
+        "🔴 BUCKET C (Cuarentena)": "C"
+    }
+    bucket_choice = st.radio("Filtro de Riesgo Institucional:", list(bucket_map.keys()), horizontal=True)
+    b_target = bucket_map[bucket_choice]
+
+    df_bucket = df_config[df_config['Bucket'] == b_target].copy()
+
+    if not df_bucket.empty:
+        render_top_metrics(df_bucket, f"Aislamiento de Motores en Bucket {b_target}")
+        st.markdown(f"#### 📋 Lista de Motores ({bucket_choice})")
+        render_engine_table(df_bucket)
+    else:
+        st.info(f"No hay motores asignados actualmente al Bucket {b_target}.")
+
+# ---> VISTA 3: VISIÓN POR REGÍMENES
+elif selected_view == "🌤️ Visión por Regímenes":
+    st.markdown("### 🌤️ Rendimiento Aislado por Clima Macroeconómico")
+
+    regime_choice = st.radio("Selecciona el Régimen Macro:", ["R0", "R1", "R2"], horizontal=True)
+
+    # Filtrar motores que SÍ tienen data en este régimen (Eliminar los 'N/A')
+    df_reg = df_config[df_config[regime_choice] != 'N/A'].copy()
+
+    if not df_reg.empty:
+        st.info(f"Mostrando **{len(df_reg)}** motores que tienen exposición histórica comprobada (5+ trades) en el Régimen **{regime_choice}**.")
+
+        # Extraer el valor numérico del string para poder ordenar la tabla de mayor a menor WR en ese régimen
+        df_reg['Sort_Key'] = df_reg[regime_choice].str.extract(r'([\d\.]+)%').astype(float)
+
+        # Seleccionar columnas y ordenar usando la llave oculta
+        display_cols = ['Módulo', 'Motor', regime_choice, 'Bucket', 'WR_Global', 'Trades', 'Últimos_5']
+        df_display = df_reg.sort_values(by=['Sort_Key', 'Trades'], ascending=[False, False])[display_cols]
+
+        styled_config = df_display.style.map(highlight_buckets, subset=['Bucket'])\
+                                        .format({'WR_Global': "{:.1f}%"})
+
+        st.dataframe(styled_config, use_container_width=True, height=600)
+    else:
+        st.warning(f"Ningún motor tiene suficientes datos recopilados en el Régimen {regime_choice}.")
+
+# ---> VISTA 4: MÓDULOS ESPECÍFICOS
 elif selected_view.startswith("🔬 Módulo:"):
     module_name = selected_view.split(": ")[1]
 
@@ -187,7 +237,7 @@ elif selected_view.startswith("🔬 Módulo:"):
     st.markdown(f"### 🔬 Radiografía Interna: {module_name}")
     render_engine_table(df_config_mod)
 
-# ---> VISTA 3: BITÁCORA CRONOLÓGICA
+# ---> VISTA 5: BITÁCORA CRONOLÓGICA
 elif selected_view == "📅 Bitácora Cronológica":
     st.markdown("### 📅 Explorador del Data Lake (Dataset Maestro)")
     st.markdown("Aquí se muestran todos los eventos capturados por la Vía A y el Backtest, ordenados cronológicamente.")
@@ -196,7 +246,6 @@ elif selected_view == "📅 Bitácora Cronológica":
         col_filtro, col_metric = st.columns([1, 2])
 
         with col_filtro:
-            # Nuevo diseño: Un checkbox mucho más intuitivo para filtrar
             usar_filtro = st.checkbox("🔍 Filtrar por un día específico")
             if usar_filtro:
                 filter_date = st.date_input("Selecciona la fecha:")
@@ -205,11 +254,9 @@ elif selected_view == "📅 Bitácora Cronológica":
 
         df_log = df_master.copy()
 
-        # Aplicar el filtro de fecha si el checkbox está activado
         if filter_date is not None:
             df_log = df_log[df_log['Timestamp'].dt.date == filter_date]
 
-        # Renderizado de la tabla
         if not df_log.empty:
             with col_metric:
                 if usar_filtro:
@@ -222,12 +269,10 @@ elif selected_view == "📅 Bitácora Cronológica":
             else:
                 df_log['Régimen'] = "N/A"
 
-            # Ordenar del más reciente al más antiguo
             df_log = df_log.sort_values('Timestamp', ascending=False)
 
-            # Columnas seguras
             show_cols = ['Timestamp', 'Module', 'Engine', 'Action', 'Régimen', 'Status']
-            show_cols = [c for c in show_cols if c in df_log.columns] # Seguridad anticaídas
+            show_cols = [c for c in show_cols if c in df_log.columns]
             if 'Trade_Exact_PnL' in df_log.columns:
                 show_cols.append('Trade_Exact_PnL')
 
