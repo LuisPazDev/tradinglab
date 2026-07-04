@@ -55,14 +55,13 @@ df_master, engines_config, kill_switch_active = load_data()
 # UI: BARRA LATERAL (CASCADA MACRO -> MICRO)
 # =========================================================================
 st.sidebar.image("https://img.icons8.com/color/96/000000/artificial-intelligence.png", width=60)
-st.sidebar.title("Quant Lab V14.1")
+st.sidebar.title("Quant Lab V14.2")
 st.sidebar.markdown("---")
 
 modules_list = ["SISTEMA COMPLETO", "MCL", "MGC", "MES", "MNQ_DAY", "MNQ_NIGHT"]
 selected_module = st.sidebar.selectbox("🔬 Módulo de Análisis", modules_list)
 
 st.sidebar.markdown("---")
-# FILTRO DE FECHA (El usuario puede limpiar el campo para ver todo)
 filter_date = st.sidebar.date_input("📅 Explorador Diario", value=None)
 
 st.sidebar.markdown("---")
@@ -80,13 +79,13 @@ else:
     st.success("✅ **SISTEMA EN LÍNEA:** Cerebro conectado. Flujo de Vía A y Vía B operando con normalidad.")
 
 # =========================================================================
-# PROCESAMIENTO DEL JSON DE MOTORES
+# PROCESAMIENTO DEL JSON DE MOTORES (LECTURA SEGURA)
 # =========================================================================
 config_rows = []
-for eng, data in engines_config.items():
+for unique_key, data in engines_config.items():
     row = {
         'Módulo': data.get('module', 'N/A'),
-        'Motor': eng,
+        'Motor': data.get('engine_name', unique_key), # Muestra el nombre limpio, sin sufijos raros
         'Últimos_5': data.get('last_5', 'N/A'),
         'Bucket': data.get('bucket', 'B'),
         'WR_Global': data.get('wr', 0.0),
@@ -157,7 +156,6 @@ if not df_config.empty and selected_module == "SISTEMA COMPLETO":
     mod_summary['WinRate'] = (mod_summary['Wins'] / mod_summary['Trades'] * 100).round(1).astype(str) + "%"
     mod_summary = mod_summary[['Módulo', 'WinRate', 'Trades', 'Motores']].sort_values('Trades', ascending=False)
 
-    # Truco de columnas para forzar que la tabla quede al centro
     col_izq, col_centro, col_der = st.columns([1, 2, 1])
     with col_centro:
         st.dataframe(mod_summary, use_container_width=True, hide_index=True)
@@ -165,20 +163,16 @@ if not df_config.empty and selected_module == "SISTEMA COMPLETO":
 st.markdown("---")
 
 # =========================================================================
-# EXPLORADOR DIARIO (NUEVA FUNCIÓN)
+# EXPLORADOR DIARIO
 # =========================================================================
 if filter_date is not None:
     st.markdown(f"### 📅 Actividad del Día: {filter_date.strftime('%Y-%m-%d')}")
     if not df_master.empty:
-        # Filtramos los trades por la fecha seleccionada
         df_day = df_master[pd.to_datetime(df_master['Timestamp']).dt.date == filter_date].copy()
         if not df_day.empty:
             df_day['Régimen'] = df_day['Unified_Regime'].apply(lambda x: f"R{int(x)}" if pd.notnull(x) else "N/A")
-
             show_cols = ['Timestamp', 'Module', 'Engine', 'Status', 'Régimen']
-            if 'Trade_Exact_PnL' in df_day.columns:
-                show_cols.append('Trade_Exact_PnL')
-
+            if 'Trade_Exact_PnL' in df_day.columns: show_cols.append('Trade_Exact_PnL')
             st.dataframe(df_day[show_cols].sort_values('Timestamp', ascending=False), use_container_width=True, hide_index=True)
         else:
             st.info(f"No hay operaciones registradas para el día {filter_date.strftime('%Y-%m-%d')} en el módulo seleccionado.")
