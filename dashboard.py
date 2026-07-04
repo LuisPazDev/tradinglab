@@ -192,31 +192,48 @@ elif selected_view == "📅 Bitácora Cronológica":
     st.markdown("### 📅 Explorador del Data Lake (Dataset Maestro)")
     st.markdown("Aquí se muestran todos los eventos capturados por la Vía A y el Backtest, ordenados cronológicamente.")
 
-    col_filtro, col_metric = st.columns([1, 2])
-    with col_filtro:
-        filter_date = st.date_input("Filtrar por Día Específico (Limpiar para ver todo):", value=None)
-
     if not df_master.empty:
+        col_filtro, col_metric = st.columns([1, 2])
+
+        with col_filtro:
+            # Nuevo diseño: Un checkbox mucho más intuitivo para filtrar
+            usar_filtro = st.checkbox("🔍 Filtrar por un día específico")
+            if usar_filtro:
+                filter_date = st.date_input("Selecciona la fecha:")
+            else:
+                filter_date = None
+
         df_log = df_master.copy()
 
-        # Filtro de fecha si el usuario seleccionó una
+        # Aplicar el filtro de fecha si el checkbox está activado
         if filter_date is not None:
             df_log = df_log[df_log['Timestamp'].dt.date == filter_date]
 
-        # Formateo visual del DataFrame
+        # Renderizado de la tabla
         if not df_log.empty:
             with col_metric:
-                st.info(f"Mostrando **{len(df_log)}** registros.")
+                if usar_filtro:
+                    st.info(f"Mostrando **{len(df_log)}** registros para el {filter_date.strftime('%Y-%m-%d')}.")
+                else:
+                    st.info(f"Mostrando el historial completo: **{len(df_log)}** registros.")
 
-            df_log['Régimen'] = df_log['Unified_Regime'].apply(lambda x: f"R{int(x)}" if pd.notnull(x) else "N/A")
-            df_log = df_log.sort_values('Timestamp', ascending=False) # Orden cronológico (Más reciente arriba)
+            if 'Unified_Regime' in df_log.columns:
+                df_log['Régimen'] = df_log['Unified_Regime'].apply(lambda x: f"R{int(x)}" if pd.notnull(x) else "N/A")
+            else:
+                df_log['Régimen'] = "N/A"
 
+            # Ordenar del más reciente al más antiguo
+            df_log = df_log.sort_values('Timestamp', ascending=False)
+
+            # Columnas seguras
             show_cols = ['Timestamp', 'Module', 'Engine', 'Action', 'Régimen', 'Status']
+            show_cols = [c for c in show_cols if c in df_log.columns] # Seguridad anticaídas
             if 'Trade_Exact_PnL' in df_log.columns:
                 show_cols.append('Trade_Exact_PnL')
 
             st.dataframe(df_log[show_cols], use_container_width=True, hide_index=True, height=700)
         else:
-            st.warning("No hay registros para la fecha seleccionada.")
+            st.warning("No hay registros almacenados para esta fecha en específico.")
     else:
-        st.warning("El Dataset Maestro está vacío o no se ha generado.")
+        st.error("El Dataset Maestro está vacío o no se pudo cargar.")
+        st.info("💡 Solución: Haz clic en el botón '🔄 Forzar Recarga' en el menú de la izquierda.")
