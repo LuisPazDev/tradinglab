@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 import json
 import os
 
@@ -38,11 +37,9 @@ def load_data():
 
     if os.path.exists(CONFIG_FILE):
         try:
-            with open(CONFIG_FILE, "r") as f:
-                config = json.load(f)
+            with open(CONFIG_FILE, "r") as f: config = json.load(f)
         except: pass
 
-    # Solo usamos trade_history para vigilar si el bróker cortó la liquidez
     if os.path.exists(TRADE_FILE):
         try:
             df_t = pd.read_csv(TRADE_FILE, on_bad_lines='skip')
@@ -58,7 +55,7 @@ df_master, engines_config, kill_switch_active = load_data()
 # UI: BARRA LATERAL (CASCADA MACRO -> MICRO)
 # =========================================================================
 st.sidebar.image("https://img.icons8.com/color/96/000000/artificial-intelligence.png", width=60)
-st.sidebar.title("Quant Lab V13")
+st.sidebar.title("Quant Lab V14")
 st.sidebar.markdown("---")
 
 modules_list = ["SISTEMA COMPLETO", "MCL", "MGC", "MES", "MNQ_DAY", "MNQ_NIGHT"]
@@ -74,7 +71,7 @@ if st.sidebar.button("🔄 Forzar Recarga"):
 # =========================================================================
 st.title("🧬 Ecosistema Cuantitativo Institucional")
 if kill_switch_active:
-    st.error("🚨 **ALERTA DE INFRAESTRUCTURA (VÍA B):** La cuenta de fondeo conectada registra un Buying Power de $0. La ejecución real está pausada, pero el Dataset Maestro sigue recabando telemetría teórica (Vía A).")
+    st.error("🚨 **ALERTA DE INFRAESTRUCTURA (VÍA B):** La cuenta de fondeo conectada registra un Buying Power de $0. Ejecución física pausada.")
 else:
     st.success("✅ **SISTEMA EN LÍNEA:** Cerebro conectado. Flujo de Vía A y Vía B operando con normalidad.")
 
@@ -84,16 +81,17 @@ else:
 config_rows = []
 for eng, data in engines_config.items():
     row = {
-        'Module': data.get('module', 'N/A'),
-        'Engine': eng,
+        'Módulo': data.get('module', 'N/A'),
+        'Motor': eng,
+        'Últimos_5': data.get('last_5', 'N/A'),
         'Bucket': data.get('bucket', 'B'),
         'WR_Global': data.get('wr', 0.0),
         'Trades': data.get('trades', 0),
         'R0': data.get('regimes_breakdown', {}).get('R0', 'N/A'),
         'R1': data.get('regimes_breakdown', {}).get('R1', 'N/A'),
         'R2': data.get('regimes_breakdown', {}).get('R2', 'N/A'),
-        'Exec_Decay_Pts': data.get('execution_decay', 0.0),
-        'Samples_V_B': data.get('decay_samples', 0),
+        'Decay_Pts': data.get('execution_decay', 0.0),
+        'Trades_Vía_B': data.get('decay_samples', 0),
         'Diag': data.get('reason', '')
     }
     config_rows.append(row)
@@ -104,10 +102,8 @@ df_config = pd.DataFrame(config_rows)
 # FILTRADO POR MÓDULO
 # =========================================================================
 if selected_module != "SISTEMA COMPLETO":
-    if not df_master.empty:
-        df_master = df_master[df_master['Module'] == selected_module]
-    if not df_config.empty:
-        df_config = df_config[df_config['Module'] == selected_module]
+    if not df_master.empty: df_master = df_master[df_master['Module'] == selected_module]
+    if not df_config.empty: df_config = df_config[df_config['Módulo'] == selected_module]
 
 # =========================================================================
 # MÉTRICAS SUPERIORES
@@ -133,7 +129,7 @@ else:
 st.markdown("---")
 
 # =========================================================================
-# GRÁFICAS DE COMPORTAMIENTO (EFECTIVIDAD VS SALUD)
+# GRÁFICAS DE COMPORTAMIENTO VS TABLA DE MÓDULOS
 # =========================================================================
 col_g1, col_g2 = st.columns(2)
 
@@ -142,28 +138,37 @@ with col_g1:
         df_m_closed = df_master[df_master['Status'].astype(str).str.contains('WIN|LOSS|CLOSED')].copy()
         if not df_m_closed.empty:
             df_m_closed = df_m_closed.sort_values('Timestamp')
-            # Calculamos la probabilidad pura (+1 acierto, -1 fallo, 0 breakeven)
             df_m_closed['Hit_Score'] = df_m_closed['Status'].apply(lambda x: 1 if 'WIN' in str(x) else (-1 if 'LOSS' in str(x) else 0))
             df_m_closed['Cumulative_Hits'] = df_m_closed['Hit_Score'].cumsum()
 
             fig_alpha = px.line(df_m_closed, x='Timestamp', y='Cumulative_Hits',
-                                title=f"Curva de Efectividad (Hits vs Misses) - {selected_module}",
-                                labels={'Cumulative_Hits': 'Balance de Aciertos Netos', 'Timestamp': 'Fecha'},
+                                title=f"Curva de Efectividad (Hits Netos) - {selected_module}",
+                                labels={'Cumulative_Hits': 'Balance de Aciertos', 'Timestamp': 'Fecha'},
                                 color_discrete_sequence=['#2962FF'])
             st.plotly_chart(fig_alpha, use_container_width=True)
 
 with col_g2:
+    st.markdown("#### 🏢 Resumen de Módulos (Macro)")
     if not df_config.empty:
-        fig_buckets = px.pie(names=['Bucket A (Óptimos)', 'Bucket B (Fricción)', 'Bucket C (Cuarentena)'],
-                             values=[b_a, b_b, b_c],
-                             color_discrete_sequence=['#00C853', '#FFD600', '#D50000'],
-                             hole=0.4, title=f"Distribución de Salud - {selected_module}")
-        st.plotly_chart(fig_buckets, use_container_width=True)
+        # Calcular Wins estimados para sacar el WinRate real del módulo
+        df_config['Wins_Est'] = (df_config['WR_Global'] / 100) * df_config['Trades']
+        mod_summary = df_config.groupby('Módulo').agg(
+            Trades=('Trades', 'sum'),
+            Wins=('Wins_Est', 'sum'),
+            Motores=('Motor', 'count')
+        ).reset_index()
+
+        mod_summary['WinRate'] = (mod_summary['Wins'] / mod_summary['Trades'] * 100).round(1)
+        # Formatear
+        mod_summary['WinRate'] = mod_summary['WinRate'].astype(str) + "%"
+        mod_summary = mod_summary[['Módulo', 'WinRate', 'Trades', 'Motores']].sort_values('Trades', ascending=False)
+
+        st.dataframe(mod_summary, use_container_width=True, hide_index=True)
 
 # =========================================================================
 # MATRIZ CIENTÍFICA (RAYOS X)
 # =========================================================================
-st.markdown("### 🔬 Matriz de Regímenes y Execution Decay")
+st.markdown("### 🔬 Radiografía de Motores y Execution Decay")
 if not df_config.empty:
     def highlight_buckets(val):
         if val == "A": return 'background-color: rgba(0, 200, 83, 0.2); color: #00C853; font-weight: bold;'
@@ -171,12 +176,10 @@ if not df_config.empty:
         if val == "C": return 'background-color: rgba(213, 0, 0, 0.2); color: #D50000; font-weight: bold;'
         return ''
 
-    display_cols = ['Module', 'Engine', 'Bucket', 'WR_Global', 'Trades', 'R0', 'R1', 'R2', 'Exec_Decay_Pts', 'Samples_V_B', 'Diag']
-
-    # Ordenamos de mejor bucket a peor, y de mayor a menor WinRate
+    display_cols = ['Módulo', 'Motor', 'Últimos_5', 'Bucket', 'WR_Global', 'Trades', 'R0', 'R1', 'R2', 'Decay_Pts', 'Trades_Vía_B', 'Diag']
     df_display = df_config[display_cols].sort_values(by=['Bucket', 'WR_Global'], ascending=[True, False])
 
     styled_config = df_display.style.map(highlight_buckets, subset=['Bucket'])\
-                                    .format({'Exec_Decay_Pts': "{:.2f}", 'WR_Global': "{:.1f}%"})
+                                    .format({'Decay_Pts': "{:.2f}", 'WR_Global': "{:.1f}%"})
 
     st.dataframe(styled_config, use_container_width=True, height=600)
