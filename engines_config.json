@@ -1,53 +1,68 @@
 {
     "Asia_Brk_L": {
+        "module": "MCL",
         "bucket": "B",
         "reason": "Inmaduro (26/30 trades)",
         "wr": 69.2,
         "trades": 26,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
             "R0": "N/A",
             "R1": "N/A",
-            "R2": "R2: 62.5% (16T) \ud83d\udeab"
+            "R2": "N/A"
         }
     },
     "Asia_Brk_S": {
+        "module": "MCL",
         "bucket": "B",
         "reason": "Inmaduro (23/30 trades)",
         "wr": 78.3,
         "trades": 23,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
-            "R0": "R0: 76.9% (13T) \u2705",
+            "R0": "N/A",
             "R1": "N/A",
             "R2": "N/A"
         }
     },
     "Lon_Brk_L": {
+        "module": "MCL",
         "bucket": "A",
         "reason": "\u00d3ptimo y Maduro",
         "wr": 77.1,
         "trades": 35,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
             "R0": "N/A",
-            "R1": "R1: 76.9% (26T) \u2705",
+            "R1": "N/A",
             "R2": "N/A"
         }
     },
     "Lon_Brk_S": {
+        "module": "MCL",
         "bucket": "B",
         "reason": "Inmaduro (24/30 trades)",
         "wr": 70.8,
         "trades": 24,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
             "R0": "N/A",
-            "R1": "R1: 69.2% (13T) \u2705",
+            "R1": "N/A",
             "R2": "N/A"
         }
     },
     "PM_Fade_L": {
+        "module": "MCL",
         "bucket": "B",
         "reason": "Inmaduro (6/30 trades)",
         "wr": 100.0,
         "trades": 6,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
             "R0": "N/A",
             "R1": "N/A",
@@ -55,21 +70,27 @@
         }
     },
     "Pit_Brk_S": {
+        "module": "MCL",
         "bucket": "A",
         "reason": "\u00d3ptimo y Maduro",
         "wr": 69.8,
         "trades": 43,
+        "execution_decay": 0.0,
+        "decay_samples": 1,
         "regimes_breakdown": {
             "R0": "N/A",
-            "R1": "R1: 66.7% (18T) \u2705",
+            "R1": "N/A",
             "R2": "N/A"
         }
     },
     "Pit_Fade_L": {
+        "module": "MCL",
         "bucket": "B",
         "reason": "Inmaduro (5/30 trades)",
         "wr": 80.0,
         "trades": 5,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
             "R0": "N/A",
             "R1": "N/A",
@@ -77,32 +98,41 @@
         }
     },
     "Asia_Bullet_L": {
+        "module": "MGC",
         "bucket": "B",
         "reason": "Fricci\u00f3n Reciente (Decay leve)",
         "wr": 73.6,
         "trades": 91,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
-            "R0": "R0: 60.0% (15T) \ud83d\udeab",
-            "R1": "R1: 80.4% (56T) \u2705",
-            "R2": "R2: 62.5% (16T) \ud83d\udeab"
+            "R0": "N/A",
+            "R1": "N/A",
+            "R2": "N/A"
         }
     },
     "Asia_Fade_S": {
+        "module": "MGC",
         "bucket": "C",
-        "reason": "Freno 3 Losses | Entorno Hostil: R2",
+        "reason": "Freno 3 Losses",
         "wr": 66.7,
         "trades": 33,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
-            "R0": "R0: 85.7% (7T) \u2705",
-            "R1": "R1: 85.7% (7T) \u2705",
-            "R2": "R2: 33.3% (6T) \ud83d\udeab"
+            "R0": "N/A",
+            "R1": "N/A",
+            "R2": "N/A"
         }
     },
     "COMEX_Swp_S_E": {
+        "module": "MGC",
         "bucket": "B",
         "reason": "Inmaduro (3/30 trades)",
         "wr": 100.0,
         "trades": 3,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
             "R0": "N/A",
             "R1": "N/A",
@@ -110,21 +140,27 @@
         }
     },
     "LP_Brk_L": {
+        "module": "MGC",
         "bucket": "B",
         "reason": "Inmaduro (12/30 trades)",
         "wr": 75.0,
         "trades": 12,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
-            "R0": "R0: 75.0% (8T) \u2705",
+            "R0": "N/A",
             "R1": "N/A",
             "R2": "N/A"
         }
     },
     "LP_Brk_S": {
+        "module": "MGC",
         "bucket": "B",
         "reason": "Inmaduro (2/30 trades)",
         "wr": 100.0,
         "trades": 2,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
             "R0": "N/A",
             "R1": "N/A",
@@ -132,32 +168,41 @@
         }
     },
     "LP_Rev_L": {
+        "module": "MGC",
         "bucket": "C",
-        "reason": "Alpha Decay (62.9%) | Lastre cr\u00f3nico en R0 (WR: 68.2%)",
+        "reason": "Alpha Decay (62.9%)",
         "wr": 62.9,
         "trades": 35,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
-            "R0": "R0: 68.2% (22T) \u2705",
+            "R0": "N/A",
             "R1": "N/A",
             "R2": "N/A"
         }
     },
     "LP_Rev_S": {
+        "module": "MGC",
         "bucket": "B",
         "reason": "Inmaduro (11/30 trades)",
         "wr": 72.7,
         "trades": 11,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
-            "R0": "R0: 80.0% (10T) \u2705",
+            "R0": "N/A",
             "R1": "N/A",
             "R2": "N/A"
         }
     },
     "Lon_BO_L_E": {
+        "module": "MGC",
         "bucket": "B",
         "reason": "Inmaduro (5/30 trades)",
         "wr": 80.0,
         "trades": 5,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
             "R0": "N/A",
             "R1": "N/A",
@@ -165,65 +210,83 @@
         }
     },
     "Lon_BO_S_E": {
+        "module": "MGC",
         "bucket": "B",
         "reason": "Inmaduro (16/30 trades)",
         "wr": 75.0,
         "trades": 16,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
-            "R0": "R0: 80.0% (5T) \u2705",
-            "R1": "R1: 60.0% (5T) \ud83d\udeab",
-            "R2": "R2: 80.0% (5T) \u2705"
+            "R0": "N/A",
+            "R1": "N/A",
+            "R2": "N/A"
         }
     },
     "Lon_Viper_L": {
+        "module": "MGC",
         "bucket": "B",
         "reason": "Inmaduro (19/30 trades)",
         "wr": 68.4,
         "trades": 19,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
-            "R0": "R0: 66.7% (9T) \u2705",
-            "R1": "R1: 75.0% (8T) \u2705",
+            "R0": "N/A",
+            "R1": "N/A",
             "R2": "N/A"
         }
     },
     "Lon_Viper_S": {
+        "module": "MGC",
         "bucket": "B",
         "reason": "Inmaduro (11/30 trades)",
         "wr": 72.7,
         "trades": 11,
+        "execution_decay": 0.0,
+        "decay_samples": 1,
         "regimes_breakdown": {
             "R0": "N/A",
             "R1": "N/A",
-            "R2": "R2: 80.0% (5T) \u2705"
+            "R2": "N/A"
         }
     },
     "V2_Rev_L": {
+        "module": "MGC",
         "bucket": "B",
         "reason": "Inmaduro (7/30 trades)",
         "wr": 71.4,
         "trades": 7,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
             "R0": "N/A",
-            "R1": "R1: 80.0% (5T) \u2705",
+            "R1": "N/A",
             "R2": "N/A"
         }
     },
     "V2_Rev_S": {
+        "module": "MGC",
         "bucket": "B",
         "reason": "Inmaduro (8/30 trades)",
         "wr": 100.0,
         "trades": 8,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
             "R0": "N/A",
-            "R1": "R1: 100.0% (6T) \u2705",
+            "R1": "N/A",
             "R2": "N/A"
         }
     },
     "AE_L": {
+        "module": "MES",
         "bucket": "B",
         "reason": "Inmaduro (5/30 trades)",
         "wr": 80.0,
         "trades": 5,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
             "R0": "N/A",
             "R1": "N/A",
@@ -231,65 +294,83 @@
         }
     },
     "AE_S": {
+        "module": "MNQ_DAY",
         "bucket": "B",
         "reason": "Inmaduro (26/30 trades)",
         "wr": 80.8,
         "trades": 26,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
-            "R0": "R0: 83.3% (6T) \u2705",
-            "R1": "R1: 71.4% (7T) \u2705",
-            "R2": "R2: 87.5% (8T) \u2705"
+            "R0": "N/A",
+            "R1": "N/A",
+            "R2": "N/A"
         }
     },
     "Box_L": {
+        "module": "MNQ_DAY",
         "bucket": "B",
         "reason": "Inmaduro (18/30 trades)",
         "wr": 77.8,
         "trades": 18,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
-            "R0": "R0: 100.0% (6T) \u2705",
-            "R1": "R1: 60.0% (5T) \ud83d\udeab",
+            "R0": "N/A",
+            "R1": "N/A",
             "R2": "N/A"
         }
     },
     "Box_S": {
+        "module": "MNQ_DAY",
         "bucket": "B",
         "reason": "Inmaduro (16/30 trades)",
         "wr": 81.2,
         "trades": 16,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
             "R0": "N/A",
-            "R1": "R1: 90.0% (10T) \u2705",
+            "R1": "N/A",
             "R2": "N/A"
         }
     },
     "Creep_S": {
+        "module": "MNQ_DAY",
         "bucket": "A",
         "reason": "\u00d3ptimo y Maduro",
         "wr": 84.8,
         "trades": 33,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
-            "R0": "R0: 100.0% (12T) \u2705",
-            "R1": "R1: 63.6% (11T) \ud83d\udeab",
-            "R2": "R2: 90.0% (10T) \u2705"
+            "R0": "N/A",
+            "R1": "N/A",
+            "R2": "N/A"
         }
     },
     "Ext_ORB_L": {
+        "module": "MNQ_DAY",
         "bucket": "C",
-        "reason": "Freno 3 Losses | Entorno Hostil: R1",
+        "reason": "Freno 3 Losses",
         "wr": 70.4,
         "trades": 27,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
             "R0": "N/A",
-            "R1": "R1: 62.5% (8T) \ud83d\udeab",
+            "R1": "N/A",
             "R2": "N/A"
         }
     },
     "Ext_ORB_S": {
+        "module": "MNQ_DAY",
         "bucket": "B",
         "reason": "Inmaduro (14/30 trades)",
         "wr": 92.9,
         "trades": 14,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
             "R0": "N/A",
             "R1": "N/A",
@@ -297,32 +378,41 @@
         }
     },
     "Gap_L": {
+        "module": "MNQ_DAY",
         "bucket": "B",
         "reason": "Inmaduro (10/30 trades)",
         "wr": 70.0,
         "trades": 10,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
-            "R0": "R0: 80.0% (5T) \u2705",
+            "R0": "N/A",
             "R1": "N/A",
             "R2": "N/A"
         }
     },
     "Grind_L": {
+        "module": "MES",
         "bucket": "B",
         "reason": "Inmaduro (22/30 trades)",
         "wr": 77.3,
         "trades": 22,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
-            "R0": "R0: 63.6% (11T) \ud83d\udeab",
-            "R1": "R1: 100.0% (10T) \u2705",
+            "R0": "N/A",
+            "R1": "N/A",
             "R2": "N/A"
         }
     },
     "Grind_S": {
+        "module": "MES",
         "bucket": "B",
         "reason": "Inmaduro (7/30 trades)",
         "wr": 85.7,
         "trades": 7,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
             "R0": "N/A",
             "R1": "N/A",
@@ -330,43 +420,55 @@
         }
     },
     "IB_L": {
+        "module": "MES",
         "bucket": "B",
         "reason": "Inmaduro (27/30 trades)",
         "wr": 74.1,
         "trades": 27,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
-            "R0": "R0: 100.0% (6T) \u2705",
-            "R1": "R1: 77.8% (9T) \u2705",
+            "R0": "N/A",
+            "R1": "N/A",
             "R2": "N/A"
         }
     },
     "Late_S": {
+        "module": "MNQ_DAY",
         "bucket": "B",
         "reason": "Inmaduro (24/30 trades)",
         "wr": 83.3,
         "trades": 24,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
-            "R0": "R0: 88.9% (9T) \u2705",
-            "R1": "R1: 100.0% (7T) \u2705",
-            "R2": "R2: 62.5% (8T) \ud83d\udeab"
+            "R0": "N/A",
+            "R1": "N/A",
+            "R2": "N/A"
         }
     },
     "M4_S": {
+        "module": "MES",
         "bucket": "B",
         "reason": "Inmaduro (22/30 trades)",
         "wr": 77.3,
         "trades": 22,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
-            "R0": "R0: 80.0% (5T) \u2705",
-            "R1": "R1: 84.6% (13T) \u2705",
+            "R0": "N/A",
+            "R1": "N/A",
             "R2": "N/A"
         }
     },
     "PH_Brk_L": {
+        "module": "MNQ_DAY",
         "bucket": "B",
         "reason": "Inmaduro (4/30 trades)",
         "wr": 100.0,
         "trades": 4,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
             "R0": "N/A",
             "R1": "N/A",
@@ -374,120 +476,153 @@
         }
     },
     "PH_Rev_L": {
+        "module": "MNQ_DAY",
         "bucket": "B",
         "reason": "Inmaduro (23/30 trades)",
         "wr": 82.6,
         "trades": 23,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
-            "R0": "R0: 100.0% (8T) \u2705",
-            "R1": "R1: 80.0% (5T) \u2705",
+            "R0": "N/A",
+            "R1": "N/A",
             "R2": "N/A"
         }
     },
     "PH_Rev_S": {
+        "module": "MNQ_DAY",
         "bucket": "C",
-        "reason": "Alpha Decay (64.7%) | Lastre cr\u00f3nico en R1 (WR: 71.4%)",
+        "reason": "Alpha Decay (64.7%)",
         "wr": 64.7,
         "trades": 17,
+        "execution_decay": 0.0,
+        "decay_samples": 1,
         "regimes_breakdown": {
-            "R0": "R0: 83.3% (6T) \u2705",
-            "R1": "R1: 71.4% (7T) \u2705",
+            "R0": "N/A",
+            "R1": "N/A",
             "R2": "N/A"
         }
     },
     "Retest_L_E": {
+        "module": "MES",
         "bucket": "B",
         "reason": "Inmaduro (14/30 trades)",
         "wr": 85.7,
         "trades": 14,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
-            "R0": "R0: 88.9% (9T) \u2705",
+            "R0": "N/A",
             "R1": "N/A",
             "R2": "N/A"
         }
     },
     "AM10_Swp_L": {
+        "module": "MES",
         "bucket": "B",
         "reason": "Inmaduro (11/30 trades)",
         "wr": 90.9,
         "trades": 11,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
             "R0": "N/A",
             "R1": "N/A",
-            "R2": "R2: 80.0% (5T) \u2705"
+            "R2": "N/A"
         }
     },
     "AM10_Swp_S": {
+        "module": "MES",
         "bucket": "B",
         "reason": "Inmaduro (22/30 trades)",
         "wr": 68.2,
         "trades": 22,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
             "R0": "N/A",
-            "R1": "R1: 71.4% (14T) \u2705",
+            "R1": "N/A",
             "R2": "N/A"
         }
     },
     "Apex_S": {
+        "module": "MES",
         "bucket": "C",
-        "reason": "Alpha Decay (64.3%) | Lastre cr\u00f3nico en R1 (WR: 50.0%)",
+        "reason": "Alpha Decay (64.3%)",
         "wr": 64.3,
         "trades": 14,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
             "R0": "N/A",
-            "R1": "R1: 50.0% (6T) \ud83d\udeab",
-            "R2": "R2: 100.0% (5T) \u2705"
+            "R1": "N/A",
+            "R2": "N/A"
         }
     },
     "Gap_Fade_L": {
+        "module": "MES",
         "bucket": "A",
         "reason": "\u00d3ptimo y Maduro",
         "wr": 76.5,
         "trades": 34,
+        "execution_decay": 0.0,
+        "decay_samples": 1,
         "regimes_breakdown": {
             "R0": "N/A",
-            "R1": "R1: 73.3% (15T) \u2705",
-            "R2": "R2: 78.6% (14T) \u2705"
+            "R1": "N/A",
+            "R2": "N/A"
         }
     },
     "Gap_Fade_S": {
+        "module": "MES",
         "bucket": "B",
         "reason": "Inmaduro (29/30 trades)",
         "wr": 82.8,
         "trades": 29,
+        "execution_decay": 0.25,
+        "decay_samples": 2,
         "regimes_breakdown": {
-            "R0": "R0: 71.4% (7T) \u2705",
-            "R1": "R1: 93.3% (15T) \u2705",
-            "R2": "R2: 80.0% (5T) \u2705"
+            "R0": "N/A",
+            "R1": "N/A",
+            "R2": "N/A"
         }
     },
     "IB_Fade_L": {
+        "module": "MES",
         "bucket": "A",
         "reason": "\u00d3ptimo y Maduro",
         "wr": 81.1,
         "trades": 37,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
-            "R0": "R0: 81.8% (11T) \u2705",
-            "R1": "R1: 86.7% (15T) \u2705",
+            "R0": "N/A",
+            "R1": "N/A",
             "R2": "N/A"
         }
     },
     "IB_Fade_S": {
+        "module": "MES",
         "bucket": "B",
         "reason": "Inmaduro (18/30 trades)",
         "wr": 77.8,
         "trades": 18,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
-            "R0": "R0: 80.0% (5T) \u2705",
-            "R1": "R1: 81.8% (11T) \u2705",
+            "R0": "N/A",
+            "R1": "N/A",
             "R2": "N/A"
         }
     },
     "OR_Fake_S": {
+        "module": "MES",
         "bucket": "B",
         "reason": "Inmaduro (8/30 trades)",
         "wr": 75.0,
         "trades": 8,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
             "R0": "N/A",
             "R1": "N/A",
@@ -495,43 +630,55 @@
         }
     },
     "AsianGrind_L": {
+        "module": "MNQ_NIGHT",
         "bucket": "B",
         "reason": "Inmaduro (15/30 trades)",
         "wr": 80.0,
         "trades": 15,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
-            "R0": "R0: 80.0% (5T) \u2705",
+            "R0": "N/A",
             "R1": "N/A",
-            "R2": "R2: 80.0% (5T) \u2705"
+            "R2": "N/A"
         }
     },
     "Frank_L": {
+        "module": "MNQ_NIGHT",
         "bucket": "B",
         "reason": "Inmaduro (14/30 trades)",
         "wr": 85.7,
         "trades": 14,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
             "R0": "N/A",
             "R1": "N/A",
-            "R2": "R2: 100.0% (5T) \u2705"
+            "R2": "N/A"
         }
     },
     "Judas_L": {
+        "module": "MNQ_NIGHT",
         "bucket": "B",
         "reason": "Inmaduro (27/30 trades)",
         "wr": 77.8,
         "trades": 27,
+        "execution_decay": 0.0,
+        "decay_samples": 1,
         "regimes_breakdown": {
-            "R0": "R0: 83.3% (6T) \u2705",
+            "R0": "N/A",
             "R1": "N/A",
-            "R2": "R2: 83.3% (12T) \u2705"
+            "R2": "N/A"
         }
     },
     "P6_L": {
+        "module": "MNQ_NIGHT",
         "bucket": "B",
         "reason": "Inmaduro (9/30 trades)",
         "wr": 88.9,
         "trades": 9,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
             "R0": "N/A",
             "R1": "N/A",
@@ -539,68 +686,86 @@
         }
     },
     "P6_S": {
+        "module": "MNQ_NIGHT",
         "bucket": "A",
         "reason": "\u00d3ptimo y Maduro",
         "wr": 78.8,
         "trades": 33,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
-            "R0": "R0: 83.3% (12T) \u2705",
-            "R1": "R1: 100.0% (6T) \u2705",
-            "R2": "R2: 77.8% (9T) \u2705"
+            "R0": "N/A",
+            "R1": "N/A",
+            "R2": "N/A"
         }
     },
     "Pre_Brk_S": {
+        "module": "MNQ_NIGHT",
         "bucket": "B",
         "reason": "Inmaduro (29/30 trades)",
         "wr": 72.4,
         "trades": 29,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
-            "R0": "R0: 85.7% (7T) \u2705",
+            "R0": "N/A",
             "R1": "N/A",
-            "R2": "R2: 66.7% (18T) \u2705"
+            "R2": "N/A"
         }
     },
     "Pre_Rev_L": {
+        "module": "MNQ_NIGHT",
         "bucket": "B",
         "reason": "Inmaduro (16/30 trades)",
         "wr": 75.0,
         "trades": 16,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
-            "R0": "R0: 66.7% (6T) \u2705",
-            "R1": "R1: 60.0% (5T) \ud83d\udeab",
+            "R0": "N/A",
+            "R1": "N/A",
             "R2": "N/A"
         }
     },
     "Pre_Rev_S": {
+        "module": "MNQ_NIGHT",
         "bucket": "B",
-        "reason": "Inmaduro (14/30 trades)",
-        "wr": 78.6,
-        "trades": 14,
+        "reason": "Inmaduro (15/30 trades)",
+        "wr": 73.3,
+        "trades": 15,
+        "execution_decay": 0.0,
+        "decay_samples": 1,
         "regimes_breakdown": {
-            "R0": "R0: 60.0% (5T) \ud83d\udeab",
+            "R0": "N/A",
             "R1": "N/A",
-            "R2": "R2: 100.0% (6T) \u2705"
+            "R2": "N/A"
         }
     },
     "Tokyo_L": {
+        "module": "MNQ_NIGHT",
         "bucket": "A",
         "reason": "\u00d3ptimo y Maduro",
         "wr": 76.7,
         "trades": 30,
+        "execution_decay": 0.0,
+        "decay_samples": 1,
         "regimes_breakdown": {
-            "R0": "R0: 85.7% (7T) \u2705",
-            "R1": "R1: 55.6% (9T) \ud83d\udeab",
-            "R2": "R2: 100.0% (5T) \u2705"
+            "R0": "N/A",
+            "R1": "N/A",
+            "R2": "N/A"
         }
     },
     "Tokyo_S": {
+        "module": "MNQ_NIGHT",
         "bucket": "B",
         "reason": "Inmaduro (15/30 trades)",
         "wr": 80.0,
         "trades": 15,
+        "execution_decay": 0.0,
+        "decay_samples": 0,
         "regimes_breakdown": {
             "R0": "N/A",
-            "R1": "R1: 60.0% (5T) \ud83d\udeab",
+            "R1": "N/A",
             "R2": "N/A"
         }
     }
