@@ -23,7 +23,7 @@
         "trades": 23,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "N/A",
+            "R0": "100.0% (5T) \u2705",
             "R1": "76.5% (17T) \u2705",
             "R2": "N/A"
         },
@@ -38,7 +38,7 @@
         "trades": 35,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "76.9% (26T) \u2705",
+            "R0": "77.1% (35T) \u2705",
             "R1": "N/A",
             "R2": "N/A"
         },
@@ -53,7 +53,7 @@
         "trades": 24,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "69.2% (13T) \u2705",
+            "R0": "76.2% (21T) \u2705",
             "R1": "N/A",
             "R2": "N/A"
         },
@@ -68,7 +68,7 @@
         "trades": 6,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "N/A",
+            "R0": "100.0% (5T) \u2705",
             "R1": "N/A",
             "R2": "N/A"
         },
@@ -83,8 +83,8 @@
         "trades": 44,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "63.6% (11T) \u2705",
-            "R1": "80.0% (5T) \u2705",
+            "R0": "66.7% (33T) \u2705",
+            "R1": "85.7% (7T) \u2705",
             "R2": "N/A"
         },
         "last_5": "W W W W L"
@@ -128,7 +128,7 @@
         "trades": 11,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "N/A",
+            "R0": "85.7% (7T) \u2705",
             "R1": "N/A",
             "R2": "N/A"
         },
@@ -143,7 +143,7 @@
         "trades": 23,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "63.6% (11T) \u2705",
+            "R0": "68.8% (16T) \u2705",
             "R1": "N/A",
             "R2": "N/A"
         },
@@ -158,7 +158,7 @@
         "trades": 14,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "66.7% (9T) \u2705",
+            "R0": "60.0% (10T) \ud83d\udeab",
             "R1": "N/A",
             "R2": "N/A"
         },
@@ -173,9 +173,9 @@
         "trades": 34,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "75.0% (12T) \u2705",
+            "R0": "79.2% (24T) \u2705",
             "R1": "N/A",
-            "R2": "71.4% (7T) \u2705"
+            "R2": "66.7% (9T) \u2705"
         },
         "last_5": "W W W W W"
     },
@@ -188,8 +188,8 @@
         "trades": 32,
         "execution_decay": 0.25,
         "regimes_breakdown": {
-            "R0": "82.4% (17T) \u2705",
-            "R1": "60.0% (5T) \ud83d\udeab",
+            "R0": "81.8% (22T) \u2705",
+            "R1": "57.1% (7T) \ud83d\udeab",
             "R2": "N/A"
         },
         "last_5": "W W W L L"
@@ -203,8 +203,8 @@
         "trades": 22,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "88.9% (9T) \u2705",
-            "R1": "57.1% (7T) \ud83d\udeab",
+            "R0": "90.9% (11T) \u2705",
+            "R1": "63.6% (11T) \u2705",
             "R2": "N/A"
         },
         "last_5": "W W W W W"
@@ -219,7 +219,7 @@
         "execution_decay": 0.0,
         "regimes_breakdown": {
             "R0": "N/A",
-            "R1": "N/A",
+            "R1": "100.0% (5T) \u2705",
             "R2": "N/A"
         },
         "last_5": "W W W W L"
@@ -233,8 +233,8 @@
         "trades": 37,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "100.0% (11T) \u2705",
-            "R1": "87.5% (8T) \u2705",
+            "R0": "88.9% (18T) \u2705",
+            "R1": "73.7% (19T) \u2705",
             "R2": "N/A"
         },
         "last_5": "L W W W W"
@@ -248,8 +248,8 @@
         "trades": 18,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "N/A",
+            "R0": "75.0% (12T) \u2705",
+            "R1": "83.3% (6T) \u2705",
             "R2": "N/A"
         },
         "last_5": "W W W W L"
@@ -263,8 +263,8 @@
         "trades": 26,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "66.7% (6T) \u2705",
-            "R1": "N/A",
+            "R0": "77.8% (9T) \u2705",
+            "R1": "76.5% (17T) \u2705",
             "R2": "N/A"
         },
         "last_5": "W W L W W"
@@ -279,7 +279,7 @@
         "execution_decay": 0.0,
         "regimes_breakdown": {
             "R0": "83.3% (12T) \u2705",
-            "R1": "N/A",
+            "R1": "62.5% (8T) \u2705",
             "R2": "N/A"
         },
         "last_5": "W W L W W"
@@ -294,7 +294,7 @@
         "execution_decay": 0.0,
         "regimes_breakdown": {
             "R0": "N/A",
-            "R1": "N/A",
+            "R1": "83.3% (6T) \u2705",
             "R2": "N/A"
         },
         "last_5": "W W W W L"
@@ -309,7 +309,7 @@
         "execution_decay": 0.0,
         "regimes_breakdown": {
             "R0": "N/A",
-            "R1": "88.9% (9T) \u2705",
+            "R1": "81.8% (11T) \u2705",
             "R2": "N/A"
         },
         "last_5": "W W W W W"
@@ -323,9 +323,9 @@
         "trades": 91,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "82.5% (57T) \u2705",
-            "R1": "58.8% (17T) \ud83d\udeab",
-            "R2": "53.8% (13T) \ud83d\udeab"
+            "R0": "57.1% (14T) \ud83d\udeab",
+            "R1": "83.1% (59T) \u2705",
+            "R2": "55.6% (18T) \ud83d\udeab"
         },
         "last_5": "L W L W L"
     },
@@ -338,9 +338,9 @@
         "trades": 33,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "88.9% (9T) \u2705",
-            "R1": "70.0% (10T) \u2705",
-            "R2": "37.5% (8T) \ud83d\udeab"
+            "R0": "37.5% (8T) \ud83d\udeab",
+            "R1": "83.3% (12T) \u2705",
+            "R2": "69.2% (13T) \u2705"
         },
         "last_5": "W L L L W"
     },
@@ -369,8 +369,8 @@
         "execution_decay": 0.0,
         "regimes_breakdown": {
             "R0": "N/A",
-            "R1": "75.0% (8T) \u2705",
-            "R2": "N/A"
+            "R1": "N/A",
+            "R2": "85.7% (7T) \u2705"
         },
         "last_5": "W W W L W"
     },
@@ -399,8 +399,8 @@
         "execution_decay": 0.0,
         "regimes_breakdown": {
             "R0": "N/A",
-            "R1": "68.2% (22T) \u2705",
-            "R2": "N/A"
+            "R1": "N/A",
+            "R2": "63.6% (33T) \u2705"
         },
         "last_5": "W W W W L"
     },
@@ -414,8 +414,8 @@
         "execution_decay": 0.0,
         "regimes_breakdown": {
             "R0": "N/A",
-            "R1": "80.0% (10T) \u2705",
-            "R2": "N/A"
+            "R1": "N/A",
+            "R2": "72.7% (11T) \u2705"
         },
         "last_5": "W W W W W"
     },
@@ -443,9 +443,9 @@
         "trades": 17,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "60.0% (5T) \ud83d\udeab",
-            "R1": "80.0% (5T) \u2705",
-            "R2": "71.4% (7T) \u2705"
+            "R0": "71.4% (7T) \u2705",
+            "R1": "60.0% (5T) \ud83d\udeab",
+            "R2": "80.0% (5T) \u2705"
         },
         "last_5": "L W W W L"
     },
@@ -458,9 +458,9 @@
         "trades": 19,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "83.3% (6T) \u2705",
-            "R1": "42.9% (7T) \ud83d\udeab",
-            "R2": "N/A"
+            "R0": "N/A",
+            "R1": "75.0% (8T) \u2705",
+            "R2": "66.7% (9T) \u2705"
         },
         "last_5": "L W W W L"
     },
@@ -473,7 +473,7 @@
         "trades": 12,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "N/A",
+            "R0": "83.3% (6T) \u2705",
             "R1": "N/A",
             "R2": "N/A"
         },
@@ -489,7 +489,7 @@
         "execution_decay": 0.0,
         "regimes_breakdown": {
             "R0": "N/A",
-            "R1": "N/A",
+            "R1": "80.0% (5T) \u2705",
             "R2": "N/A"
         },
         "last_5": "L W W W W"
@@ -504,7 +504,7 @@
         "execution_decay": 0.0,
         "regimes_breakdown": {
             "R0": "N/A",
-            "R1": "N/A",
+            "R1": "100.0% (6T) \u2705",
             "R2": "N/A"
         },
         "last_5": "W W W W W"
@@ -518,9 +518,9 @@
         "trades": 90,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "83.3% (24T) \u2705",
-            "R1": "85.7% (7T) \u2705",
-            "R2": "75.0% (24T) \u2705"
+            "R0": "80.6% (36T) \u2705",
+            "R1": "79.3% (29T) \u2705",
+            "R2": "72.0% (25T) \u2705"
         },
         "last_5": "W W L W L"
     },
@@ -534,8 +534,8 @@
         "execution_decay": 0.0,
         "regimes_breakdown": {
             "R0": "85.7% (7T) \u2705",
-            "R1": "83.3% (6T) \u2705",
-            "R2": "N/A"
+            "R1": "72.7% (11T) \u2705",
+            "R2": "87.5% (8T) \u2705"
         },
         "last_5": "W W L W W"
     },
@@ -548,9 +548,9 @@
         "trades": 18,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "80.0% (5T) \u2705",
-            "R1": "N/A",
-            "R2": "100.0% (6T) \u2705"
+            "R0": "81.8% (11T) \u2705",
+            "R1": "66.7% (6T) \u2705",
+            "R2": "N/A"
         },
         "last_5": "W W W W W"
     },
@@ -563,8 +563,8 @@
         "trades": 16,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "100.0% (7T) \u2705",
-            "R1": "N/A",
+            "R0": "87.5% (8T) \u2705",
+            "R1": "71.4% (7T) \u2705",
             "R2": "N/A"
         },
         "last_5": "W W W W W"
@@ -578,9 +578,9 @@
         "trades": 33,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "72.7% (11T) \u2705",
-            "R1": "80.0% (5T) \u2705",
-            "R2": "100.0% (6T) \u2705"
+            "R0": "78.9% (19T) \u2705",
+            "R1": "N/A",
+            "R2": "100.0% (11T) \u2705"
         },
         "last_5": "W W W W W"
     },
@@ -593,8 +593,8 @@
         "trades": 26,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "66.7% (6T) \u2705",
-            "R1": "N/A",
+            "R0": "55.6% (9T) \ud83d\udeab",
+            "R1": "73.3% (15T) \u2705",
             "R2": "N/A"
         },
         "last_5": "L L L W W"
@@ -609,7 +609,7 @@
         "execution_decay": 0.0,
         "regimes_breakdown": {
             "R0": "N/A",
-            "R1": "N/A",
+            "R1": "100.0% (8T) \u2705",
             "R2": "N/A"
         },
         "last_5": "W W W L W"
@@ -638,9 +638,9 @@
         "trades": 27,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "75.0% (12T) \u2705",
-            "R1": "N/A",
-            "R2": "N/A"
+            "R0": "70.0% (10T) \u2705",
+            "R1": "63.6% (11T) \u2705",
+            "R2": "100.0% (6T) \u2705"
         },
         "last_5": "W W W W W"
     },
@@ -653,9 +653,9 @@
         "trades": 13,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "N/A",
+            "R0": "57.1% (7T) \ud83d\udeab",
             "R1": "N/A",
-            "R2": "80.0% (5T) \u2705"
+            "R2": "N/A"
         },
         "last_5": "L W W W W"
     },
@@ -668,9 +668,9 @@
         "trades": 40,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "85.7% (14T) \u2705",
-            "R1": "N/A",
-            "R2": "66.7% (6T) \u2705"
+            "R0": "80.0% (20T) \u2705",
+            "R1": "87.5% (16T) \u2705",
+            "R2": "N/A"
         },
         "last_5": "W W L L W"
     },
@@ -684,8 +684,8 @@
         "execution_decay": 0.0,
         "regimes_breakdown": {
             "R0": "N/A",
-            "R1": "70.0% (10T) \u2705",
-            "R2": "N/A"
+            "R1": "62.5% (8T) \u2705",
+            "R2": "91.7% (12T) \u2705"
         },
         "last_5": "W W W W W"
     },
@@ -698,9 +698,9 @@
         "trades": 28,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "62.5% (8T) \u2705",
-            "R1": "N/A",
-            "R2": "72.7% (11T) \u2705"
+            "R0": "72.7% (11T) \u2705",
+            "R1": "100.0% (9T) \u2705",
+            "R2": "50.0% (8T) \ud83d\udeab"
         },
         "last_5": "W L L W L"
     },
@@ -728,9 +728,9 @@
         "trades": 24,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "83.3% (6T) \u2705",
-            "R1": "N/A",
-            "R2": "100.0% (7T) \u2705"
+            "R0": "87.5% (8T) \u2705",
+            "R1": "66.7% (6T) \u2705",
+            "R2": "90.0% (10T) \u2705"
         },
         "last_5": "W W W W W"
     },
@@ -743,9 +743,9 @@
         "trades": 18,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "71.4% (7T) \u2705",
+            "R0": "62.5% (8T) \u2705",
             "R1": "N/A",
-            "R2": "60.0% (5T) \ud83d\udeab"
+            "R2": "71.4% (7T) \u2705"
         },
         "last_5": "W L W L W"
     },
@@ -758,8 +758,8 @@
         "trades": 15,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "80.0% (5T) \u2705",
-            "R1": "N/A",
+            "R0": "100.0% (5T) \u2705",
+            "R1": "71.4% (7T) \u2705",
             "R2": "N/A"
         },
         "last_5": "W L W L W"
@@ -773,9 +773,9 @@
         "trades": 15,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "80.0% (5T) \u2705",
+            "R0": "N/A",
             "R1": "N/A",
-            "R2": "80.0% (5T) \u2705"
+            "R2": "85.7% (7T) \u2705"
         },
         "last_5": "W W W W W"
     },
@@ -788,9 +788,9 @@
         "trades": 14,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "N/A",
+            "R0": "75.0% (8T) \u2705",
             "R1": "N/A",
-            "R2": "100.0% (5T) \u2705"
+            "R2": "100.0% (6T) \u2705"
         },
         "last_5": "W W W W W"
     },
@@ -803,9 +803,9 @@
         "trades": 27,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "83.3% (6T) \u2705",
-            "R1": "N/A",
-            "R2": "83.3% (12T) \u2705"
+            "R0": "92.3% (13T) \u2705",
+            "R1": "71.4% (7T) \u2705",
+            "R2": "57.1% (7T) \ud83d\udeab"
         },
         "last_5": "W L W W W"
     },
@@ -833,9 +833,9 @@
         "trades": 33,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "83.3% (12T) \u2705",
-            "R1": "100.0% (6T) \u2705",
-            "R2": "77.8% (9T) \u2705"
+            "R0": "73.3% (15T) \u2705",
+            "R1": "85.7% (7T) \u2705",
+            "R2": "81.8% (11T) \u2705"
         },
         "last_5": "W W L W W"
     },
@@ -848,9 +848,9 @@
         "trades": 29,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "85.7% (7T) \u2705",
-            "R1": "N/A",
-            "R2": "66.7% (18T) \u2705"
+            "R0": "60.0% (15T) \ud83d\udeab",
+            "R1": "83.3% (6T) \u2705",
+            "R2": "87.5% (8T) \u2705"
         },
         "last_5": "W W L W W"
     },
@@ -863,8 +863,8 @@
         "trades": 16,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "66.7% (6T) \u2705",
-            "R1": "60.0% (5T) \ud83d\udeab",
+            "R0": "75.0% (8T) \u2705",
+            "R1": "66.7% (6T) \u2705",
             "R2": "N/A"
         },
         "last_5": "W L W L W"
@@ -878,9 +878,9 @@
         "trades": 14,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "60.0% (5T) \ud83d\udeab",
+            "R0": "83.3% (6T) \u2705",
             "R1": "N/A",
-            "R2": "100.0% (6T) \u2705"
+            "R2": "60.0% (5T) \ud83d\udeab"
         },
         "last_5": "W L W L W"
     },
@@ -893,9 +893,9 @@
         "trades": 30,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "85.7% (7T) \u2705",
-            "R1": "55.6% (9T) \ud83d\udeab",
-            "R2": "100.0% (5T) \u2705"
+            "R0": "83.3% (6T) \u2705",
+            "R1": "50.0% (12T) \ud83d\udeab",
+            "R2": "100.0% (12T) \u2705"
         },
         "last_5": "W L W W W"
     },
@@ -908,8 +908,8 @@
         "trades": 15,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "60.0% (5T) \ud83d\udeab",
+            "R0": "83.3% (6T) \u2705",
+            "R1": "66.7% (6T) \u2705",
             "R2": "N/A"
         },
         "last_5": "W L W W W"
