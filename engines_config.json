@@ -9,7 +9,7 @@
         "execution_decay": 0.0,
         "regimes_breakdown": {
             "R0": "N/A",
-            "R1": "63.2% (19T) \u2705",
+            "R1": "68.4% (19T) \u2705",
             "R2": "N/A"
         },
         "last_5": "W W W W L"
@@ -19,15 +19,15 @@
         "engine_name": "Asia_Brk_S",
         "bucket": "A",
         "reason": "\u00d3ptimo y Maduro",
-        "wr": 78.3,
-        "trades": 23,
+        "wr": 75.0,
+        "trades": 24,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "100.0% (5T) \u2705",
-            "R1": "76.5% (17T) \u2705",
-            "R2": "N/A"
+            "R0": "83.3% (6T) \u2705",
+            "R1": "62.5% (8T) \u2705",
+            "R2": "80.0% (10T) \u2705"
         },
-        "last_5": "W W W W W"
+        "last_5": "W W W W L"
     },
     "MCL::Lon_Brk_L": {
         "module": "MCL",
@@ -83,8 +83,8 @@
         "trades": 44,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "66.7% (33T) \u2705",
-            "R1": "85.7% (7T) \u2705",
+            "R0": "67.6% (34T) \u2705",
+            "R1": "66.7% (6T) \u2705",
             "R2": "N/A"
         },
         "last_5": "W W W W L"
@@ -319,15 +319,15 @@
         "engine_name": "Asia_Bullet_L",
         "bucket": "A",
         "reason": "\u00d3ptimo y Maduro",
-        "wr": 73.6,
-        "trades": 91,
+        "wr": 73.9,
+        "trades": 92,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "57.1% (14T) \ud83d\udeab",
-            "R1": "83.1% (59T) \u2705",
-            "R2": "55.6% (18T) \ud83d\udeab"
+            "R0": "60.0% (15T) \ud83d\udeab",
+            "R1": "58.8% (17T) \ud83d\udeab",
+            "R2": "81.7% (60T) \u2705"
         },
-        "last_5": "L W L W L"
+        "last_5": "W L W L W"
     },
     "MGC::Asia_Fade_S": {
         "module": "MGC",
@@ -339,8 +339,8 @@
         "execution_decay": 0.0,
         "regimes_breakdown": {
             "R0": "37.5% (8T) \ud83d\udeab",
-            "R1": "83.3% (12T) \u2705",
-            "R2": "69.2% (13T) \u2705"
+            "R1": "69.2% (13T) \u2705",
+            "R2": "83.3% (12T) \u2705"
         },
         "last_5": "W L L L W"
     },
@@ -369,8 +369,8 @@
         "execution_decay": 0.0,
         "regimes_breakdown": {
             "R0": "N/A",
-            "R1": "N/A",
-            "R2": "85.7% (7T) \u2705"
+            "R1": "85.7% (7T) \u2705",
+            "R2": "N/A"
         },
         "last_5": "W W W L W"
     },
@@ -399,8 +399,8 @@
         "execution_decay": 0.0,
         "regimes_breakdown": {
             "R0": "N/A",
-            "R1": "N/A",
-            "R2": "63.6% (33T) \u2705"
+            "R1": "63.6% (33T) \u2705",
+            "R2": "N/A"
         },
         "last_5": "W W W W L"
     },
@@ -414,8 +414,8 @@
         "execution_decay": 0.0,
         "regimes_breakdown": {
             "R0": "N/A",
-            "R1": "N/A",
-            "R2": "72.7% (11T) \u2705"
+            "R1": "72.7% (11T) \u2705",
+            "R2": "N/A"
         },
         "last_5": "W W W W W"
     },
@@ -444,8 +444,8 @@
         "execution_decay": 0.0,
         "regimes_breakdown": {
             "R0": "71.4% (7T) \u2705",
-            "R1": "60.0% (5T) \ud83d\udeab",
-            "R2": "80.0% (5T) \u2705"
+            "R1": "80.0% (5T) \u2705",
+            "R2": "60.0% (5T) \ud83d\udeab"
         },
         "last_5": "L W W W L"
     },
@@ -459,8 +459,8 @@
         "execution_decay": 0.0,
         "regimes_breakdown": {
             "R0": "N/A",
-            "R1": "75.0% (8T) \u2705",
-            "R2": "66.7% (9T) \u2705"
+            "R1": "66.7% (9T) \u2705",
+            "R2": "75.0% (8T) \u2705"
         },
         "last_5": "L W W W L"
     },
@@ -489,8 +489,8 @@
         "execution_decay": 0.0,
         "regimes_breakdown": {
             "R0": "N/A",
-            "R1": "80.0% (5T) \u2705",
-            "R2": "N/A"
+            "R1": "N/A",
+            "R2": "80.0% (5T) \u2705"
         },
         "last_5": "L W W W W"
     },
@@ -504,8 +504,8 @@
         "execution_decay": 0.0,
         "regimes_breakdown": {
             "R0": "N/A",
-            "R1": "100.0% (6T) \u2705",
-            "R2": "N/A"
+            "R1": "N/A",
+            "R2": "100.0% (6T) \u2705"
         },
         "last_5": "W W W W W"
     },
@@ -514,15 +514,15 @@
         "engine_name": "AE_L",
         "bucket": "A",
         "reason": "\u00d3ptimo y Maduro",
-        "wr": 77.8,
-        "trades": 90,
+        "wr": 78.0,
+        "trades": 91,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "79.6% (49T) \u2705",
-            "R1": "76.7% (30T) \u2705",
-            "R2": "72.7% (11T) \u2705"
+            "R0": "80.0% (50T) \u2705",
+            "R1": "70.0% (10T) \u2705",
+            "R2": "77.4% (31T) \u2705"
         },
-        "last_5": "W W L W L"
+        "last_5": "W L W L W"
     },
     "MNQ_DAY::AE_S": {
         "module": "MNQ_DAY",
@@ -534,8 +534,8 @@
         "execution_decay": 0.0,
         "regimes_breakdown": {
             "R0": "75.0% (12T) \u2705",
-            "R1": "100.0% (5T) \u2705",
-            "R2": "77.8% (9T) \u2705"
+            "R1": "80.0% (10T) \u2705",
+            "R2": "N/A"
         },
         "last_5": "W W L W W"
     },
@@ -549,8 +549,8 @@
         "execution_decay": 0.0,
         "regimes_breakdown": {
             "R0": "66.7% (12T) \u2705",
-            "R1": "100.0% (6T) \u2705",
-            "R2": "N/A"
+            "R1": "N/A",
+            "R2": "100.0% (6T) \u2705"
         },
         "last_5": "W W W W W"
     },
@@ -578,9 +578,9 @@
         "trades": 33,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "84.6% (13T) \u2705",
-            "R1": "100.0% (13T) \u2705",
-            "R2": "57.1% (7T) \ud83d\udeab"
+            "R0": "85.7% (14T) \u2705",
+            "R1": "57.1% (7T) \ud83d\udeab",
+            "R2": "100.0% (12T) \u2705"
         },
         "last_5": "W W W W W"
     },
@@ -624,8 +624,8 @@
         "execution_decay": 0.0,
         "regimes_breakdown": {
             "R0": "60.0% (5T) \ud83d\udeab",
-            "R1": "80.0% (5T) \u2705",
-            "R2": "N/A"
+            "R1": "N/A",
+            "R2": "80.0% (5T) \u2705"
         },
         "last_5": "L W W W W"
     },
@@ -638,9 +638,9 @@
         "trades": 27,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "63.2% (19T) \u2705",
-            "R1": "100.0% (7T) \u2705",
-            "R2": "N/A"
+            "R0": "68.4% (19T) \u2705",
+            "R1": "N/A",
+            "R2": "85.7% (7T) \u2705"
         },
         "last_5": "W W W W W"
     },
@@ -653,9 +653,9 @@
         "trades": 13,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "75.0% (8T) \u2705",
-            "R1": "80.0% (5T) \u2705",
-            "R2": "N/A"
+            "R0": "71.4% (7T) \u2705",
+            "R1": "N/A",
+            "R2": "83.3% (6T) \u2705"
         },
         "last_5": "L W W W W"
     },
@@ -668,9 +668,9 @@
         "trades": 40,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "81.2% (32T) \u2705",
-            "R1": "57.1% (7T) \ud83d\udeab",
-            "R2": "N/A"
+            "R0": "81.8% (33T) \u2705",
+            "R1": "N/A",
+            "R2": "66.7% (6T) \u2705"
         },
         "last_5": "W W L L W"
     },
@@ -679,13 +679,13 @@
         "engine_name": "Late_S",
         "bucket": "A",
         "reason": "\u00d3ptimo y Maduro",
-        "wr": 84.0,
-        "trades": 25,
+        "wr": 83.3,
+        "trades": 24,
         "execution_decay": 0.0,
         "regimes_breakdown": {
             "R0": "N/A",
-            "R1": "100.0% (7T) \u2705",
-            "R2": "76.5% (17T) \u2705"
+            "R1": "75.0% (16T) \u2705",
+            "R2": "N/A"
         },
         "last_5": "W W W W W"
     },
@@ -699,8 +699,8 @@
         "execution_decay": 0.0,
         "regimes_breakdown": {
             "R0": "81.2% (16T) \u2705",
-            "R1": "66.7% (12T) \u2705",
-            "R2": "N/A"
+            "R1": "N/A",
+            "R2": "72.7% (11T) \u2705"
         },
         "last_5": "W L L W L"
     },
@@ -728,9 +728,9 @@
         "trades": 24,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "72.7% (11T) \u2705",
-            "R1": "91.7% (12T) \u2705",
-            "R2": "N/A"
+            "R0": "70.0% (10T) \u2705",
+            "R1": "N/A",
+            "R2": "100.0% (11T) \u2705"
         },
         "last_5": "W W W W W"
     },
@@ -744,8 +744,8 @@
         "execution_decay": 0.0,
         "regimes_breakdown": {
             "R0": "66.7% (9T) \u2705",
-            "R1": "75.0% (8T) \u2705",
-            "R2": "N/A"
+            "R1": "N/A",
+            "R2": "66.7% (6T) \u2705"
         },
         "last_5": "W L W L W"
     },
@@ -758,11 +758,26 @@
         "trades": 15,
         "execution_decay": 0.0,
         "regimes_breakdown": {
-            "R0": "90.0% (10T) \u2705",
+            "R0": "81.8% (11T) \u2705",
             "R1": "N/A",
             "R2": "N/A"
         },
         "last_5": "W L W L W"
+    },
+    "MNQ_DAY::Tokyo_S": {
+        "module": "MNQ_DAY",
+        "engine_name": "Tokyo_S",
+        "bucket": "B",
+        "reason": "Inmaduro (1/20 trades)",
+        "wr": 100.0,
+        "trades": 1,
+        "execution_decay": 0.0,
+        "regimes_breakdown": {
+            "R0": "N/A",
+            "R1": "N/A",
+            "R2": "N/A"
+        },
+        "last_5": "W"
     },
     "MNQ_NIGHT::AsianGrind_L": {
         "module": "MNQ_NIGHT",
