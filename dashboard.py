@@ -9,14 +9,17 @@ from datetime import datetime, timedelta
 
 st.set_page_config(page_title="OmniSwarm Quant", layout="wide")
 
-# Custom CSS for Minimalist Modern Design & Green SEND Button
+# Custom CSS for Minimalist Modern Design, Green SEND Button & Bucket Gradients
 st.markdown("""
     <style>
     .block-container { padding-top: 2rem; padding-bottom: 2rem; }
     h1, h2, h3 { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 400; color: #E0E0E0;}
+    
+    /* Metrics general styling */
     .stMetric label { font-size: 0.85rem !important; color: #A0A0A0 !important; }
     .stMetric value { font-size: 1.5rem !important; }
-    /* Target the primary button to be standard green */
+    
+    /* Primary SEND Button */
     div.stButton > button[kind="primary"] {
         background-color: #28a745;
         color: white;
@@ -27,6 +30,20 @@ st.markdown("""
     }
     div.stButton > button[kind="primary"]:hover {
         background-color: #218838;
+    }
+    
+    /* Glassmorphism Gradients for Buckets (Targets the 4th, 5th and 6th metrics in the top row) */
+    div[data-testid="column"]:nth-of-type(4) [data-testid="stMetric"] {
+        background: linear-gradient(135deg, rgba(0,200,83,0.15), transparent);
+        border-radius: 8px; padding: 10px 15px; border-left: 3px solid #00C853;
+    }
+    div[data-testid="column"]:nth-of-type(5) [data-testid="stMetric"] {
+        background: linear-gradient(135deg, rgba(255,214,0,0.12), transparent);
+        border-radius: 8px; padding: 10px 15px; border-left: 3px solid #FFD600;
+    }
+    div[data-testid="column"]:nth-of-type(6) [data-testid="stMetric"] {
+        background: linear-gradient(135deg, rgba(213,0,0,0.12), transparent);
+        border-radius: 8px; padding: 10px 15px; border-left: 3px solid #D50000;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -126,7 +143,6 @@ nav_category = st.sidebar.radio("Navigation", [
     "Risk Management", 
     "Trade Log", 
     "Buckets Breakdown", 
-    "Regimes Breakdown", 
     "Modules"
 ])
 
@@ -151,7 +167,6 @@ if nav_category == "HOME":
         st.error(f"Execution Locked | Status: {status}")
     
     render_top_row(df_config)
-    st.markdown("#### Global Engine Registry")
     render_engine_table(df_config)
 
 elif nav_category == "Risk Management":
@@ -226,16 +241,27 @@ elif nav_category == "Buckets Breakdown":
     render_top_row(df_b)
     render_engine_table(df_b)
 
-elif nav_category == "Regimes Breakdown":
-    st.title("Regimes Breakdown")
-    r_choice = st.radio("Filter Regime", ["R0", "R1", "R2"], horizontal=True)
-    df_r = df_config[df_config[r_choice] != 'N/A']
-    render_top_row(df_r)
-    render_engine_table(df_r)
-
 elif nav_category == "Modules" and selected_module:
     st.title(f"Module: {selected_module}")
     df_c_mod = df_config[df_config['Module'] == selected_module]
-    render_top_row(df_c_mod)
-    st.markdown(f"#### {selected_module} Engines")
-    render_engine_table(df_c_mod)
+    
+    tab1, tab2, tab3, tab4 = st.tabs(["Overview (All Regimes)", "R0 (Low Volatility)", "R1 (Normal)", "R2 (High Volatility)"])
+    
+    with tab1:
+        render_top_row(df_c_mod)
+        render_engine_table(df_c_mod)
+        
+    with tab2:
+        df_r0 = df_c_mod[df_c_mod['R0'] != 'N/A']
+        render_top_row(df_r0)
+        render_engine_table(df_r0)
+        
+    with tab3:
+        df_r1 = df_c_mod[df_c_mod['R1'] != 'N/A']
+        render_top_row(df_r1)
+        render_engine_table(df_r1)
+        
+    with tab4:
+        df_r2 = df_c_mod[df_c_mod['R2'] != 'N/A']
+        render_top_row(df_r2)
+        render_engine_table(df_r2)
