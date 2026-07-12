@@ -1,5 +1,5 @@
 {
-    "account_status": "ACTIVE",
+    "account_status": "DEMO",
     "account_size": 25000.0,
     "eod_drawdown_limit": 1000.0,
     "profit_target": 1250.0,
@@ -7,6 +7,6 @@
     "start_of_day_balance": 25000.0,
     "pnl_today": 307.5,
     "current_balance": 102066.5,
-    "account_name": "Terminal-V6.6",
+    "account_name": "Sim101",
     "daily_cap_usd": 850.0
 }
