@@ -6,5 +6,7 @@
     "daily_cap_percent": 0.5,
     "start_of_day_balance": 25000.0,
     "pnl_today": 307.5,
-    "current_balance": 102066.5
+    "current_balance": 102066.5,
+    "account_name": "Terminal-V6.6",
+    "daily_cap_usd": 850.0
 }
