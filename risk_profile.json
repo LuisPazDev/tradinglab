@@ -8,5 +8,7 @@
     "pnl_today": 0.0,
     "current_balance": 25000.0,
     "account_name": "LTE02571085060001",
-    "daily_cap_usd": 1250.0
+    "daily_cap_usd": 1250.0,
+    "base_risk_usd": 500.0,
+    "max_contracts": 15
 }
