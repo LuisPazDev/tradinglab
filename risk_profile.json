@@ -1,6 +1,6 @@
 {
     "account_status": "DEMO",
-    "account_size": 25000.0,
+    "account_size": 26250.0,
     "eod_drawdown_limit": 1000.0,
     "profit_target": 1250.0,
     "daily_cap_percent": 0.5,
@@ -8,5 +8,5 @@
     "pnl_today": 307.5,
     "current_balance": 102066.5,
     "account_name": "Sim101",
-    "daily_cap_usd": 850.0
+    "daily_cap_usd": 1250.0
 }
