@@ -1,0 +1,10 @@
+{
+    "account_status": "DEMO",
+    "account_size": 25000.0,
+    "eod_drawdown_limit": 1000.0,
+    "profit_target": 1250.0,
+    "daily_cap_percent": 0.5,
+    "start_of_day_balance": 25000.0,
+    "pnl_today": 307.5,
+    "current_balance": 102066.5
+}
