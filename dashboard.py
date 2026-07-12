@@ -1,267 +1,284 @@
-﻿# -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 import json
 import os
-import requests
-from datetime import datetime, timedelta
-
-st.set_page_config(page_title="OmniSwarm Quant", layout="wide")
-
-# Custom CSS for Minimalist Modern Design, Green SEND Button & Bucket Gradients
-st.markdown("""
-    <style>
-    .block-container { padding-top: 2rem; padding-bottom: 2rem; }
-    h1, h2, h3 { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 400; color: #E0E0E0;}
-    
-    /* Metrics general styling */
-    .stMetric label { font-size: 0.85rem !important; color: #A0A0A0 !important; }
-    .stMetric value { font-size: 1.5rem !important; }
-    
-    /* Primary SEND Button */
-    div.stButton > button[kind="primary"] {
-        background-color: #28a745;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        font-weight: bold;
-        width: 150px;
-    }
-    div.stButton > button[kind="primary"]:hover {
-        background-color: #218838;
-    }
-    
-    /* Glassmorphism Gradients for Buckets (Targets the 4th, 5th and 6th metrics in the top row) */
-    div[data-testid="column"]:nth-of-type(4) [data-testid="stMetric"] {
-        background: linear-gradient(135deg, rgba(0,200,83,0.15), transparent);
-        border-radius: 8px; padding: 10px 15px; border-left: 3px solid #00C853;
-    }
-    div[data-testid="column"]:nth-of-type(5) [data-testid="stMetric"] {
-        background: linear-gradient(135deg, rgba(255,214,0,0.12), transparent);
-        border-radius: 8px; padding: 10px 15px; border-left: 3px solid #FFD600;
-    }
-    div[data-testid="column"]:nth-of-type(6) [data-testid="stMetric"] {
-        background: linear-gradient(135deg, rgba(213,0,0,0.12), transparent);
-        border-radius: 8px; padding: 10px 15px; border-left: 3px solid #D50000;
-    }
-    </style>
-""", unsafe_allow_html=True)
+import re
 
 # =========================================================================
-# CONFIGURATION & INFRASTRUCTURE
+# 1. CONFIGURACIÓN DE PÁGINA Y RUTAS
 # =========================================================================
-VPS_PUBLIC_IP = "103.89.14.117" 
-VPS_WEBHOOK_URL = f"http://{VPS_PUBLIC_IP}:80/webhook"
-WEBHOOK_PASSPHRASE = "TradingLab_Quant_V15_Secret"
+st.set_page_config(page_title="TradingLab Quant", layout="wide", page_icon="🧬")
 
 def get_file_path(filename):
     if os.path.exists(filename): return filename
-    local_vps_path = os.path.join(r"C:\OmniSwarm_Brain\Data", filename)
-    if os.path.exists(local_vps_path): return local_vps_path
+    local_path = os.path.join(os.path.expanduser("~/mysite/"), filename)
+    if os.path.exists(local_path): return local_path
     return filename
 
+MASTER_FILE = get_file_path("master_ml_dataset.csv")
+CONFIG_FILE = get_file_path("engines_config.json")
+TRADE_FILE = get_file_path("trade_history.csv")
+
 # =========================================================================
-# DATA LOADING (CACHE)
+# 2. CARGA DEL DATASET MAESTRO (CACHÉ EN RAM)
 # =========================================================================
-@st.cache_data(ttl=30)
+@st.cache_data(ttl=60)
 def load_data():
-    df_master = pd.read_csv(get_file_path("master_ml_dataset.csv"), on_bad_lines='skip') if os.path.exists(get_file_path("master_ml_dataset.csv")) else pd.DataFrame()
-    if not df_master.empty and 'Timestamp' in df_master.columns:
-        df_master['Timestamp'] = pd.to_datetime(df_master['Timestamp'], errors='coerce')
-
+    df_master = pd.DataFrame()
     config = {}
-    if os.path.exists(get_file_path("engines_config.json")):
-        with open(get_file_path("engines_config.json"), "r") as f: config = json.load(f)
+    kill_switch = False
 
-    risk_data = {}
-    if os.path.exists(get_file_path("risk_profile.json")):
-        with open(get_file_path("risk_profile.json"), "r", encoding="utf-8-sig") as f: risk_data = json.load(f)
+    if os.path.exists(MASTER_FILE):
+        try:
+            df_master = pd.read_csv(MASTER_FILE, on_bad_lines='skip')
+            if 'Timestamp' in df_master.columns:
+                df_master['Timestamp'] = pd.to_datetime(df_master['Timestamp'], errors='coerce')
+        except: pass
 
-    config_rows = [{
-        'Module': d.get('module', 'N/A'), 
-        'Engine': d.get('engine_name', k), 
-        'Bucket': d.get('bucket', 'B'), 
-        'Win Rate': d.get('wr', 0.0), 
-        'Trades': d.get('trades', 0),
-        'Last 5': d.get('last_5', 'N/A'),
-        'R0': d.get('regimes_breakdown', {}).get('R0', 'N/A'),
-        'R1': d.get('regimes_breakdown', {}).get('R1', 'N/A'),
-        'R2': d.get('regimes_breakdown', {}).get('R2', 'N/A'),
-        'Diag': d.get('reason', '')
-    } for k, d in config.items()]
-    
-    return df_master, pd.DataFrame(config_rows), risk_data
+    if os.path.exists(CONFIG_FILE):
+        try:
+            with open(CONFIG_FILE, "r") as f: config = json.load(f)
+        except: pass
 
-df_master, df_config, risk_profile = load_data()
+    if os.path.exists(TRADE_FILE):
+        try:
+            df_t = pd.read_csv(TRADE_FILE, on_bad_lines='skip')
+            if not df_t.empty and "REJECTED_ACCOUNT_INACTIVE" in str(df_t.iloc[-1].get('Status', '')):
+                kill_switch = True
+        except: pass
+
+    # Convertir JSON a DataFrame una sola vez
+    config_rows = []
+    for unique_key, data in config.items():
+        row = {
+            'Módulo': data.get('module', 'N/A'),
+            'Motor': data.get('engine_name', unique_key),
+            'Últimos_5': data.get('last_5', 'N/A'),
+            'Bucket': data.get('bucket', 'B'),
+            'WR_Global': data.get('wr', 0.0),
+            'Trades': data.get('trades', 0),
+            'R0': data.get('regimes_breakdown', {}).get('R0', 'N/A'),
+            'R1': data.get('regimes_breakdown', {}).get('R1', 'N/A'),
+            'R2': data.get('regimes_breakdown', {}).get('R2', 'N/A'),
+            'Decay_Pts': data.get('execution_decay', 0.0),
+            'Diag': data.get('reason', '')
+        }
+        config_rows.append(row)
+    df_config = pd.DataFrame(config_rows)
+
+    return df_master, df_config, kill_switch
+
+df_master, df_config, kill_switch_active = load_data()
 
 # =========================================================================
-# REUSABLE UI COMPONENTS
+# 3. FUNCIONES DE DISEÑO (ESTILOS Y GRÁFICAS)
 # =========================================================================
 def highlight_buckets(val):
-    if val == "A": return 'background-color: rgba(0, 200, 83, 0.1); color: #00C853;'
-    if val == "B": return 'background-color: rgba(255, 214, 0, 0.1); color: #FFD600;'
-    if val == "C": return 'background-color: rgba(213, 0, 0, 0.1); color: #D50000;'
+    if val == "A": return 'background-color: rgba(0, 200, 83, 0.2); color: #00C853; font-weight: bold;'
+    if val == "B": return 'background-color: rgba(255, 214, 0, 0.2); color: #FFD600; font-weight: bold;'
+    if val == "C": return 'background-color: rgba(213, 0, 0, 0.2); color: #D50000; font-weight: bold;'
     return ''
 
-def render_top_row(df_c):
+def plot_cumulative_hits(df, title):
+    if df.empty: return None
+    df_closed = df[df['Status'].astype(str).str.contains('WIN|LOSS|CLOSED')].copy()
+    if df_closed.empty: return None
+
+    df_closed = df_closed.sort_values('Timestamp')
+    df_closed['Hit_Score'] = df_closed['Status'].apply(lambda x: 1 if 'WIN' in str(x) else (-1 if 'LOSS' in str(x) else 0))
+    df_closed['Cumulative_Hits'] = df_closed['Hit_Score'].cumsum()
+
+    fig = px.line(df_closed, x='Timestamp', y='Cumulative_Hits', title=title,
+                  labels={'Cumulative_Hits': 'Balance de Aciertos Netos', 'Timestamp': 'Fecha'},
+                  color_discrete_sequence=['#2962FF'])
+    return fig
+
+def render_top_metrics(df_c, title):
+    st.markdown(f"### 📊 Rendimiento de Probabilidad Pura: {title}")
     if df_c.empty:
-        st.warning("No data available.")
+        st.warning("No hay datos disponibles.")
         return
 
     total_trades = df_c['Trades'].sum()
-    avg_wr = (df_c['Win Rate'] * df_c['Trades']).sum() / total_trades if total_trades > 0 else 0
-    engines_count = len(df_c)
+    avg_wr = (df_c['WR_Global'] * df_c['Trades']).sum() / total_trades if total_trades > 0 else 0
+    total_motores = len(df_c)
+
     b_a = len(df_c[df_c['Bucket'] == 'A'])
     b_b = len(df_c[df_c['Bucket'] == 'B'])
     b_c = len(df_c[df_c['Bucket'] == 'C'])
-    
-    c1, c2, c3, c4, c5, c6 = st.columns(6)
-    c1.metric("Total Trades", total_trades)
-    c2.metric("Win Rate", f"{avg_wr:.1f}%")
-    c3.metric("Active Engines", engines_count)
-    c4.metric("Bucket A", b_a)
-    c5.metric("Bucket B", b_b)
-    c6.metric("Bucket C", b_c)
+
+    col1, col2, col3, col4, col5, col6 = st.columns(6)
+    col1.metric("Total Trades", f"{total_trades}")
+    col2.metric("WinRate Promedio", f"{avg_wr:.1f}%")
+    col3.metric("Motores en Vista", f"{total_motores}")
+    col4.metric("🟢 BUCKET A", f"{b_a}")
+    col5.metric("🟡 BUCKET B", f"{b_b}")
+    col6.metric("🔴 BUCKET C", f"{b_c}")
     st.markdown("---")
 
 def render_engine_table(df_c):
     if df_c.empty: return
-    cols = ['Module', 'Engine', 'Bucket', 'Win Rate', 'Trades', 'Last 5', 'R0', 'R1', 'R2', 'Diag']
-    df_display = df_c[cols].sort_values(by='Trades', ascending=False)
-    styled = df_display.style.map(highlight_buckets, subset=['Bucket']).format({'Win Rate': "{:.1f}%"})
-    st.dataframe(styled, use_container_width=True, hide_index=True)
+    display_cols = ['Módulo', 'Motor', 'Últimos_5', 'Bucket', 'WR_Global', 'Trades', 'R0', 'R1', 'R2', 'Decay_Pts', 'Diag']
+    df_display = df_c[display_cols].sort_values(by=['Bucket', 'WR_Global'], ascending=[True, False])
+
+    styled_config = df_display.style.map(highlight_buckets, subset=['Bucket'])\
+                                    .format({'Decay_Pts': "{:.2f}", 'WR_Global': "{:.1f}%"})
+
+    st.dataframe(styled_config, use_container_width=True, height=600)
 
 # =========================================================================
-# NAVIGATION (SIDEBAR)
+# 4. RUTEO DE VISTAS (MENÚ LATERAL)
 # =========================================================================
-st.sidebar.title("OmniSwarm Quant")
+st.sidebar.image("https://img.icons8.com/color/96/000000/artificial-intelligence.png", width=60)
+st.sidebar.title("Quant Lab V15")
 st.sidebar.markdown("---")
 
-nav_category = st.sidebar.radio("Navigation", [
-    "HOME", 
-    "Risk Management", 
-    "Trade Log", 
-    "Buckets Breakdown", 
-    "Modules"
-])
-
-selected_module = None
-if nav_category == "Modules":
-    selected_module = st.sidebar.selectbox("Select Module", ["MCL", "MGC", "MES", "MNQ_DAY", "MNQ_NIGHT"])
+menu_options = [
+    "🏠 HOME (Visión Global)",
+    "🗂️ Visión por Buckets",
+    "🌤️ Visión por Regímenes",
+    "🔬 Módulo: MCL",
+    "🔬 Módulo: MGC",
+    "🔬 Módulo: MES",
+    "🔬 Módulo: MNQ_DAY",
+    "🔬 Módulo: MNQ_NIGHT",
+    "📅 Bitácora Cronológica"
+]
+selected_view = st.sidebar.radio("Navegación del Sistema", menu_options)
 
 st.sidebar.markdown("---")
-if st.sidebar.button("Refresh Data"):
+if st.sidebar.button("🔄 Forzar Recarga"):
     st.cache_data.clear()
     st.rerun()
 
 # =========================================================================
-# VIEWS RENDERING
+# 5. CABECERA GLOBAL
 # =========================================================================
-if nav_category == "HOME":
-    st.title("System Overview")
-    status = risk_profile.get("account_status", "ACTIVE")
-    if status in ["ACTIVE", "DEMO"]: 
-        st.success(f"System Online | Status: {status}")
-    else: 
-        st.error(f"Execution Locked | Status: {status}")
-    
-    render_top_row(df_config)
+st.title("🧬 Ecosistema Cuantitativo Institucional")
+if kill_switch_active:
+    st.error("🚨 **ALERTA DE INFRAESTRUCTURA (VÍA B):** La cuenta de fondeo conectada registra un Buying Power de $0. Ejecución física pausada.")
+else:
+    st.success("✅ **SISTEMA EN LÍNEA:** Cerebro conectado. Flujo de Vía A y Vía B operando con normalidad.")
+
+# =========================================================================
+# 6. RENDERIZADO CONDICIONAL DE VISTAS
+# =========================================================================
+
+# ---> VISTA 1: HOME (VISIÓN GLOBAL)
+if selected_view == "🏠 HOME (Visión Global)":
+    render_top_metrics(df_config, "SISTEMA COMPLETO")
+
+    fig = plot_cumulative_hits(df_master, "Curva de Efectividad Global (Todos los Módulos)")
+    if fig: st.plotly_chart(fig, use_container_width=True)
+
+    st.markdown("### 🔬 Radiografía Maestra (Todos los Motores)")
     render_engine_table(df_config)
 
-elif nav_category == "Risk Management":
-    st.title("Risk Management")
-    st.markdown("Configure core risk parameters. Changes are transmitted directly to the execution server.")
-    
-    with st.form("risk_form", clear_on_submit=False):
-        col1, col2 = st.columns(2)
-        with col1:
-            acc_name = st.text_input("Account Number", value=risk_profile.get("account_name", "PA-01"))
-            acc_status = st.selectbox("Account Status", ["ACTIVE", "DEMO", "PAUSED"], index=["ACTIVE", "DEMO", "PAUSED"].index(risk_profile.get("account_status", "ACTIVE")))
-        with col2:
-            acc_size = st.number_input("Global Target", value=float(risk_profile.get("account_size", 25000.0)), step=1000.0)
-            daily_cap = st.number_input("Daily Cap", value=float(risk_profile.get("daily_cap_usd", 500.0)), step=50.0)
-            eod_dd = st.number_input("Max EOD Drawdown", value=float(risk_profile.get("eod_drawdown_limit", 1000.0)), step=100.0)
-        
-        submitted = st.form_submit_button("SEND", type="primary")
-        
-        if submitted:
-            payload = {
-                "passphrase": WEBHOOK_PASSPHRASE,
-                "event": "UPDATE_RISK",
-                "risk_data": {
-                    "account_name": acc_name, 
-                    "account_status": acc_status, 
-                    "account_size": acc_size,
-                    "eod_drawdown_limit": eod_dd, 
-                    "daily_cap_usd": daily_cap
-                }
-            }
-            try:
-                res = requests.post(VPS_WEBHOOK_URL, json=payload, timeout=5)
-                if res.status_code == 200: st.success("Parameters updated successfully.")
-                else: st.error(f"Server rejected connection: {res.status_code}")
-            except Exception as e:
-                st.error(f"Connection failed to {VPS_PUBLIC_IP}. Error: {e}")
+# ---> VISTA 2: VISIÓN POR BUCKETS
+elif selected_view == "🗂️ Visión por Buckets":
+    st.markdown("### 🗂️ Radiografía por Buckets de Riesgo")
 
-elif nav_category == "Trade Log":
-    st.title("Trade Log")
-    time_filter = st.radio("Timeframe", ["Today", "7 Days", "15 Days", "1 Month", "3 Months", "6 Months", "1 Year", "All-Time"], horizontal=True)
-    
+    bucket_map = {
+        "🟢 BUCKET A (Full Riesgo)": "A",
+        "🟡 BUCKET B (Limitados)": "B",
+        "🔴 BUCKET C (Cuarentena)": "C"
+    }
+    bucket_choice = st.radio("Filtro de Riesgo Institucional:", list(bucket_map.keys()), horizontal=True)
+    b_target = bucket_map[bucket_choice]
+
+    df_bucket = df_config[df_config['Bucket'] == b_target].copy()
+
+    if not df_bucket.empty:
+        render_top_metrics(df_bucket, f"Aislamiento de Motores en Bucket {b_target}")
+        st.markdown(f"#### 📋 Lista de Motores ({bucket_choice})")
+        render_engine_table(df_bucket)
+    else:
+        st.info(f"No hay motores asignados actualmente al Bucket {b_target}.")
+
+# ---> VISTA 3: VISIÓN POR REGÍMENES
+elif selected_view == "🌤️ Visión por Regímenes":
+    st.markdown("### 🌤️ Rendimiento Aislado por Clima Macroeconómico")
+
+    regime_choice = st.radio("Selecciona el Régimen Macro:", ["R0", "R1", "R2"], horizontal=True)
+
+    # Filtrar motores que SÍ tienen data en este régimen (Eliminar los 'N/A')
+    df_reg = df_config[df_config[regime_choice] != 'N/A'].copy()
+
+    if not df_reg.empty:
+        st.info(f"Mostrando **{len(df_reg)}** motores que tienen exposición histórica comprobada (5+ trades) en el Régimen **{regime_choice}**.")
+
+        # Extraer el valor numérico del string para poder ordenar la tabla de mayor a menor WR en ese régimen
+        df_reg['Sort_Key'] = df_reg[regime_choice].str.extract(r'([\d\.]+)%').astype(float)
+
+        # Seleccionar columnas y ordenar usando la llave oculta
+        display_cols = ['Módulo', 'Motor', regime_choice, 'Bucket', 'WR_Global', 'Trades', 'Últimos_5']
+        df_display = df_reg.sort_values(by=['Sort_Key', 'Trades'], ascending=[False, False])[display_cols]
+
+        styled_config = df_display.style.map(highlight_buckets, subset=['Bucket'])\
+                                        .format({'WR_Global': "{:.1f}%"})
+
+        st.dataframe(styled_config, use_container_width=True, height=600)
+    else:
+        st.warning(f"Ningún motor tiene suficientes datos recopilados en el Régimen {regime_choice}.")
+
+# ---> VISTA 4: MÓDULOS ESPECÍFICOS
+elif selected_view.startswith("🔬 Módulo:"):
+    module_name = selected_view.split(": ")[1]
+
+    df_master_mod = df_master[df_master['Module'] == module_name] if not df_master.empty else pd.DataFrame()
+    df_config_mod = df_config[df_config['Módulo'] == module_name] if not df_config.empty else pd.DataFrame()
+
+    render_top_metrics(df_config_mod, module_name)
+
+    fig = plot_cumulative_hits(df_master_mod, f"Curva de Efectividad - {module_name}")
+    if fig: st.plotly_chart(fig, use_container_width=True)
+
+    st.markdown(f"### 🔬 Radiografía Interna: {module_name}")
+    render_engine_table(df_config_mod)
+
+# ---> VISTA 5: BITÁCORA CRONOLÓGICA
+elif selected_view == "📅 Bitácora Cronológica":
+    st.markdown("### 📅 Explorador del Data Lake (Dataset Maestro)")
+    st.markdown("Aquí se muestran todos los eventos capturados por la Vía A y el Backtest, ordenados cronológicamente.")
+
     if not df_master.empty:
-        df_log = df_master[df_master['Engine'] != 'NO_TRADE'].copy()
-        
-        if time_filter != "All-Time":
-            days_map = {"Today": 1, "7 Days": 7, "15 Days": 15, "1 Month": 30, "3 Months": 90, "6 Months": 180, "1 Year": 365}
-            cutoff_date = datetime.now() - timedelta(days=days_map[time_filter])
-            df_log = df_log[df_log['Timestamp'] >= cutoff_date]
-            
-        df_log = df_log.sort_values('Timestamp', ascending=False)
-        
+        col_filtro, col_metric = st.columns([1, 2])
+
+        with col_filtro:
+            usar_filtro = st.checkbox("🔍 Filtrar por un día específico")
+            if usar_filtro:
+                filter_date = st.date_input("Selecciona la fecha:")
+            else:
+                filter_date = None
+
+        df_log = df_master.copy()
+
+        if filter_date is not None:
+            df_log = df_log[df_log['Timestamp'].dt.date == filter_date]
+
         if not df_log.empty:
-            df_log['Result'] = df_log['Is_Win'].apply(lambda x: "WIN" if x == 1 else "LOSS")
-            wins = len(df_log[df_log['Is_Win'] == 1])
-            total = len(df_log)
-            wr = (wins / total) * 100 if total > 0 else 0
-            
-            col1, col2, col3 = st.columns(3)
-            col1.metric("Trades", total)
-            col2.metric("Win Rate", f"{wr:.1f}%")
-            col3.metric("Net Wins", wins)
-            
-            show_cols = ['Timestamp', 'Module', 'Engine', 'Action', 'Result', 'Trade_Exact_PnL', 'Macro_Rng_Ratio']
-            st.dataframe(df_log[[c for c in show_cols if c in df_log.columns]], use_container_width=True, hide_index=True)
-        else: st.warning("No data found for the selected timeframe.")
-    else: st.error("Database is empty.")
+            with col_metric:
+                if usar_filtro:
+                    st.info(f"Mostrando **{len(df_log)}** registros para el {filter_date.strftime('%Y-%m-%d')}.")
+                else:
+                    st.info(f"Mostrando el historial completo: **{len(df_log)}** registros.")
 
-elif nav_category == "Buckets Breakdown":
-    st.title("Buckets Breakdown")
-    b_choice = st.radio("Filter Bucket", ["A", "B", "C"], horizontal=True)
-    df_b = df_config[df_config['Bucket'] == b_choice]
-    render_top_row(df_b)
-    render_engine_table(df_b)
+            if 'Unified_Regime' in df_log.columns:
+                df_log['Régimen'] = df_log['Unified_Regime'].apply(lambda x: f"R{int(x)}" if pd.notnull(x) else "N/A")
+            else:
+                df_log['Régimen'] = "N/A"
 
-elif nav_category == "Modules" and selected_module:
-    st.title(f"Module: {selected_module}")
-    df_c_mod = df_config[df_config['Module'] == selected_module]
-    
-    tab1, tab2, tab3, tab4 = st.tabs(["Overview (All Regimes)", "R0 (Low Volatility)", "R1 (Normal)", "R2 (High Volatility)"])
-    
-    with tab1:
-        render_top_row(df_c_mod)
-        render_engine_table(df_c_mod)
-        
-    with tab2:
-        df_r0 = df_c_mod[df_c_mod['R0'] != 'N/A']
-        render_top_row(df_r0)
-        render_engine_table(df_r0)
-        
-    with tab3:
-        df_r1 = df_c_mod[df_c_mod['R1'] != 'N/A']
-        render_top_row(df_r1)
-        render_engine_table(df_r1)
-        
-    with tab4:
-        df_r2 = df_c_mod[df_c_mod['R2'] != 'N/A']
-        render_top_row(df_r2)
-        render_engine_table(df_r2)
+            df_log = df_log.sort_values('Timestamp', ascending=False)
+
+            show_cols = ['Timestamp', 'Module', 'Engine', 'Action', 'Régimen', 'Status']
+            show_cols = [c for c in show_cols if c in df_log.columns]
+            if 'Trade_Exact_PnL' in df_log.columns:
+                show_cols.append('Trade_Exact_PnL')
+
+            st.dataframe(df_log[show_cols], use_container_width=True, hide_index=True, height=700)
+        else:
+            st.warning("No hay registros almacenados para esta fecha en específico.")
+    else:
+        st.error("El Dataset Maestro está vacío o no se pudo cargar.")
+        st.info("💡 Solución: Haz clic en el botón '🔄 Forzar Recarga' en el menú de la izquierda.")
