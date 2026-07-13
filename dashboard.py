@@ -30,16 +30,16 @@ st.markdown("""
         background-color: #218838;
     }
     
-    /* Glassmorphism Gradients for Buckets */
-    div[data-testid="column"]:nth-of-type(4) [data-testid="stMetric"] {
+    /* Glassmorphism Gradients for Buckets - BUCKET B UPDATE (SOBRIO) */
+    div[data-testid="column"]:nth-of-type(2) [data-testid="stMetric"] /* ROW 2, COL 2: BUCKET A */ {
         background: linear-gradient(135deg, rgba(0,200,83,0.15), transparent);
         border-radius: 8px; padding: 10px 15px; border-left: 3px solid #00C853;
     }
-    div[data-testid="column"]:nth-of-type(5) [data-testid="stMetric"] {
-        background: linear-gradient(135deg, rgba(255,214,0,0.12), transparent);
-        border-radius: 8px; padding: 10px 15px; border-left: 3px solid #FFD600;
+    div[data-testid="column"]:nth-of-type(3) [data-testid="stMetric"] /* ROW 2, COL 3: BUCKET B */ {
+        background: linear-gradient(135deg, rgba(200,170,0,0.06), transparent);
+        border-radius: 8px; padding: 10px 15px; border-left: 3px solid #B38F00;
     }
-    div[data-testid="column"]:nth-of-type(6) [data-testid="stMetric"] {
+    div[data-testid="column"]:nth-of-type(4) [data-testid="stMetric"] /* ROW 2, COL 4: BUCKET C */ {
         background: linear-gradient(135deg, rgba(213,0,0,0.12), transparent);
         border-radius: 8px; padding: 10px 15px; border-left: 3px solid #D50000;
     }
@@ -98,11 +98,11 @@ df_master, df_config, risk_profile = load_data()
 # =========================================================================
 def highlight_buckets(val):
     if val == "A": return 'background-color: rgba(0, 200, 83, 0.1); color: #00C853;'
-    if val == "B": return 'background-color: rgba(255, 214, 0, 0.1); color: #FFD600;'
+    if val == "B": return 'background-color: rgba(200, 170, 0, 0.06); color: #CCA700;' # Color sobrio
     if val == "C": return 'background-color: rgba(213, 0, 0, 0.1); color: #D50000;'
     return ''
 
-def render_top_row(df_c):
+def render_top_row(df_c, df_m=None):
     if df_c.empty:
         st.warning("No data available.")
         return
@@ -114,20 +114,61 @@ def render_top_row(df_c):
     b_b = len(df_c[df_c['Bucket'] == 'B'])
     b_c = len(df_c[df_c['Bucket'] == 'C'])
     
-    c1, c2, c3, c4, c5, c6 = st.columns(6)
+    # Cálculos globales avanzados
+    wins = 0
+    losses = 0
+    max_l_streak = 0
+    
+    if df_m is not None and not df_m.empty and 'Is_Win' in df_m.columns:
+        wins = len(df_m[df_m['Is_Win'] == 1])
+        losses = len(df_m[df_m['Is_Win'] == 0])
+        
+        # Max Streak Loss
+        df_asc = df_m.sort_values('Timestamp', ascending=True)
+        curr_streak = 0
+        for val in df_asc['Is_Win']:
+            if val == 0:
+                curr_streak += 1
+                max_l_streak = max(max_l_streak, curr_streak)
+            else:
+                curr_streak = 0
+    else:
+        wins = int((avg_wr / 100) * total_trades)
+        losses = total_trades - wins
+
+    # FILA 1: Rendimiento
+    c1, c2, c3, c4, c5 = st.columns(5)
     c1.metric("Total Trades", total_trades)
     c2.metric("Win Rate", f"{avg_wr:.1f}%")
-    c3.metric("Active Engines", engines_count)
-    c4.metric("Bucket A", b_a)
-    c5.metric("Bucket B", b_b)
-    c6.metric("Bucket C", b_c)
+    c3.metric("Net Wins", wins)
+    c4.metric("Net Losses", losses)
+    c5.metric("Max L-Streak", max_l_streak)
+    
+    st.write("") # Separador visual sutil
+    
+    # FILA 2: Salud del Enjambre
+    c6, c7, c8, c9 = st.columns(4)
+    c6.metric("Active Engines", engines_count)
+    c7.metric("Bucket A", b_a)
+    c8.metric("Bucket B", b_b)
+    c9.metric("Bucket C", b_c)
+    
     st.markdown("---")
 
-def render_engine_table(df_c):
+def render_engine_table(df_c, exclude_cols=None):
     if df_c.empty: return
     cols = ['Module', 'Engine', 'Bucket', 'Win Rate', 'Trades', 'Last 5', 'R0', 'R1', 'R2', 'Diag']
-    df_display = df_c[cols].sort_values(by='Trades', ascending=False)
-    styled = df_display.style.map(highlight_buckets, subset=['Bucket']).format({'Win Rate': "{:.1f}%"})
+    
+    if exclude_cols:
+        cols = [c for c in cols if c not in exclude_cols]
+        
+    df_display = df_c[cols].sort_values(by='Trades', ascending=False).copy()
+    
+    # Formateo armónico "W - W - L - L - L"
+    if 'Last 5' in df_display.columns:
+        df_display['Last 5'] = df_display['Last 5'].apply(lambda x: " - ".join(list(str(x))) if pd.notna(x) and x != 'N/A' else x)
+        
+    styled = df_display.style.map(highlight_buckets, subset=['Bucket'] if 'Bucket' in df_display.columns else []).format({'Win Rate': "{:.1f}%"})
     st.dataframe(styled, use_container_width=True, hide_index=True)
 
 # =========================================================================
@@ -140,13 +181,8 @@ nav_category = st.sidebar.radio("Navigation", [
     "HOME", 
     "Risk Management", 
     "Trade Log", 
-    "Buckets Breakdown", 
     "Modules"
 ])
-
-selected_module = None
-if nav_category == "Modules":
-    selected_module = st.sidebar.selectbox("Select Module", ["MCL", "MGC", "MES", "MNQ_DAY", "MNQ_NIGHT"])
 
 st.sidebar.markdown("---")
 if st.sidebar.button("Refresh Data"):
@@ -164,7 +200,8 @@ if nav_category == "HOME":
     else: 
         st.error(f"Execution Locked | Status: {status}")
     
-    render_top_row(df_config)
+    df_m_valid = df_master[df_master['Engine'] != 'NO_TRADE'] if not df_master.empty else None
+    render_top_row(df_config, df_m_valid)
     render_engine_table(df_config)
 
 elif nav_category == "Risk Management":
@@ -249,47 +286,65 @@ elif nav_category == "Trade Log":
         if not df_log.empty:
             df_log['Result'] = df_log['Is_Win'].apply(lambda x: "WIN" if x == 1 else "LOSS")
             wins = len(df_log[df_log['Is_Win'] == 1])
+            losses = len(df_log[df_log['Is_Win'] == 0])
             total = len(df_log)
             wr = (wins / total) * 100 if total > 0 else 0
             
-            col1, col2, col3 = st.columns(3)
+            # Streak Loss exacto en marco temporal filtrado
+            df_asc = df_log.sort_values('Timestamp', ascending=True)
+            max_l_streak = 0
+            curr_streak = 0
+            for val in df_asc['Is_Win']:
+                if val == 0:
+                    curr_streak += 1
+                    max_l_streak = max(max_l_streak, curr_streak)
+                else:
+                    curr_streak = 0
+            
+            col1, col2, col3, col4, col5 = st.columns(5)
             col1.metric("Trades", total)
             col2.metric("Win Rate", f"{wr:.1f}%")
             col3.metric("Net Wins", wins)
+            col4.metric("Net Losses", losses)
+            col5.metric("Max L-Streak", max_l_streak)
             
-            show_cols = ['Timestamp', 'Module', 'Engine', 'Action', 'Result', 'Trade_Exact_PnL', 'Macro_Rng_Ratio']
+            # Limpieza de columnas solicitada
+            show_cols = ['Timestamp', 'Module', 'Engine', 'Action', 'Result']
             st.dataframe(df_log[[c for c in show_cols if c in df_log.columns]], use_container_width=True, hide_index=True)
         else: st.warning("No data found for the selected timeframe.")
     else: st.error("Database is empty.")
 
-elif nav_category == "Buckets Breakdown":
-    st.title("Buckets Breakdown")
-    b_choice = st.radio("Filter Bucket", ["A", "B", "C"], horizontal=True)
-    df_b = df_config[df_config['Bucket'] == b_choice]
-    render_top_row(df_b)
-    render_engine_table(df_b)
-
-elif nav_category == "Modules" and selected_module:
-    st.title(f"Module: {selected_module}")
-    df_c_mod = df_config[df_config['Module'] == selected_module]
+elif nav_category == "Modules":
+    st.title("Modules Dashboard")
+    selected_module = st.selectbox("Select Target Module", ["MCL", "MGC", "MES", "MNQ_DAY", "MNQ_NIGHT"])
     
-    tab1, tab2, tab3, tab4 = st.tabs(["Overview (All Regimes)", "R0 (Low Volatility)", "R1 (Normal)", "R2 (High Volatility)"])
+    df_c_mod = df_config[df_config['Module'] == selected_module]
+    df_m_mod = df_master[(df_master['Module'] == selected_module) & (df_master['Engine'] != 'NO_TRADE')] if not df_master.empty else None
+    
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["Overview (All)", "Buckets Breakdown", "R0 (Low Volatility)", "R1 (Normal)", "R2 (High Volatility)"])
     
     with tab1:
-        render_top_row(df_c_mod)
+        render_top_row(df_c_mod, df_m_mod)
         render_engine_table(df_c_mod)
         
     with tab2:
-        df_r0 = df_c_mod[df_c_mod['R0'] != 'N/A']
-        render_top_row(df_r0)
-        render_engine_table(df_r0)
+        b_choice = st.radio("Filter Bucket", ["A", "B", "C"], horizontal=True)
+        df_c_b = df_c_mod[df_c_mod['Bucket'] == b_choice]
+        df_m_b = df_m_mod[df_m_mod['Engine'].isin(df_c_b['Engine'].tolist())] if df_m_mod is not None else None
+        render_top_row(df_c_b, df_m_b)
+        render_engine_table(df_c_b, exclude_cols=['Bucket']) # Filtrado inteligente
         
     with tab3:
-        df_r1 = df_c_mod[df_c_mod['R1'] != 'N/A']
-        render_top_row(df_r1)
-        render_engine_table(df_r1)
+        df_r0 = df_c_mod[df_c_mod['R0'] != 'N/A']
+        render_top_row(df_r0, None)
+        render_engine_table(df_r0, exclude_cols=['R1', 'R2']) # Filtrado inteligente
         
     with tab4:
+        df_r1 = df_c_mod[df_c_mod['R1'] != 'N/A']
+        render_top_row(df_r1, None)
+        render_engine_table(df_r1, exclude_cols=['R0', 'R2']) # Filtrado inteligente
+        
+    with tab5:
         df_r2 = df_c_mod[df_c_mod['R2'] != 'N/A']
-        render_top_row(df_r2)
-        render_engine_table(df_r2)
+        render_top_row(df_r2, None)
+        render_engine_table(df_r2, exclude_cols=['R0', 'R1']) # Filtrado inteligente
