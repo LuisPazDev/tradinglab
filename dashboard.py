@@ -178,6 +178,7 @@ elif nav_category == "Risk Management":
         with col1:
             acc_name = st.text_input("Account Number", value=risk_profile.get("account_name", "PA-01"))
             acc_status = st.selectbox("Account Status", ["ACTIVE", "DEMO", "PAUSED"], index=["ACTIVE", "DEMO", "PAUSED"].index(risk_profile.get("account_status", "ACTIVE")))
+            # NUEVO: Controles visuales inyectados (Sin romper diseño)
             base_risk = st.number_input("Base Risk Bucket A ($)", value=float(risk_profile.get("base_risk_usd", 500.0)), step=50.0)
             max_contracts = st.number_input("Max Contracts Limit", value=int(risk_profile.get("max_contracts", 15)), step=1)
         with col2:
@@ -197,8 +198,8 @@ elif nav_category == "Risk Management":
                     "account_size": acc_size,
                     "eod_drawdown_limit": eod_dd, 
                     "daily_cap_usd": daily_cap,
-                    "base_risk_usd": base_risk,
-                    "max_contracts": max_contracts
+                    "base_risk_usd": base_risk,       # NUEVO
+                    "max_contracts": max_contracts    # NUEVO
                 }
             }
             try:
