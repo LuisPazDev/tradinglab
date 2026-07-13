@@ -1,7 +1,6 @@
 ﻿# -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 import json
 import os
 import requests
@@ -26,13 +25,12 @@ st.markdown("""
         border: none;
         border-radius: 4px;
         font-weight: bold;
-        width: 150px;
     }
     div.stButton > button[kind="primary"]:hover {
         background-color: #218838;
     }
     
-    /* Glassmorphism Gradients for Buckets (Targets the 4th, 5th and 6th metrics in the top row) */
+    /* Glassmorphism Gradients for Buckets */
     div[data-testid="column"]:nth-of-type(4) [data-testid="stMetric"] {
         background: linear-gradient(135deg, rgba(0,200,83,0.15), transparent);
         border-radius: 8px; padding: 10px 15px; border-left: 3px solid #00C853;
@@ -171,37 +169,46 @@ if nav_category == "HOME":
 
 elif nav_category == "Risk Management":
     st.title("Risk Management")
-    st.markdown("Configure core risk parameters. Changes are transmitted directly to the execution server.")
+    st.markdown("Configure core risk parameters. Changes are transmitted and validated directly by the execution server.")
     
-    with st.form("risk_form", clear_on_submit=False):
-        col1, col2 = st.columns(2)
-        with col1:
-            acc_name = st.text_input("Account Number", value=risk_profile.get("account_name", "PA-01"))
-            
-            # --- BLINDAJE INSTITUCIONAL CONTRA ERRORES DE ESTADO (VALUEERROR RESOLVED) ---
-            status_options = ["ACTIVE", "DEMO", "PAUSED", "PASSED", "BURNED", "DAILY_LOCKED"]
-            current_stat = risk_profile.get("account_status", "ACTIVE").upper()
-            if current_stat not in status_options:
-                current_stat = "ACTIVE"
-            acc_status = st.selectbox("Account Status", status_options, index=status_options.index(current_stat))
-            # -----------------------------------------------------------------------------
-            
-            base_risk = st.number_input("Base Risk Bucket A ($)", value=float(risk_profile.get("base_risk_usd", 500.0)), step=50.0)
-            max_contracts = st.number_input("Max Contracts Limit", value=int(risk_profile.get("max_contracts", 15)), step=1)
-        with col2:
-            acc_size = st.number_input("Global Target", value=float(risk_profile.get("account_size", 25000.0)), step=1000.0)
-            daily_cap = st.number_input("Daily Cap", value=float(risk_profile.get("daily_cap_usd", 500.0)), step=50.0)
-            eod_dd = st.number_input("Max EOD Drawdown", value=float(risk_profile.get("eod_drawdown_limit", 1000.0)), step=100.0)
+    with st.container():
+        current_type = risk_profile.get("account_type", "DEMO").upper()
+        acc_type = st.radio("Account Type", ["DEMO", "FUNDED", "EVALUATION"], index=["DEMO", "FUNDED", "EVALUATION"].index(current_type) if current_type in ["DEMO", "FUNDED", "EVALUATION"] else 0, horizontal=True)
         
-        submitted = st.form_submit_button("SEND", type="primary")
+        if acc_type == "DEMO":
+            st.info("🟢 Operating in Safe Mode. All executions will be routed to Sim101. Risk limits are disabled.")
+            acc_name = "Sim101"
+            base_risk = float(risk_profile.get("base_risk_usd", 500.0))
+            max_contracts = int(risk_profile.get("max_contracts", 15))
+            acc_size = float(risk_profile.get("account_size", 25000.0))
+            daily_cap = float(risk_profile.get("daily_cap_usd", 500.0))
+            eod_dd = float(risk_profile.get("eod_drawdown_limit", 1000.0))
+            
+        else:
+            col1, col2 = st.columns(2)
+            with col1:
+                acc_name = st.text_input("Account Number", value=risk_profile.get("account_name", "PA-01") if risk_profile.get("account_name") != "Sim101" else "PA-01")
+                base_risk = st.number_input("Base Risk Bucket A ($)", value=float(risk_profile.get("base_risk_usd", 500.0)), step=50.0)
+                max_contracts = st.number_input("Max Contracts Limit", value=int(risk_profile.get("max_contracts", 15)), step=1)
+            with col2:
+                acc_size = st.number_input("Global Target", value=float(risk_profile.get("account_size", 25000.0)), step=1000.0)
+                daily_cap = st.number_input("Daily Cap", value=float(risk_profile.get("daily_cap_usd", 500.0)), step=50.0)
+                eod_dd = st.number_input("Max EOD Drawdown", value=float(risk_profile.get("eod_drawdown_limit", 1000.0)), step=100.0)
         
+        st.write("")
+        c_btn1, c_btn2, c_btn3 = st.columns([1, 1, 2])
+        with c_btn1:
+            submitted = st.button("SEND", type="primary", use_container_width=True)
+        with c_btn2:
+            force_sync = st.button("🔄 FORCE SYNC WITH NT8", use_container_width=True)
+            
         if submitted:
             payload = {
                 "passphrase": WEBHOOK_PASSPHRASE,
                 "event": "UPDATE_RISK",
                 "risk_data": {
+                    "account_type": acc_type,
                     "account_name": acc_name, 
-                    "account_status": acc_status, 
                     "account_size": acc_size,
                     "eod_drawdown_limit": eod_dd, 
                     "daily_cap_usd": daily_cap,
@@ -211,10 +218,19 @@ elif nav_category == "Risk Management":
             }
             try:
                 res = requests.post(VPS_WEBHOOK_URL, json=payload, timeout=5)
-                if res.status_code == 200: st.success("Parameters updated successfully.")
+                if res.status_code == 200: st.success("Parameters transmitted. Brain is verifying with NT8...")
                 else: st.error(f"Server rejected connection: {res.status_code}")
             except Exception as e:
                 st.error(f"Connection failed to {VPS_PUBLIC_IP}. Error: {e}")
+                
+        if force_sync:
+            payload = {"passphrase": WEBHOOK_PASSPHRASE, "event": "FORCE_SYNC"}
+            try:
+                res = requests.post(VPS_WEBHOOK_URL, json=payload, timeout=5)
+                if res.status_code == 200: st.success("Sync command sent to NT8.")
+                else: st.error(f"Server rejected connection: {res.status_code}")
+            except Exception as e:
+                st.error(f"Connection failed. Error: {e}")
 
 elif nav_category == "Trade Log":
     st.title("Trade Log")
