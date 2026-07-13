@@ -146,27 +146,49 @@ def render_top_row(df_c, df_m=None):
     
     st.write("") # Separador visual sutil
     
-    # FILA 2: Salud del Enjambre
-    c6, c7, c8, c9 = st.columns(4)
+    # FILA 2: Salud del Enjambre (Añadido Swarm Health para grid 5x5 armónico)
+    swarm_health = (b_a / engines_count * 100) if engines_count > 0 else 0
+    
+    c6, c7, c8, c9, c10 = st.columns(5)
     c6.metric("Active Engines", engines_count)
     c7.metric("Bucket A", b_a)
     c8.metric("Bucket B", b_b)
     c9.metric("Bucket C", b_c)
+    c10.metric("Swarm Health", f"{swarm_health:.1f}%")
     
     st.markdown("---")
 
 def render_engine_table(df_c, exclude_cols=None):
     if df_c.empty: return
+    
+    df_display = df_c.copy()
+    
+    # Limpieza visual e inteligente de la columna "Diag"
+    def format_diag(row):
+        if row['Bucket'] == 'A': 
+            return "ÓPTIMO"
+        elif row['Bucket'] == 'B':
+            if row['Trades'] < 20:
+                return f"({row['Trades']}/20)"
+            else:
+                return "FRICCIÓN"
+        elif row['Bucket'] == 'C': 
+            return "CUARENTENA"
+        return str(row.get('Diag', ''))
+        
+    if 'Diag' in df_display.columns:
+        df_display['Diag'] = df_display.apply(format_diag, axis=1)
+
+    # Formateo armónico "W - W - L - L - L"
+    if 'Last 5' in df_display.columns:
+        df_display['Last 5'] = df_display['Last 5'].apply(lambda x: " - ".join(list(str(x))) if pd.notna(x) and x != 'N/A' else x)
+        
     cols = ['Module', 'Engine', 'Bucket', 'Win Rate', 'Trades', 'Last 5', 'R0', 'R1', 'R2', 'Diag']
     
     if exclude_cols:
         cols = [c for c in cols if c not in exclude_cols]
         
-    df_display = df_c[cols].sort_values(by='Trades', ascending=False).copy()
-    
-    # Formateo armónico "W - W - L - L - L"
-    if 'Last 5' in df_display.columns:
-        df_display['Last 5'] = df_display['Last 5'].apply(lambda x: " - ".join(list(str(x))) if pd.notna(x) and x != 'N/A' else x)
+    df_display = df_display[cols].sort_values(by='Trades', ascending=False)
         
     styled = df_display.style.map(highlight_buckets, subset=['Bucket'] if 'Bucket' in df_display.columns else []).format({'Win Rate': "{:.1f}%"})
     st.dataframe(styled, use_container_width=True, hide_index=True)
