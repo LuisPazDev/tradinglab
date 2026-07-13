@@ -161,7 +161,7 @@ if st.sidebar.button("Refresh Data"):
 if nav_category == "HOME":
     st.title("System Overview")
     status = risk_profile.get("account_status", "ACTIVE")
-    if status in ["ACTIVE", "DEMO"]: 
+    if status in ["ACTIVE", "DEMO", "PASSED"]: 
         st.success(f"System Online | Status: {status}")
     else: 
         st.error(f"Execution Locked | Status: {status}")
@@ -177,8 +177,15 @@ elif nav_category == "Risk Management":
         col1, col2 = st.columns(2)
         with col1:
             acc_name = st.text_input("Account Number", value=risk_profile.get("account_name", "PA-01"))
-            acc_status = st.selectbox("Account Status", ["ACTIVE", "DEMO", "PAUSED"], index=["ACTIVE", "DEMO", "PAUSED"].index(risk_profile.get("account_status", "ACTIVE")))
-            # NUEVO: Controles visuales inyectados (Sin romper diseño)
+            
+            # --- BLINDAJE INSTITUCIONAL CONTRA ERRORES DE ESTADO (VALUEERROR RESOLVED) ---
+            status_options = ["ACTIVE", "DEMO", "PAUSED", "PASSED", "BURNED", "DAILY_LOCKED"]
+            current_stat = risk_profile.get("account_status", "ACTIVE").upper()
+            if current_stat not in status_options:
+                current_stat = "ACTIVE"
+            acc_status = st.selectbox("Account Status", status_options, index=status_options.index(current_stat))
+            # -----------------------------------------------------------------------------
+            
             base_risk = st.number_input("Base Risk Bucket A ($)", value=float(risk_profile.get("base_risk_usd", 500.0)), step=50.0)
             max_contracts = st.number_input("Max Contracts Limit", value=int(risk_profile.get("max_contracts", 15)), step=1)
         with col2:
@@ -198,8 +205,8 @@ elif nav_category == "Risk Management":
                     "account_size": acc_size,
                     "eod_drawdown_limit": eod_dd, 
                     "daily_cap_usd": daily_cap,
-                    "base_risk_usd": base_risk,       # NUEVO
-                    "max_contracts": max_contracts    # NUEVO
+                    "base_risk_usd": base_risk,
+                    "max_contracts": max_contracts
                 }
             }
             try:
