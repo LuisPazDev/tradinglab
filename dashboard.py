@@ -1,24 +1,24 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 import json
 import os
 import requests
-import re
 from datetime import datetime, timedelta
 
-# =========================================================================
-# 1. CONFIGURACIÓN DE PÁGINA Y RUTAS
-# =========================================================================
-st.set_page_config(page_title="TradingLab Quant", layout="wide", page_icon="🧬")
+st.set_page_config(page_title="OmniSwarm Quant", layout="wide")
 
-# Custom CSS for Modern Design & Green SEND Button
+# Custom CSS for Minimalist Modern Design, Green SEND Button & Bucket Gradients
 st.markdown("""
     <style>
     .block-container { padding-top: 2rem; padding-bottom: 2rem; }
     h1, h2, h3 { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 400; color: #E0E0E0;}
     
+    /* Metrics general styling */
+    .stMetric label { font-size: 0.85rem !important; color: #A0A0A0 !important; }
+    .stMetric value { font-size: 1.5rem !important; }
+    
+    /* Primary SEND Button */
     div.stButton > button[kind="primary"] {
         background-color: #28a745;
         color: white;
@@ -29,369 +29,334 @@ st.markdown("""
     div.stButton > button[kind="primary"]:hover {
         background-color: #218838;
     }
+    
+    /* Glassmorphism Gradients for Buckets */
+    div[data-testid="column"]:nth-of-type(2) [data-testid="stMetric"] {
+        background: linear-gradient(135deg, rgba(0,200,83,0.15), transparent);
+        border-radius: 8px; padding: 10px 15px; border-left: 3px solid #00C853;
+    }
+    div[data-testid="column"]:nth-of-type(3) [data-testid="stMetric"] {
+        background: linear-gradient(135deg, rgba(200,170,0,0.06), transparent);
+        border-radius: 8px; padding: 10px 15px; border-left: 3px solid #B38F00;
+    }
+    div[data-testid="column"]:nth-of-type(4) [data-testid="stMetric"] {
+        background: linear-gradient(135deg, rgba(213,0,0,0.12), transparent);
+        border-radius: 8px; padding: 10px 15px; border-left: 3px solid #D50000;
+    }
     </style>
 """, unsafe_allow_html=True)
 
-# ----------------- CREDENCIALES DEL VPS -----------------
-VPS_PUBLIC_IP = "103.89.14.117" 
+# =========================================================================
+# CONFIGURATION & INFRASTRUCTURE
+# =========================================================================
+VPS_PUBLIC_IP = "127.0.0.1" # Como corre en el VPS, local host es la vía más rápida y segura.
 VPS_WEBHOOK_URL = f"http://{VPS_PUBLIC_IP}:80/webhook"
+NT8_WEBHOOK_URL = f"http://{VPS_PUBLIC_IP}:8080/webhook/"
 WEBHOOK_PASSPHRASE = "TradingLab_Quant_V15_Secret"
 
 def get_file_path(filename):
     if os.path.exists(filename): return filename
-    local_path = os.path.join(os.path.expanduser("~/mysite/"), filename)
-    if os.path.exists(local_path): return local_path
+    local_vps_path = os.path.join(r"C:\OmniSwarm_Brain\Data", filename)
+    if os.path.exists(local_vps_path): return local_vps_path
     return filename
 
-MASTER_FILE = get_file_path("master_ml_dataset.csv")
-CONFIG_FILE = get_file_path("engines_config.json")
-TRADE_FILE = get_file_path("trade_history.csv")
-RISK_FILE = get_file_path("risk_profile.json")
-
 # =========================================================================
-# 2. CARGA DEL DATASET MAESTRO (CACHÉ EN RAM)
+# DATA LOADING (CACHE)
 # =========================================================================
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=30)
 def load_data():
-    df_master = pd.DataFrame()
+    df_master = pd.read_csv(get_file_path("master_ml_dataset.csv"), on_bad_lines='skip') if os.path.exists(get_file_path("master_ml_dataset.csv")) else pd.DataFrame()
+    if not df_master.empty and 'Timestamp' in df_master.columns:
+        df_master['Timestamp'] = pd.to_datetime(df_master['Timestamp'], errors='coerce')
+
     config = {}
+    if os.path.exists(get_file_path("engines_config.json")):
+        with open(get_file_path("engines_config.json"), "r") as f: config = json.load(f)
+
     risk_data = {}
-    kill_switch = False
+    if os.path.exists(get_file_path("risk_profile.json")):
+        with open(get_file_path("risk_profile.json"), "r", encoding="utf-8-sig") as f: risk_data = json.load(f)
 
-    if os.path.exists(MASTER_FILE):
-        try:
-            df_master = pd.read_csv(MASTER_FILE, on_bad_lines='skip')
-            if 'Timestamp' in df_master.columns:
-                df_master['Timestamp'] = pd.to_datetime(df_master['Timestamp'], errors='coerce')
-        except: pass
+    config_rows = [{
+        'Module': d.get('module', 'N/A'), 
+        'Engine': d.get('engine_name', k), 
+        'Bucket': d.get('bucket', 'B'), 
+        'Win Rate': d.get('wr', 0.0), 
+        'Trades': d.get('trades', 0),
+        'Last 5': d.get('last_5', 'N/A'),
+        'R0': d.get('regimes_breakdown', {}).get('R0', 'N/A'),
+        'R1': d.get('regimes_breakdown', {}).get('R1', 'N/A'),
+        'R2': d.get('regimes_breakdown', {}).get('R2', 'N/A'),
+        'Diag': d.get('reason', '')
+    } for k, d in config.items()]
+    
+    return df_master, pd.DataFrame(config_rows), risk_data
 
-    if os.path.exists(CONFIG_FILE):
-        try:
-            with open(CONFIG_FILE, "r") as f: config = json.load(f)
-        except: pass
-        
-    if os.path.exists(RISK_FILE):
-        try:
-            with open(RISK_FILE, "r", encoding="utf-8-sig") as f: risk_data = json.load(f)
-        except: pass
-
-    if os.path.exists(TRADE_FILE):
-        try:
-            df_t = pd.read_csv(TRADE_FILE, on_bad_lines='skip')
-            if not df_t.empty and 'Status' in df_t.columns and "REJECTED_ACCOUNT_INACTIVE" in str(df_t.iloc[-1].get('Status', '')):
-                kill_switch = True
-        except: pass
-
-    # Convertir JSON a DataFrame una sola vez
-    config_rows = []
-    for unique_key, data in config.items():
-        row = {
-            'Módulo': data.get('module', 'N/A'),
-            'Motor': data.get('engine_name', unique_key),
-            'Últimos_5': data.get('last_5', 'N/A'),
-            'Bucket': data.get('bucket', 'B'),
-            'WR_Global': data.get('wr', 0.0),
-            'Trades': data.get('trades', 0),
-            'R0': data.get('regimes_breakdown', {}).get('R0', 'N/A'),
-            'R1': data.get('regimes_breakdown', {}).get('R1', 'N/A'),
-            'R2': data.get('regimes_breakdown', {}).get('R2', 'N/A'),
-            'Decay_Pts': data.get('execution_decay', 0.0),
-            'Diag': data.get('reason', '')
-        }
-        config_rows.append(row)
-    df_config = pd.DataFrame(config_rows)
-
-    return df_master, df_config, risk_data, kill_switch
-
-df_master, df_config, risk_profile, kill_switch_active = load_data()
+df_master, df_config, risk_profile = load_data()
 
 # =========================================================================
-# 3. FUNCIONES DE DISEÑO (ESTILOS Y GRÁFICAS BLINDADAS)
+# REUSABLE UI COMPONENTS
 # =========================================================================
 def highlight_buckets(val):
-    if val == "A": return 'background-color: rgba(0, 200, 83, 0.2); color: #00C853; font-weight: bold;'
-    if val == "B": return 'background-color: rgba(255, 214, 0, 0.2); color: #FFD600; font-weight: bold;'
-    if val == "C": return 'background-color: rgba(213, 0, 0, 0.2); color: #D50000; font-weight: bold;'
+    if val == "A": return 'background-color: rgba(0, 200, 83, 0.1); color: #00C853;'
+    if val == "B": return 'background-color: rgba(200, 170, 0, 0.06); color: #CCA700;'
+    if val == "C": return 'background-color: rgba(213, 0, 0, 0.1); color: #D50000;'
     return ''
 
-def plot_cumulative_hits(df, title):
-    """Función de gráfica blindada para buscar Status o Is_Win"""
-    if df.empty: return None
-    df_closed = df.copy()
-
-    # Si la base de datos trae la columna 'Status'
-    if 'Status' in df_closed.columns:
-        df_closed = df_closed[df_closed['Status'].astype(str).str.contains('WIN|LOSS|CLOSED', case=False, na=False)].copy()
-        if df_closed.empty: return None
-        df_closed['Hit_Score'] = df_closed['Status'].apply(lambda x: 1 if 'WIN' in str(x).upper() else (-1 if 'LOSS' in str(x).upper() else 0))
-    
-    # Si en cambio trae la columna numérica 'Is_Win' (Formato anterior)
-    elif 'Is_Win' in df_closed.columns:
-        df_closed = df_closed.dropna(subset=['Is_Win']).copy()
-        if df_closed.empty: return None
-        df_closed['Hit_Score'] = df_closed['Is_Win'].apply(lambda x: 1 if float(x) == 1.0 else -1)
-    
-    # Si no hay ninguna columna válida, abortamos la gráfica en lugar de romper la app
-    else:
-        return None
-
-    df_closed = df_closed.sort_values('Timestamp')
-    df_closed['Cumulative_Hits'] = df_closed['Hit_Score'].cumsum()
-
-    fig = px.line(df_closed, x='Timestamp', y='Cumulative_Hits', title=title,
-                  labels={'Cumulative_Hits': 'Balance de Aciertos Netos', 'Timestamp': 'Fecha'},
-                  color_discrete_sequence=['#2962FF'])
-    return fig
-
-def render_top_metrics(df_c, title):
-    st.markdown(f"### 📊 Rendimiento de Probabilidad Pura: {title}")
+def render_top_row(df_c, df_m=None):
     if df_c.empty:
-        st.warning("No hay datos disponibles.")
+        st.warning("No data available.")
         return
 
     total_trades = df_c['Trades'].sum()
-    avg_wr = (df_c['WR_Global'] * df_c['Trades']).sum() / total_trades if total_trades > 0 else 0
-    total_motores = len(df_c)
-
+    avg_wr = (df_c['Win Rate'] * df_c['Trades']).sum() / total_trades if total_trades > 0 else 0
+    engines_count = len(df_c)
     b_a = len(df_c[df_c['Bucket'] == 'A'])
     b_b = len(df_c[df_c['Bucket'] == 'B'])
     b_c = len(df_c[df_c['Bucket'] == 'C'])
+    
+    wins = 0
+    losses = 0
+    max_l_streak = 0
+    
+    if df_m is not None and not df_m.empty and 'Is_Win' in df_m.columns:
+        wins = len(df_m[df_m['Is_Win'] == 1])
+        losses = len(df_m[df_m['Is_Win'] == 0])
+        df_asc = df_m.sort_values('Timestamp', ascending=True)
+        curr_streak = 0
+        for val in df_asc['Is_Win']:
+            if val == 0:
+                curr_streak += 1
+                max_l_streak = max(max_l_streak, curr_streak)
+            else:
+                curr_streak = 0
+    else:
+        wins = int((avg_wr / 100) * total_trades)
+        losses = total_trades - wins
 
-    col1, col2, col3, col4, col5, col6 = st.columns(6)
-    col1.metric("Total Trades", f"{total_trades}")
-    col2.metric("WinRate Promedio", f"{avg_wr:.1f}%")
-    col3.metric("Motores en Vista", f"{total_motores}")
-    col4.metric("🟢 BUCKET A", f"{b_a}")
-    col5.metric("🟡 BUCKET B", f"{b_b}")
-    col6.metric("🔴 BUCKET C", f"{b_c}")
+    c1, c2, c3, c4, c5 = st.columns(5)
+    c1.metric("Total Trades", total_trades)
+    c2.metric("Win Rate", f"{avg_wr:.1f}%")
+    c3.metric("Net Wins", wins)
+    c4.metric("Net Losses", losses)
+    c5.metric("Max L-Streak", max_l_streak)
+    
+    st.write("") 
+    swarm_health = (b_a / engines_count * 100) if engines_count > 0 else 0
+    
+    c6, c7, c8, c9, c10 = st.columns(5)
+    c6.metric("Active Engines", engines_count)
+    c7.metric("Bucket A", b_a)
+    c8.metric("Bucket B", b_b)
+    c9.metric("Bucket C", b_c)
+    c10.metric("Swarm Health", f"{swarm_health:.1f}%")
     st.markdown("---")
 
-def render_engine_table(df_c):
+def render_engine_table(df_c, exclude_cols=None):
     if df_c.empty: return
-    display_cols = ['Módulo', 'Motor', 'Últimos_5', 'Bucket', 'WR_Global', 'Trades', 'R0', 'R1', 'R2', 'Decay_Pts', 'Diag']
-    df_display = df_c[display_cols].sort_values(by=['Bucket', 'WR_Global'], ascending=[True, False])
+    df_display = df_c.copy()
+    
+    def format_diag(row):
+        if row['Bucket'] == 'A': return "ÓPTIMO"
+        elif row['Bucket'] == 'B':
+            if row['Trades'] < 20: return f"({row['Trades']}/20)"
+            else: return "FRICCIÓN"
+        elif row['Bucket'] == 'C': return "CUARENTENA"
+        return str(row.get('Diag', ''))
+        
+    if 'Diag' in df_display.columns:
+        df_display['Diag'] = df_display.apply(format_diag, axis=1)
 
-    styled_config = df_display.style.map(highlight_buckets, subset=['Bucket'])\
-                                    .format({'Decay_Pts': "{:.2f}", 'WR_Global': "{:.1f}%"})
-
-    st.dataframe(styled_config, use_container_width=True, height=600)
+    if 'Last 5' in df_display.columns:
+        df_display['Last 5'] = df_display['Last 5'].apply(lambda x: " - ".join(list(str(x))) if pd.notna(x) and x != 'N/A' else x)
+        
+    cols = ['Module', 'Engine', 'Bucket', 'Win Rate', 'Trades', 'Last 5', 'R0', 'R1', 'R2', 'Diag']
+    if exclude_cols: cols = [c for c in cols if c not in exclude_cols]
+        
+    df_display = df_display[cols].sort_values(by='Trades', ascending=False)
+    styled = df_display.style.map(highlight_buckets, subset=['Bucket'] if 'Bucket' in df_display.columns else []).format({'Win Rate': "{:.1f}%"})
+    st.dataframe(styled, use_container_width=True, hide_index=True)
 
 # =========================================================================
-# 4. RUTEO DE VISTAS (MENÚ LATERAL)
+# NAVIGATION (SIDEBAR)
 # =========================================================================
-st.sidebar.image("https://img.icons8.com/color/96/000000/artificial-intelligence.png", width=60)
-st.sidebar.title("Quant Lab V15")
+st.sidebar.title("OmniSwarm Quant")
 st.sidebar.markdown("---")
 
-menu_options = [
-    "🏠 HOME (Visión Global)",
-    "⚙️ Risk Management (Vía B)",
-    "🗂️ Visión por Buckets",
-    "🌤️ Visión por Regímenes",
-    "🔬 Módulo: MCL",
-    "🔬 Módulo: MGC",
-    "🔬 Módulo: MES",
-    "🔬 Módulo: MNQ_DAY",
-    "🔬 Módulo: MNQ_NIGHT",
-    "📅 Bitácora Cronológica"
-]
-selected_view = st.sidebar.radio("Navegación del Sistema", menu_options)
+nav_category = st.sidebar.radio("Navigation", ["HOME", "Risk Management", "Trade Log", "Modules"])
 
 st.sidebar.markdown("---")
-if st.sidebar.button("🔄 Forzar Recarga"):
+if st.sidebar.button("Refresh Data"):
     st.cache_data.clear()
     st.rerun()
 
 # =========================================================================
-# 5. CABECERA GLOBAL
+# VIEWS RENDERING
 # =========================================================================
-st.title("🧬 Ecosistema Cuantitativo Institucional")
-status = risk_profile.get("account_status", "ACTIVE")
-if status in ["ACTIVE", "DEMO", "PASSED"] and not kill_switch_active: 
-    st.success(f"✅ **SISTEMA EN LÍNEA:** Flujo de Vía A y Vía B operando con normalidad. Estado: {status}")
-else: 
-    st.error(f"🚨 **ALERTA DE INFRAESTRUCTURA:** Ejecución física bloqueada por Risk Management. Estado actual: {status}")
-
-# =========================================================================
-# 6. RENDERIZADO CONDICIONAL DE VISTAS
-# =========================================================================
-
-# ---> VISTA 1: HOME (VISIÓN GLOBAL)
-if selected_view == "🏠 HOME (Visión Global)":
-    render_top_metrics(df_config, "SISTEMA COMPLETO")
-
-    fig = plot_cumulative_hits(df_master, "Curva de Efectividad Global (Todos los Módulos)")
-    if fig: st.plotly_chart(fig, use_container_width=True)
-
-    st.markdown("### 🔬 Radiografía Maestra (Todos los Motores)")
+if nav_category == "HOME":
+    st.title("System Overview")
+    status = risk_profile.get("account_status", "ACTIVE")
+    if status in ["ACTIVE", "DEMO", "PASSED"]: st.success(f"System Online | Status: {status}")
+    else: st.error(f"Execution Locked | Status: {status}")
+    
+    df_m_valid = df_master[df_master['Engine'] != 'NO_TRADE'] if not df_master.empty else None
+    render_top_row(df_config, df_m_valid)
     render_engine_table(df_config)
 
-# ---> VISTA 2: RISK MANAGEMENT
-elif selected_view == "⚙️ Risk Management (Vía B)":
-    st.markdown("### ⚙️ Risk Management (Gatekeeper)")
-    st.markdown("Configura los parámetros de riesgo. Estos datos viajan en tiempo real al VPS para gobernar las decisiones de NT8.")
+# -------------------------------------------------------------------------
+# NUEVA VISTA ZERO-TRUST: RISK MANAGEMENT
+# -------------------------------------------------------------------------
+elif nav_category == "Risk Management":
+    st.title("Risk Management (Zero-Trust)")
+    st.markdown("Consulta en vivo la memoria de NinjaTrader para asignar reglas a la cuenta real.")
     
-    with st.container():
-        current_type = risk_profile.get("account_type", "DEMO").upper()
-        acc_type = st.radio("Account Type", ["DEMO", "FUNDED", "EVALUATION"], index=["DEMO", "FUNDED", "EVALUATION"].index(current_type) if current_type in ["DEMO", "FUNDED", "EVALUATION"] else 0, horizontal=True)
+    # Manejo de estado en RAM para no perder los datos al clickear botones
+    if "scanned_accounts" not in st.session_state:
+        st.session_state.scanned_accounts = []
+    if "active_account" not in st.session_state:
+        st.session_state.active_account = risk_profile.get("account_name", "")
+
+    st.markdown("### 1. Escáner de Conexiones Físicas")
+    if st.button("🔍 ESCANEAR BROKER (NT8)", use_container_width=True):
+        payload = {"passphrase": WEBHOOK_PASSPHRASE, "command": "SCAN_ACCOUNTS"}
+        try:
+            res = requests.post(NT8_WEBHOOK_URL, json=payload, timeout=5)
+            if res.status_code == 200:
+                data = res.json()
+                st.session_state.scanned_accounts = data.get("accounts", [])
+                st.session_state.active_account = data.get("active_account", "")
+                st.success("✅ Servidor NinjaTrader interrogado exitosamente.")
+            else:
+                st.error(f"❌ NT8 rechazó la conexión (Error {res.status_code}).")
+        except Exception as e:
+            st.error(f"❌ Falló la conexión con NT8 en el puerto 8080. Verifique que OmniSwarmWebhook esté activo. Error: {e}")
+
+    if st.session_state.scanned_accounts:
+        st.markdown("---")
+        st.markdown("### 2. Selección de Cuenta y Radiografía")
         
-        if acc_type == "DEMO":
-            st.info("🟢 Modo Simulación: Todo el flujo se enruta a la cuenta Sim101. Límites de riesgo diarios desactivados.")
-            acc_name = "Sim101"
-            base_risk = float(risk_profile.get("base_risk_usd", 500.0))
-            max_contracts = int(risk_profile.get("max_contracts", 15))
-            acc_size = float(risk_profile.get("account_size", 25000.0))
-            profit_target = 0.0
-            daily_cap = float(risk_profile.get("daily_cap_usd", 500.0))
-            eod_dd = float(risk_profile.get("eod_drawdown_limit", 1000.0))
+        # Generar lista de cuentas encontradas
+        account_names = [acc["name"] for acc in st.session_state.scanned_accounts]
+        default_index = account_names.index(st.session_state.active_account) if st.session_state.active_account in account_names else 0
+        
+        selected_acc_name = st.selectbox("Selecciona la cuenta que deseas operar:", account_names, index=default_index)
+        acc_data = next((acc for acc in st.session_state.scanned_accounts if acc["name"] == selected_acc_name), None)
+        
+        if acc_data:
+            st.info(f"📊 **Métricas extraídas directamente del servidor para {selected_acc_name}**")
+            colA, colB, colC, colD = st.columns(4)
+            colA.metric("Net Liquidation", f"${acc_data['net_liq']:,.2f}")
+            colB.metric("Cash Value", f"${acc_data['cash_value']:,.2f}")
+            colC.metric("PnL Realizado (Hoy)", f"${acc_data['pnl']:,.2f}")
             
-        else:
-            col1, col2 = st.columns(2)
-            with col1:
-                acc_name = st.text_input("Account Number", value=risk_profile.get("account_name", "LTE02571085060001"))
-                acc_size = st.number_input("Account Size ($)", value=float(risk_profile.get("account_size", 25000.0)), step=1000.0)
-                base_risk = st.number_input("Base Risk Bucket A ($)", value=float(risk_profile.get("base_risk_usd", 500.0)), step=50.0)
-                max_contracts = st.number_input("Max Contracts Limit", value=int(risk_profile.get("max_contracts", 15)), step=1)
+            dd_val = acc_data['trailing_dd']
+            if dd_val > 0:
+                colD.metric("Colchón de Vida (Max DD)", f"${dd_val:,.2f}")
+            else:
+                colD.metric("Colchón de Vida", "N/A (Sim/Sin Límite)")
+
+            st.markdown("---")
+            st.markdown("### 3. Parámetros de Ejecución y Disciplina")
+            st.markdown("Estos límites le dictarán a NinjaTrader cuándo colocar el candado por protección.")
+            
+            c_lim1, c_lim2 = st.columns(2)
+            with c_lim1:
+                base_risk = st.number_input("Riesgo Base por Trade (Bucket A) - $", value=float(risk_profile.get("base_risk_usd", 500.0)), step=50.0)
+                max_contracts = st.number_input("Límite Máximo de Contratos Físicos", value=int(risk_profile.get("max_contracts", 15)), step=1)
+            with c_lim2:
+                daily_cap = st.number_input("Daily Loss Cap (Bloqueo por Pérdida) - $", value=float(risk_profile.get("daily_cap_usd", 1250.0)), step=50.0)
+                profit_target = st.number_input("Profit Target (Bloqueo por Meta) - $", value=float(risk_profile.get("profit_target", 1500.0)), step=100.0)
                 
-            with col2:
-                profit_target = st.number_input("Profit Target ($)", value=float(risk_profile.get("profit_target", 1500.0)), step=100.0)
-                daily_cap = st.number_input("Daily Cap ($)", value=float(risk_profile.get("daily_cap_usd", 1250.0)), step=50.0)
-                eod_dd = st.number_input("Max EOD Drawdown ($)", value=float(risk_profile.get("eod_drawdown_limit", 1500.0)), step=100.0)
-        
-        st.write("")
-        c_btn1, c_btn2, c_btn3 = st.columns([1, 1, 2])
-        with c_btn1:
-            submitted = st.button("SEND TO VPS", type="primary", use_container_width=True)
-        with c_btn2:
-            force_sync = st.button("🔄 FORCE VPS SYNC", use_container_width=True)
-            
-        if submitted:
-            payload = {
-                "passphrase": WEBHOOK_PASSPHRASE,
-                "event": "UPDATE_RISK",
-                "risk_data": {
-                    "account_type": acc_type,
-                    "account_name": acc_name, 
-                    "account_size": acc_size,
-                    "profit_target": profit_target,
-                    "eod_drawdown_limit": eod_dd, 
-                    "daily_cap_usd": daily_cap,
-                    "base_risk_usd": base_risk,
-                    "max_contracts": max_contracts
+            st.write("")
+            if st.button("🚀 ENVIAR AL VPS Y ESTABLECER COMO CUENTA ACTIVA", type="primary", use_container_width=True):
+                # El gateway en Python reescribe el risk_profile.json e invoca el HotSwap en C#
+                payload_gateway = {
+                    "passphrase": WEBHOOK_PASSPHRASE,
+                    "event": "UPDATE_RISK",
+                    "target_account": selected_acc_name, # Clave: Esto dispara el cambio en NT8
+                    "risk_data": {
+                        "account_status": "ACTIVE", # Auto-desbloqueo 
+                        "account_type": "EVALUATION" if "LTE" in selected_acc_name else "DEMO",
+                        "account_name": selected_acc_name, 
+                        "account_size": acc_data['net_liq'], # Referencial
+                        "profit_target": profit_target,
+                        "eod_drawdown_limit": 0.0, # Obsoleto, C# ya usa el del broker, se envía por retrocompatibilidad
+                        "daily_cap_usd": daily_cap,
+                        "base_risk_usd": base_risk,
+                        "max_contracts": max_contracts
+                    }
                 }
-            }
-            try:
-                res = requests.post(VPS_WEBHOOK_URL, json=payload, timeout=5)
-                if res.status_code == 200: st.success(f"✅ Éxito: Parámetros transmitidos correctamente al VPS ({VPS_PUBLIC_IP}).")
-                else: st.error(f"❌ El Gateway del VPS rechazó la conexión (Error {res.status_code}).")
-            except Exception as e:
-                st.error(f"❌ Falla de red: No se pudo conectar al VPS. Verifique que el servicio Python esté activo. Error: {e}")
-                
-        if force_sync:
-            payload = {"passphrase": WEBHOOK_PASSPHRASE, "command": "SYNC_BALANCE"}
-            try:
-                res = requests.post(VPS_WEBHOOK_URL, json=payload, timeout=5)
-                if res.status_code == 200: st.success("✅ Comando de sincronización enviado directamente a NinjaTrader.")
-                else: st.error(f"❌ NinjaTrader rechazó la conexión (Error {res.status_code}).")
-            except Exception as e:
-                st.error(f"❌ Falló el enlace de sincronización. Error: {e}")
+                try:
+                    res = requests.post(VPS_WEBHOOK_URL, json=payload_gateway, timeout=5)
+                    if res.status_code == 200: 
+                        st.success(f"✅ ¡Blindaje Activo! NinjaTrader ahora ejecutará órdenes físicamente en **{selected_acc_name}**.")
+                        st.session_state.active_account = selected_acc_name
+                    else: 
+                        st.error(f"❌ El Gateway de Python rechazó la configuración (Error {res.status_code}).")
+                except Exception as e:
+                    st.error(f"❌ Falló la conexión con la base de datos (Puerto 80). Error: {e}")
 
-# ---> VISTA 3: VISIÓN POR BUCKETS
-elif selected_view == "🗂️ Visión por Buckets":
-    st.markdown("### 🗂️ Radiografía por Buckets de Riesgo")
-
-    bucket_map = {
-        "🟢 BUCKET A (Full Riesgo)": "A",
-        "🟡 BUCKET B (Limitados)": "B",
-        "🔴 BUCKET C (Cuarentena)": "C"
-    }
-    bucket_choice = st.radio("Filtro de Riesgo Institucional:", list(bucket_map.keys()), horizontal=True)
-    b_target = bucket_map[bucket_choice]
-
-    df_bucket = df_config[df_config['Bucket'] == b_target].copy()
-
-    if not df_bucket.empty:
-        render_top_metrics(df_bucket, f"Aislamiento de Motores en Bucket {b_target}")
-        st.markdown(f"#### 📋 Lista de Motores ({bucket_choice})")
-        render_engine_table(df_bucket)
-    else:
-        st.info(f"No hay motores asignados actualmente al Bucket {b_target}.")
-
-# ---> VISTA 4: VISIÓN POR REGÍMENES
-elif selected_view == "🌤️ Visión por Regímenes":
-    st.markdown("### 🌤️ Rendimiento Aislado por Clima Macroeconómico")
-
-    regime_choice = st.radio("Selecciona el Régimen Macro:", ["R0", "R1", "R2"], horizontal=True)
-
-    df_reg = df_config[df_config[regime_choice] != 'N/A'].copy()
-
-    if not df_reg.empty:
-        st.info(f"Mostrando **{len(df_reg)}** motores que tienen exposición histórica comprobada (5+ trades) en el Régimen **{regime_choice}**.")
-        df_reg['Sort_Key'] = df_reg[regime_choice].str.extract(r'([\d\.]+)%').astype(float)
-        display_cols = ['Módulo', 'Motor', regime_choice, 'Bucket', 'WR_Global', 'Trades', 'Últimos_5']
-        df_display = df_reg.sort_values(by=['Sort_Key', 'Trades'], ascending=[False, False])[display_cols]
-        styled_config = df_display.style.map(highlight_buckets, subset=['Bucket']).format({'WR_Global': "{:.1f}%"})
-        st.dataframe(styled_config, use_container_width=True, height=600)
-    else:
-        st.warning(f"Ningún motor tiene suficientes datos recopilados en el Régimen {regime_choice}.")
-
-# ---> VISTA 5: MÓDULOS ESPECÍFICOS
-elif selected_view.startswith("🔬 Módulo:"):
-    module_name = selected_view.split(": ")[1]
-
-    df_master_mod = df_master[df_master['Module'] == module_name] if not df_master.empty else pd.DataFrame()
-    df_config_mod = df_config[df_config['Módulo'] == module_name] if not df_config.empty else pd.DataFrame()
-
-    render_top_metrics(df_config_mod, module_name)
-
-    fig = plot_cumulative_hits(df_master_mod, f"Curva de Efectividad - {module_name}")
-    if fig: st.plotly_chart(fig, use_container_width=True)
-
-    st.markdown(f"### 🔬 Radiografía Interna: {module_name}")
-    render_engine_table(df_config_mod)
-
-# ---> VISTA 6: BITÁCORA CRONOLÓGICA
-elif selected_view == "📅 Bitácora Cronológica":
-    st.markdown("### 📅 Explorador del Data Lake (Dataset Maestro)")
-    st.markdown("Aquí se muestran todos los eventos capturados por la Vía A y el Backtest, ordenados cronológicamente.")
-
+# -------------------------------------------------------------------------
+# TRADE LOG Y MODULES QUEDAN INTACTOS
+# -------------------------------------------------------------------------
+elif nav_category == "Trade Log":
+    st.title("Trade Log")
+    time_filter = st.radio("Timeframe", ["Today", "7 Days", "15 Days", "1 Month", "3 Months", "6 Months", "1 Year", "All-Time"], horizontal=True)
     if not df_master.empty:
-        col_filtro, col_metric = st.columns([1, 2])
-
-        with col_filtro:
-            usar_filtro = st.checkbox("🔍 Filtrar por un día específico")
-            if usar_filtro:
-                filter_date = st.date_input("Selecciona la fecha:")
-            else:
-                filter_date = None
-
-        df_log = df_master.copy()
-
-        if filter_date is not None:
-            df_log = df_log[df_log['Timestamp'].dt.date == filter_date]
-
+        df_log = df_master[df_master['Engine'] != 'NO_TRADE'].copy()
+        if time_filter != "All-Time":
+            days_map = {"Today": 1, "7 Days": 7, "15 Days": 15, "1 Month": 30, "3 Months": 90, "6 Months": 180, "1 Year": 365}
+            cutoff_date = datetime.now() - timedelta(days=days_map[time_filter])
+            df_log = df_log[df_log['Timestamp'] >= cutoff_date]
+        df_log = df_log.sort_values('Timestamp', ascending=False)
         if not df_log.empty:
-            with col_metric:
-                if usar_filtro:
-                    st.info(f"Mostrando **{len(df_log)}** registros para el {filter_date.strftime('%Y-%m-%d')}.")
-                else:
-                    st.info(f"Mostrando el historial completo: **{len(df_log)}** registros.")
+            df_log['Result'] = df_log['Is_Win'].apply(lambda x: "WIN" if x == 1 else "LOSS")
+            wins = len(df_log[df_log['Is_Win'] == 1])
+            losses = len(df_log[df_log['Is_Win'] == 0])
+            total = len(df_log)
+            wr = (wins / total) * 100 if total > 0 else 0
+            df_asc = df_log.sort_values('Timestamp', ascending=True)
+            max_l_streak, curr_streak = 0, 0
+            for val in df_asc['Is_Win']:
+                if val == 0:
+                    curr_streak += 1
+                    max_l_streak = max(max_l_streak, curr_streak)
+                else: curr_streak = 0
+            col1, col2, col3, col4, col5 = st.columns(5)
+            col1.metric("Trades", total)
+            col2.metric("Win Rate", f"{wr:.1f}%")
+            col3.metric("Net Wins", wins)
+            col4.metric("Net Losses", losses)
+            col5.metric("Max L-Streak", max_l_streak)
+            show_cols = ['Timestamp', 'Module', 'Engine', 'Action', 'Result']
+            st.dataframe(df_log[[c for c in show_cols if c in df_log.columns]], use_container_width=True, hide_index=True)
+        else: st.warning("No data found for the selected timeframe.")
+    else: st.error("Database is empty.")
 
-            if 'Unified_Regime' in df_log.columns:
-                df_log['Régimen'] = df_log['Unified_Regime'].apply(lambda x: f"R{int(x)}" if pd.notnull(x) else "N/A")
-            else:
-                df_log['Régimen'] = "N/A"
-
-            df_log = df_log.sort_values('Timestamp', ascending=False)
-
-            show_cols = ['Timestamp', 'Module', 'Engine', 'Action', 'Régimen', 'Status']
-            show_cols = [c for c in show_cols if c in df_log.columns]
-            if 'Trade_Exact_PnL' in df_log.columns:
-                show_cols.append('Trade_Exact_PnL')
-
-            st.dataframe(df_log[show_cols], use_container_width=True, hide_index=True, height=700)
-        else:
-            st.warning("No hay registros almacenados para esta fecha en específico.")
-    else:
-        st.error("El Dataset Maestro está vacío o no se pudo cargar.")
-        st.info("💡 Solución: Haz clic en el botón '🔄 Forzar Recarga' en el menú de la izquierda.")
+elif nav_category == "Modules":
+    st.title("Modules Dashboard")
+    selected_module = st.selectbox("Select Target Module", ["MCL", "MGC", "MES", "MNQ_DAY", "MNQ_NIGHT"])
+    df_c_mod = df_config[df_config['Module'] == selected_module]
+    df_m_mod = df_master[(df_master['Module'] == selected_module) & (df_master['Engine'] != 'NO_TRADE')] if not df_master.empty else None
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["Overview (All)", "Buckets Breakdown", "R0 (Low Volatility)", "R1 (Normal)", "R2 (High Volatility)"])
+    with tab1:
+        render_top_row(df_c_mod, df_m_mod)
+        render_engine_table(df_c_mod)
+    with tab2:
+        b_choice = st.radio("Filter Bucket", ["A", "B", "C"], horizontal=True)
+        df_c_b = df_c_mod[df_c_mod['Bucket'] == b_choice]
+        df_m_b = df_m_mod[df_m_mod['Engine'].isin(df_c_b['Engine'].tolist())] if df_m_mod is not None else None
+        render_top_row(df_c_b, df_m_b)
+        render_engine_table(df_c_b, exclude_cols=['Bucket'])
+    with tab3:
+        df_r0 = df_c_mod[df_c_mod['R0'] != 'N/A']
+        render_top_row(df_r0, None)
+        render_engine_table(df_r0, exclude_cols=['R1', 'R2'])
+    with tab4:
+        df_r1 = df_c_mod[df_c_mod['R1'] != 'N/A']
+        render_top_row(df_r1, None)
+        render_engine_table(df_r1, exclude_cols=['R0', 'R2'])
+    with tab5:
+        df_r2 = df_c_mod[df_c_mod['R2'] != 'N/A']
+        render_top_row(df_r2, None)
+        render_engine_table(df_r2, exclude_cols=['R0', 'R1'])
