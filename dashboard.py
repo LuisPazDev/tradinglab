@@ -78,7 +78,7 @@ def load_data():
     if os.path.exists(TRADE_FILE):
         try:
             df_t = pd.read_csv(TRADE_FILE, on_bad_lines='skip')
-            if not df_t.empty and "REJECTED_ACCOUNT_INACTIVE" in str(df_t.iloc[-1].get('Status', '')):
+            if not df_t.empty and 'Status' in df_t.columns and "REJECTED_ACCOUNT_INACTIVE" in str(df_t.iloc[-1].get('Status', '')):
                 kill_switch = True
         except: pass
 
@@ -106,7 +106,7 @@ def load_data():
 df_master, df_config, risk_profile, kill_switch_active = load_data()
 
 # =========================================================================
-# 3. FUNCIONES DE DISEÑO (ESTILOS Y GRÁFICAS)
+# 3. FUNCIONES DE DISEÑO (ESTILOS Y GRÁFICAS BLINDADAS)
 # =========================================================================
 def highlight_buckets(val):
     if val == "A": return 'background-color: rgba(0, 200, 83, 0.2); color: #00C853; font-weight: bold;'
@@ -115,12 +115,27 @@ def highlight_buckets(val):
     return ''
 
 def plot_cumulative_hits(df, title):
+    """Función de gráfica blindada para buscar Status o Is_Win"""
     if df.empty: return None
-    df_closed = df[df['Status'].astype(str).str.contains('WIN|LOSS|CLOSED')].copy()
-    if df_closed.empty: return None
+    df_closed = df.copy()
+
+    # Si la base de datos trae la columna 'Status'
+    if 'Status' in df_closed.columns:
+        df_closed = df_closed[df_closed['Status'].astype(str).str.contains('WIN|LOSS|CLOSED', case=False, na=False)].copy()
+        if df_closed.empty: return None
+        df_closed['Hit_Score'] = df_closed['Status'].apply(lambda x: 1 if 'WIN' in str(x).upper() else (-1 if 'LOSS' in str(x).upper() else 0))
+    
+    # Si en cambio trae la columna numérica 'Is_Win' (Formato anterior)
+    elif 'Is_Win' in df_closed.columns:
+        df_closed = df_closed.dropna(subset=['Is_Win']).copy()
+        if df_closed.empty: return None
+        df_closed['Hit_Score'] = df_closed['Is_Win'].apply(lambda x: 1 if float(x) == 1.0 else -1)
+    
+    # Si no hay ninguna columna válida, abortamos la gráfica en lugar de romper la app
+    else:
+        return None
 
     df_closed = df_closed.sort_values('Timestamp')
-    df_closed['Hit_Score'] = df_closed['Status'].apply(lambda x: 1 if 'WIN' in str(x) else (-1 if 'LOSS' in str(x) else 0))
     df_closed['Cumulative_Hits'] = df_closed['Hit_Score'].cumsum()
 
     fig = px.line(df_closed, x='Timestamp', y='Cumulative_Hits', title=title,
