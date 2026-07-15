@@ -49,11 +49,10 @@ st.markdown("""
 # =========================================================================
 # CONFIGURATION & INFRASTRUCTURE
 # =========================================================================
-VPS_PUBLIC_IP = "127.0.0.1" # Como corre en el VPS, local host es la vía más rápida y segura.
-VPS_WEBHOOK_URL = f"http://{VPS_PUBLIC_IP}:80/webhook/"
+VPS_PUBLIC_IP = "103.89.14.117" # <- TU IP PÚBLICA DEL VPS
+VPS_WEBHOOK_URL = f"http://{VPS_PUBLIC_IP}:80/webhook"
 NT8_WEBHOOK_URL = f"http://{VPS_PUBLIC_IP}:8080/webhook/"
 WEBHOOK_PASSPHRASE = "TradingLab_Quant_V15_Secret"
-
 def get_file_path(filename):
     if os.path.exists(filename): return filename
     local_vps_path = os.path.join(r"C:\OmniSwarm_Brain\Data", filename)
