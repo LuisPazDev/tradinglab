@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 
 st.set_page_config(page_title="OmniSwarm Quant", layout="wide")
 
+# Custom CSS for Minimalist Modern Design, Green SEND Button & Bucket Gradients
 st.markdown("""
     <style>
     .block-container { padding-top: 2rem; padding-bottom: 2rem; }
@@ -26,7 +27,7 @@ st.markdown("""
 # CONFIGURATION
 # =========================================================================
 VPS_PUBLIC_IP = "103.89.14.117"
-# URLs limpias sin trailing slash para evitar errores de ruteo
+# Clean URLs without trailing slashes for exact routing
 VPS_WEBHOOK_URL = f"http://{VPS_PUBLIC_IP}:80/webhook"
 NT8_WEBHOOK_URL = f"http://{VPS_PUBLIC_IP}:8080/webhook"
 WEBHOOK_PASSPHRASE = "TradingLab_Quant_V15_Secret"
@@ -128,9 +129,9 @@ def render_engine_table(df_c, exclude_cols=None):
     if df_c.empty: return
     df_display = df_c.copy()
     def format_diag(row):
-        if row['Bucket'] == 'A': return "ÓPTIMO"
-        elif row['Bucket'] == 'B': return f"({row['Trades']}/20)" if row['Trades'] < 20 else "FRICCIÓN"
-        elif row['Bucket'] == 'C': return "CUARENTENA"
+        if row['Bucket'] == 'A': return "OPTIMAL"
+        elif row['Bucket'] == 'B': return f"({row['Trades']}/20)" if row['Trades'] < 20 else "FRICTION"
+        elif row['Bucket'] == 'C': return "QUARANTINE"
         return str(row.get('Diag', ''))
         
     if 'Diag' in df_display.columns: df_display['Diag'] = df_display.apply(format_diag, axis=1)
@@ -166,13 +167,13 @@ if nav_category == "HOME":
 
 elif nav_category == "Risk Management":
     st.title("Risk Management (Zero-Trust)")
-    st.markdown("Consulta en vivo la memoria de NinjaTrader para asignar reglas a la cuenta real.")
+    st.markdown("Query NinjaTrader's memory live to assign rules to the active account.")
     
     if "scanned_accounts" not in st.session_state: st.session_state.scanned_accounts = []
     if "active_account" not in st.session_state: st.session_state.active_account = risk_profile.get("account_name", "")
 
-    st.markdown("### 1. Escáner de Conexiones Físicas")
-    if st.button("🔍 ESCANEAR BROKER (NT8)", use_container_width=True):
+    st.markdown("### 1. Physical Connections Scanner")
+    if st.button("🔍 SCAN BROKER (NT8)", use_container_width=True):
         payload = {"passphrase": WEBHOOK_PASSPHRASE, "command": "SCAN_ACCOUNTS"}
         try:
             res = requests.post(NT8_WEBHOOK_URL, json=payload, timeout=5)
@@ -180,50 +181,51 @@ elif nav_category == "Risk Management":
                 data = res.json()
                 st.session_state.scanned_accounts = data.get("accounts", [])
                 st.session_state.active_account = data.get("active_account", "")
-                st.success("✅ Servidor NinjaTrader interrogado exitosamente.")
-            else: st.error(f"❌ NT8 rechazó la conexión (Error {res.status_code}).")
-        except Exception as e: st.error(f"❌ Falló la conexión con NT8 en el puerto 8080. Verifique la IP o el Firewall. Error: {e}")
+                st.success("✅ NinjaTrader server queried successfully.")
+            else: st.error(f"❌ NT8 rejected connection (Error {res.status_code}).")
+        except Exception as e: st.error(f"❌ Connection to NT8 on port 8080 failed. Verify IP and Firewall. Error: {e}")
 
     if st.session_state.scanned_accounts:
         st.markdown("---")
-        st.markdown("### 2. Selección de Cuenta y Radiografía")
+        st.markdown("### 2. Account Selection & Overview")
         
         account_names = [acc["name"] for acc in st.session_state.scanned_accounts]
         default_index = account_names.index(st.session_state.active_account) if st.session_state.active_account in account_names else 0
         
-        selected_acc_name = st.selectbox("Selecciona la cuenta que deseas operar:", account_names, index=default_index)
+        selected_acc_name = st.selectbox("Select target account to trade:", account_names, index=default_index)
         acc_data = next((acc for acc in st.session_state.scanned_accounts if acc["name"] == selected_acc_name), None)
         
         if acc_data:
-            st.info(f"📊 **Métricas extraídas directamente del servidor para {selected_acc_name}**")
+            st.info(f"📊 **Metrics extracted directly from server for {selected_acc_name}**")
             colA, colB, colC, colD = st.columns(4)
             colA.metric("Net Liquidation", f"${acc_data['net_liq']:,.2f}")
             colB.metric("Cash Value", f"${acc_data['cash_value']:,.2f}")
-            colC.metric("PnL Realizado (Hoy)", f"${acc_data['pnl']:,.2f}")
+            colC.metric("Realized PnL (Today)", f"${acc_data['pnl']:,.2f}")
             
             dd_val = acc_data['trailing_dd']
-            if dd_val > 0: colD.metric("Colchón de Vida (Max DD)", f"${dd_val:,.2f}")
-            else: colD.metric("Colchón de Vida", "N/A (Sim/Sin Límite)")
+            if dd_val > 0: colD.metric("Life Cushion (Max DD)", f"${dd_val:,.2f}")
+            else: colD.metric("Life Cushion", "N/A (Sim/No Limit)")
 
             st.markdown("---")
-            st.markdown("### 3. Parámetros de Ejecución y Disciplina")
-            st.markdown("Estos límites le dictarán a NinjaTrader cuándo colocar el candado por protección.")
+            st.markdown("### 3. Execution & Discipline Parameters")
+            st.markdown("These limits dictate when NinjaTrader will physically lock the account for protection.")
             
             c_type, c_lim1, c_lim2 = st.columns([1, 1, 1])
             with c_type:
-                acc_type = st.selectbox("Tipo de Cuenta", ["EVALUATION", "FUNDED", "DEMO"], index=0)
-                eod_fallback = st.number_input("Drawdown Matemático (Respaldo) - $", value=float(risk_profile.get("eod_drawdown_limit", 1500.0)), step=100.0)
+                acc_type = st.selectbox("Account Type", ["EVALUATION", "FUNDED", "DEMO"], index=0)
+                eod_fallback = st.number_input("Math Drawdown Limit (Fallback) - $", value=float(risk_profile.get("eod_drawdown_limit", 1500.0)), step=100.0)
 
             with c_lim1:
-                base_risk = st.number_input("Riesgo Base por Trade (Bucket A) - $", value=float(risk_profile.get("base_risk_usd", 500.0)), step=50.0)
-                max_contracts = st.number_input("Límite Máximo de Contratos Físicos", value=int(risk_profile.get("max_contracts", 15)), step=1)
+                base_risk = st.number_input("Base Risk per Trade (Bucket A) - $", value=float(risk_profile.get("base_risk_usd", 500.0)), step=50.0)
+                max_contracts = st.number_input("Max Physical Contracts Limit", value=int(risk_profile.get("max_contracts", 15)), step=1)
             
             with c_lim2:
-                daily_cap = st.number_input("Daily Loss Cap (Bloqueo por Pérdida) - $", value=float(risk_profile.get("daily_cap_usd", 1250.0)), step=50.0)
-                profit_target = st.number_input("Profit Target (Bloqueo por Meta) - $", value=float(risk_profile.get("profit_target", 1500.0)), step=100.0)
+                daily_cap = st.number_input("Daily Profit Cap (Consistency Lock) - $", value=float(risk_profile.get("daily_cap_usd", 1250.0)), step=50.0)
+                profit_target = st.number_input("Profit Target (Goal Lock) - $", value=float(risk_profile.get("profit_target", 1500.0)), step=100.0)
                 
             st.write("")
-            if st.button("🚀 ENVIAR AL VPS Y ESTABLECER COMO CUENTA ACTIVA", type="primary", use_container_width=True):
+            if st.button("🚀 SEND TO VPS & SET AS ACTIVE ACCOUNT", type="primary", use_container_width=True):
+                # Target 1: Python Gateway to rewrite risk_profile.json
                 payload_gateway = {
                     "passphrase": WEBHOOK_PASSPHRASE,
                     "event": "UPDATE_RISK",
@@ -240,13 +242,26 @@ elif nav_category == "Risk Management":
                         "max_contracts": max_contracts
                     }
                 }
+                
+                # Target 2: Dual Shot to C# Webhook to hot-swap account in RAM
+                payload_nt8 = {
+                    "passphrase": WEBHOOK_PASSPHRASE,
+                    "command": "SYNC_BALANCE",
+                    "target_account": selected_acc_name
+                }
+                
                 try:
-                    res = requests.post(VPS_WEBHOOK_URL, json=payload_gateway, timeout=5)
-                    if res.status_code == 200: 
-                        st.success(f"✅ ¡Blindaje Activo! NinjaTrader ejecutará órdenes en **{selected_acc_name}**.")
+                    res_py = requests.post(VPS_WEBHOOK_URL, json=payload_gateway, timeout=5)
+                    try:
+                        requests.post(NT8_WEBHOOK_URL, json=payload_nt8, timeout=3)
+                    except Exception as e_nt8:
+                        st.warning(f"⚠️ Risk params saved, but direct ping to NT8 for Hot-Swap failed: {e_nt8}")
+
+                    if res_py.status_code == 200: 
+                        st.success(f"✅ Armor Active! NinjaTrader will now physically execute orders on **{selected_acc_name}**.")
                         st.session_state.active_account = selected_acc_name
-                    else: st.error(f"❌ El Gateway rechazó la configuración (Error {res.status_code}).")
-                except Exception as e: st.error(f"❌ Falló la conexión (Puerto 80). Verifique la IP o el Firewall. Error: {e}")
+                    else: st.error(f"❌ Python Gateway rejected the config (Error {res_py.status_code}).")
+                except Exception as e: st.error(f"❌ Connection to Python database (Port 80) failed. Verify IP and Firewall. Error: {e}")
 
 elif nav_category == "Trade Log":
     st.title("Trade Log")
