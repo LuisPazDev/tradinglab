@@ -134,9 +134,22 @@ def render_engine_table(df_c, exclude_cols=None):
     df_display = df_c.copy()
         
     cols = ['Module', 'Engine', 'Bucket', 'Target Regime', 'WR (Target)', 'WR (Global)', 'Trades (Target)', 'Trades (Global)', 'Diag']
-    if exclude_cols: cols = [c for c in cols if c not in exclude_cols]
+    
+    # 1. ORDENAMIENTO ESTRUCTURAL (Prevención de KeyError & Priorización Visual)
+    # Ordenamos primero por Target Regime (ascendente: R0, R1...) y luego por WR Target (descendente: 100% -> 0%)
+    sort_cols = [c for c in ['Target Regime', 'WR (Target)', 'Bucket'] if c in df_display.columns]
+    sort_asc = [True, False, True][:len(sort_cols)]
+    
+    if sort_cols:
+        df_display = df_display.sort_values(by=sort_cols, ascending=sort_asc)
+
+    # 2. EXCLUSIÓN DE COLUMNAS SOLICITADAS
+    if exclude_cols: 
+        cols = [c for c in cols if c not in exclude_cols]
         
-    df_display = df_display[cols].sort_values(by=['Bucket', 'WR (Target)'], ascending=[True, False])
+    valid_cols = [c for c in cols if c in df_display.columns]
+    df_display = df_display[valid_cols]
+        
     styled = df_display.style.map(highlight_buckets, subset=['Bucket'] if 'Bucket' in df_display.columns else [])\
                              .format({'WR (Target)': "{:.1f}%", 'WR (Global)': "{:.1f}%"})
     st.dataframe(styled, use_container_width=True, hide_index=True)
@@ -300,21 +313,26 @@ elif nav_category == "Modules":
     df_c_mod = df_config[df_config['Module'] == selected_module]
     df_m_mod = df_master[(df_master['Module'] == selected_module) & (df_master['Engine'] != 'NO_TRADE')] if not df_master.empty else None
     
-    # NUEVAS PESTAÑAS: Alineadas con el Semáforo de Riesgo 
-    tab1, tab2, tab3, tab4 = st.tabs(["Overview (All)", "Bucket A (Snipers)", "Bucket B (Friction/New)", "Bucket C (Quarantine)"])
+    # NUEVAS PESTAÑAS: Alineadas visualmente con la priorización del WR en regímenes
+    tab1, tab2, tab3 = st.tabs(["Overview (All)", "By Bucket (Risk)", "By Target Regime (Performance)"])
     
     with tab1:
         render_top_row(df_c_mod, df_m_mod)
         render_engine_table(df_c_mod)
+        
     with tab2:
-        df_c_a = df_c_mod[df_c_mod['Bucket'] == 'A']
-        render_top_row(df_c_a, None)
-        render_engine_table(df_c_a, exclude_cols=['Bucket'])
-    with tab3:
-        df_c_b = df_c_mod[df_c_mod['Bucket'] == 'B']
+        b_choice = st.radio("Filter Risk Bucket", ["A", "B", "C"], horizontal=True)
+        df_c_b = df_c_mod[df_c_mod['Bucket'] == b_choice]
         render_top_row(df_c_b, None)
         render_engine_table(df_c_b, exclude_cols=['Bucket'])
-    with tab4:
-        df_c_c = df_c_mod[df_c_mod['Bucket'] == 'C']
-        render_top_row(df_c_c, None)
-        render_engine_table(df_c_c, exclude_cols=['Bucket'])
+        
+    with tab3:
+        # Extraemos los regímenes disponibles para hacer el filtro dinámico (R0, R1, R2...)
+        regimes_available = sorted(df_c_mod['Target Regime'].unique().tolist())
+        if not regimes_available:
+            st.info("No regime data available for this module.")
+        else:
+            r_choice = st.radio("Filter Target Regime", regimes_available, horizontal=True)
+            df_c_r = df_c_mod[df_c_mod['Target Regime'] == r_choice]
+            render_top_row(df_c_r, None)
+            render_engine_table(df_c_r, exclude_cols=['Target Regime'])
