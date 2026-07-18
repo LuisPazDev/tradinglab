@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
 import json
@@ -53,23 +53,28 @@ def load_data():
     if os.path.exists(get_file_path("risk_profile.json")):
         with open(get_file_path("risk_profile.json"), "r", encoding="utf-8-sig") as f: risk_data = json.load(f)
 
-    # Restaurado a las llaves originales exactas para evitar ceros
-    config_rows = [{
-        'Module': d.get('module', 'N/A'), 
-        'Engine': d.get('engine_name', k), 
-        'Bucket': d.get('bucket', 'B'), 
-        'Win Rate': d.get('wr', 0.0), 
-        'Trades': d.get('trades', 0),
-        'Last 5': d.get('last_5', 'N/A'),
-        'R0': d.get('regimes_breakdown', {}).get('R0', 'N/A'),
-        'R1': d.get('regimes_breakdown', {}).get('R1', 'N/A'),
-        'R2': d.get('regimes_breakdown', {}).get('R2', 'N/A'),
-        'Diag': d.get('reason', '')
-    } for k, d in config.items() if isinstance(d, dict) and 'engine_name' in d]
-    
-    return df_master, pd.DataFrame(config_rows), risk_data
+    # 1. Extraemos el pronóstico de Markov del JSON
+    system_forecast = config.pop("_SYSTEM_FORECAST_", {})
 
-df_master, df_config, risk_profile = load_data()
+    # 2. Mapeamos la nueva telemetría del ML Auditor
+    config_rows = []
+    for k, d in config.items():
+        if isinstance(d, dict) and 'engine_name' in d:
+            config_rows.append({
+                'Module': d.get('module', 'N/A'), 
+                'Engine': d.get('engine_name', k), 
+                'Bucket': d.get('bucket', 'B'), 
+                'Target Regime': f"R{d.get('predicted_regime_evaluated', '?')}",
+                'WR (Target)': d.get('wr_predicted_regime', 0.0),
+                'WR (Global)': d.get('wr_global', 0.0),
+                'Trades (Target)': d.get('total_trades_in_regime', 0),
+                'Trades (Global)': d.get('total_trades_global', 0),
+                'Diag': d.get('reason', '') # Razón cruda: Muestra Z-Score, Inmadurez o Freno Terminal
+            })
+    
+    return df_master, pd.DataFrame(config_rows), risk_data, system_forecast
+
+df_master, df_config, risk_profile, system_forecast = load_data()
 
 # =========================================================================
 # UI COMPONENTS
@@ -84,8 +89,8 @@ def render_top_row(df_c, df_m=None):
     if df_c.empty:
         st.warning("No data available.")
         return
-    total_trades = df_c['Trades'].sum()
-    avg_wr = (df_c['Win Rate'] * df_c['Trades']).sum() / total_trades if total_trades > 0 else 0
+    total_trades = df_c['Trades (Global)'].sum()
+    avg_wr = (df_c['WR (Global)'] * df_c['Trades (Global)']).sum() / total_trades if total_trades > 0 else 0
     engines_count = len(df_c)
     b_a = len(df_c[df_c['Bucket'] == 'A'])
     b_b = len(df_c[df_c['Bucket'] == 'B'])
@@ -108,7 +113,7 @@ def render_top_row(df_c, df_m=None):
 
     c1, c2, c3, c4, c5 = st.columns(5)
     c1.metric("Total Trades", total_trades)
-    c2.metric("Win Rate", f"{avg_wr:.1f}%")
+    c2.metric("Avg Global WR", f"{avg_wr:.1f}%")
     c3.metric("Net Wins", wins)
     c4.metric("Net Losses", losses)
     c5.metric("Max L-Streak", max_l_streak)
@@ -118,47 +123,22 @@ def render_top_row(df_c, df_m=None):
     
     c6, c7, c8, c9, c10 = st.columns(5)
     c6.metric("Active Engines", engines_count)
-    c7.metric("Bucket A", b_a)
-    c8.metric("Bucket B", b_b)
-    c9.metric("Bucket C", b_c)
+    c7.metric("Bucket A (Snipers)", b_a)
+    c8.metric("Bucket B (Friction/New)", b_b)
+    c9.metric("Bucket C (Quarantine)", b_c)
     c10.metric("Swarm Health", f"{swarm_health:.1f}%")
     st.markdown("---")
 
 def render_engine_table(df_c, exclude_cols=None):
     if df_c.empty: return
     df_display = df_c.copy()
-
-    def format_diag(row):
-        if row['Bucket'] == 'A': return "OPTIMAL"
-        elif row['Bucket'] == 'B':
-            if row['Trades'] < 20: return f"({row['Trades']}/20)"
-            else: return "FRICTION"
-        elif row['Bucket'] == 'C': return "QUARANTINE"
-        return str(row.get('Diag', ''))
         
-    if 'Diag' in df_display.columns:
-        df_display['Diag'] = df_display.apply(format_diag, axis=1)
-
-    if 'Last 5' in df_display.columns:
-        df_display['Last 5'] = df_display['Last 5'].apply(lambda x: " - ".join(list(str(x))) if pd.notna(x) and x != 'N/A' else x)
-            
-    cols = ['Module', 'Engine', 'Bucket', 'Win Rate', 'Trades', 'Last 5', 'R0', 'R1', 'R2', 'Diag']
-    
-    # ORDENAMIENTO SEGURO (El que evita el KeyError)
-    sort_cols = [c for c in ['Bucket', 'Win Rate'] if c in df_display.columns]
-    sort_asc = [True, False][:len(sort_cols)]
-    
-    if sort_cols:
-        df_display = df_display.sort_values(by=sort_cols, ascending=sort_asc)
-
-    if exclude_cols: 
-        cols = [c for c in cols if c not in exclude_cols]
+    cols = ['Module', 'Engine', 'Bucket', 'Target Regime', 'WR (Target)', 'WR (Global)', 'Trades (Target)', 'Trades (Global)', 'Diag']
+    if exclude_cols: cols = [c for c in cols if c not in exclude_cols]
         
-    valid_cols = [c for c in cols if c in df_display.columns]
-    df_display = df_display[valid_cols]
-        
+    df_display = df_display[cols].sort_values(by=['Bucket', 'WR (Target)'], ascending=[True, False])
     styled = df_display.style.map(highlight_buckets, subset=['Bucket'] if 'Bucket' in df_display.columns else [])\
-                             .format({'Win Rate': "{:.1f}%"})
+                             .format({'WR (Target)': "{:.1f}%", 'WR (Global)': "{:.1f}%"})
     st.dataframe(styled, use_container_width=True, hide_index=True)
 
 # =========================================================================
@@ -177,6 +157,18 @@ if nav_category == "HOME":
     status = risk_profile.get("account_status", "ACTIVE")
     if status in ["ACTIVE", "DEMO", "PASSED"]: st.success(f"System Online | Status: {status}")
     else: st.error(f"Execution Locked | Status: {status}")
+    
+    # 🔮 NUEVO PANEL: Pronóstico Predictivo de Markov
+    if system_forecast:
+        st.markdown("### 🔮 Markov Predictive Forecast (Target For Tomorrow)")
+        cols = st.columns(len(system_forecast))
+        for i, (mod, data) in enumerate(system_forecast.items()):
+            with cols[i]:
+                prob = data.get("probability", 0)
+                pred_r = data.get("predicted_regime_tomorrow", "?")
+                delta_color = "normal" if prob > 50 else "off"
+                st.metric(f"Module: {mod}", f"Regime {pred_r}", f"{prob}% Prob", delta_color=delta_color)
+        st.markdown("---")
     
     df_m_valid = df_master[df_master['Engine'] != 'NO_TRADE'] if not df_master.empty else None
     render_top_row(df_config, df_m_valid)
@@ -308,30 +300,21 @@ elif nav_category == "Modules":
     df_c_mod = df_config[df_config['Module'] == selected_module]
     df_m_mod = df_master[(df_master['Module'] == selected_module) & (df_master['Engine'] != 'NO_TRADE')] if not df_master.empty else None
     
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["Overview (All)", "Buckets Breakdown", "R0 (Low Volatility)", "R1 (Normal)", "R2 (High Volatility)"])
+    # NUEVAS PESTAÑAS: Alineadas con el Semáforo de Riesgo 
+    tab1, tab2, tab3, tab4 = st.tabs(["Overview (All)", "Bucket A (Snipers)", "Bucket B (Friction/New)", "Bucket C (Quarantine)"])
     
     with tab1:
         render_top_row(df_c_mod, df_m_mod)
         render_engine_table(df_c_mod)
-        
     with tab2:
-        b_choice = st.radio("Filter Bucket", ["A", "B", "C"], horizontal=True)
-        df_c_b = df_c_mod[df_c_mod['Bucket'] == b_choice]
-        df_m_b = df_m_mod[df_m_mod['Engine'].isin(df_c_b['Engine'].tolist())] if df_m_mod is not None else None
-        render_top_row(df_c_b, df_m_b)
-        render_engine_table(df_c_b, exclude_cols=['Bucket'])
-        
+        df_c_a = df_c_mod[df_c_mod['Bucket'] == 'A']
+        render_top_row(df_c_a, None)
+        render_engine_table(df_c_a, exclude_cols=['Bucket'])
     with tab3:
-        df_r0 = df_c_mod[df_c_mod['R0'] != 'N/A']
-        render_top_row(df_r0, None)
-        render_engine_table(df_r0, exclude_cols=['R1', 'R2'])
-        
+        df_c_b = df_c_mod[df_c_mod['Bucket'] == 'B']
+        render_top_row(df_c_b, None)
+        render_engine_table(df_c_b, exclude_cols=['Bucket'])
     with tab4:
-        df_r1 = df_c_mod[df_c_mod['R1'] != 'N/A']
-        render_top_row(df_r1, None)
-        render_engine_table(df_r1, exclude_cols=['R0', 'R2'])
-        
-    with tab5:
-        df_r2 = df_c_mod[df_c_mod['R2'] != 'N/A']
-        render_top_row(df_r2, None)
-        render_engine_table(df_r2, exclude_cols=['R0', 'R1'])
+        df_c_c = df_c_mod[df_c_mod['Bucket'] == 'C']
+        render_top_row(df_c_c, None)
+        render_engine_table(df_c_c, exclude_cols=['Bucket'])
