@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
 import json
@@ -12,13 +12,38 @@ st.markdown("""
     <style>
     .block-container { padding-top: 2rem; padding-bottom: 2rem; }
     h1, h2, h3 { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 400; color: #E0E0E0;}
+    
+    /* Global Metrics Styling */
     .stMetric label { font-size: 0.85rem !important; color: #A0A0A0 !important; }
     .stMetric value { font-size: 1.5rem !important; }
+    
+    /* Buttons */
     div.stButton > button[kind="primary"] { background-color: #28a745; color: white; border: none; border-radius: 4px; font-weight: bold; }
     div.stButton > button[kind="primary"]:hover { background-color: #218838; }
-    div[data-testid="column"]:nth-of-type(2) [data-testid="stMetric"] { background: linear-gradient(135deg, rgba(0,200,83,0.15), transparent); border-radius: 8px; padding: 10px 15px; border-left: 3px solid #00C853; }
-    div[data-testid="column"]:nth-of-type(3) [data-testid="stMetric"] { background: linear-gradient(135deg, rgba(200,170,0,0.06), transparent); border-radius: 8px; padding: 10px 15px; border-left: 3px solid #B38F00; }
-    div[data-testid="column"]:nth-of-type(4) [data-testid="stMetric"] { background: linear-gradient(135deg, rgba(213,0,0,0.12), transparent); border-radius: 8px; padding: 10px 15px; border-left: 3px solid #D50000; }
+    
+    /* Minimalist Forecast Cards */
+    .forecast-card {
+        background-color: #1A1C23;
+        border: 1px solid #2D303E;
+        border-radius: 8px;
+        padding: 12px;
+        text-align: center;
+        margin-bottom: 10px;
+    }
+    .fc-title { font-size: 1rem; color: #A0A0A0; font-weight: 600; margin-bottom: 5px; }
+    .fc-data { font-size: 1.1rem; color: #E0E0E0; font-weight: 400; }
+    .fc-highlight { color: #00C853; font-weight: 700; }
+    
+    .module-hud {
+        background: linear-gradient(90deg, #1A1C23, #15161B);
+        border-left: 4px solid #00C853;
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+        color: #E0E0E0;
+        font-size: 1.2rem;
+        font-weight: 500;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -63,17 +88,17 @@ def load_data():
                 'Engine': d.get('engine_name', k), 
                 'Bucket': d.get('bucket', 'B'), 
                 'Target Regime': f"R{d.get('predicted_regime_evaluated', '?')}",
-                'WR (Target)': d.get('wr_predicted_regime', 0.0),
-                'WR (Global)': d.get('wr_global', 0.0),
-                'Trades (Target)': d.get('total_trades_in_regime', 0),
-                'Trades (Global)': d.get('total_trades_global', 0),
+                'WR Target': d.get('wr_predicted_regime', 0.0),
+                'WR Global': d.get('wr_global', 0.0),
+                'TT Target': d.get('total_trades_in_regime', 0),
+                'TT Global': d.get('total_trades_global', 0),
                 'Diag': d.get('reason', ''),
-                'R0 WR': d.get('r0_wr', 0.0),
-                'R0 Trades': d.get('r0_trades', 0),
-                'R1 WR': d.get('r1_wr', 0.0),
-                'R1 Trades': d.get('r1_trades', 0),
-                'R2 WR': d.get('r2_wr', 0.0),
-                'R2 Trades': d.get('r2_trades', 0)
+                'WR R0': d.get('r0_wr', 0.0),
+                'TT R0': d.get('r0_trades', 0),
+                'WR R1': d.get('r1_wr', 0.0),
+                'TT R1': d.get('r1_trades', 0),
+                'WR R2': d.get('r2_wr', 0.0),
+                'TT R2': d.get('r2_trades', 0)
             })
     
     return df_master, pd.DataFrame(config_rows), risk_data, system_forecast
@@ -81,7 +106,7 @@ def load_data():
 df_master, df_config, risk_profile, system_forecast = load_data()
 
 # =========================================================================
-# UI COMPONENTS & RENDERING
+# UTILITIES & FORMATTING
 # =========================================================================
 def highlight_buckets(val):
     if val == "A": return 'background-color: rgba(0, 200, 83, 0.1); color: #00C853;'
@@ -89,85 +114,20 @@ def highlight_buckets(val):
     if val == "C": return 'background-color: rgba(213, 0, 0, 0.1); color: #D50000;'
     return ''
 
-def classify_historical_bucket(row, r_id):
-    """Dynamic Bucketing for Historical Terrains"""
-    wr = row[f'R{r_id} WR']
-    trades = row[f'R{r_id} Trades']
-    if trades < 5: return "B" # Friction/New
-    if wr >= 62.5: return "A" # Sniper
-    return "C" # Toxic/Quarantine
+def get_last_5_string(engine_name, df_m):
+    if df_m is None or df_m.empty: return "N/A"
+    trades = df_m[df_m['Engine'] == engine_name].sort_values('Timestamp')
+    if trades.empty: return "N/A"
+    last_5 = trades.tail(5)['Is_Win'].tolist()
+    return " - ".join(["W" if x == 1 else "L" for x in last_5])
 
-def render_module_hud(module_name, forecast_dict):
-    f_data = forecast_dict.get(module_name, {})
-    if not f_data: return
-    
-    today_r = f_data.get('today_regime', '?')
-    pred_r = f_data.get('predicted_regime_tomorrow', '?')
-    prob = f_data.get('probability', 0)
-    
-    hist = f_data.get('historical_sessions', {})
-    hist_r0 = hist.get('0', hist.get(0, 0))
-    hist_r1 = hist.get('1', hist.get(1, 0))
-    hist_r2 = hist.get('2', hist.get(2, 0))
-    
-    st.markdown("### 🧠 Module Intelligence Header")
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Last Session", f"Regime {today_r}")
-    c2.metric("Next Session Target", f"Regime {pred_r}", f"{prob}% Prob")
-    c3.metric("Historical Distribution", f"{hist_r0} (R0) | {hist_r1} (R1) | {hist_r2} (R2)")
-    st.markdown("---")
-
-def render_global_table(df_c):
-    """Wide table for Global Overview (Home & Module Tab 1)"""
-    if df_c.empty: return
-    df_display = df_c.copy()
-    
-    # Sort first
-    df_display = df_display.sort_values(by=['Bucket', 'WR (Global)'], ascending=[True, False])
-    
-    # Select cols
-    cols = ['Module', 'Engine', 'Bucket', 'WR (Global)', 'Trades (Global)', 'R0 WR', 'R0 Trades', 'R1 WR', 'R1 Trades', 'R2 WR', 'R2 Trades']
-    valid_cols = [c for c in cols if c in df_display.columns]
-    df_display = df_display[valid_cols]
-    
-    format_dict = {'WR (Global)': "{:.1f}%", 'R0 WR': "{:.1f}%", 'R1 WR': "{:.1f}%", 'R2 WR': "{:.1f}%"}
-    styled = df_display.style.map(highlight_buckets, subset=['Bucket'] if 'Bucket' in df_display.columns else [])\
-                             .format(format_dict)
-    st.dataframe(styled, use_container_width=True, hide_index=True)
-
-def render_lineup_table(df_c):
-    """Action table for Next Session (Module Tab 2)"""
-    if df_c.empty: return
-    df_display = df_c.copy()
-    
-    df_display = df_display.sort_values(by=['Bucket', 'WR (Target)'], ascending=[True, False])
-    cols = ['Module', 'Engine', 'Bucket', 'Target Regime', 'WR (Target)', 'Trades (Target)', 'Diag']
-    valid_cols = [c for c in cols if c in df_display.columns]
-    df_display = df_display[valid_cols]
-    
-    styled = df_display.style.map(highlight_buckets, subset=['Bucket'] if 'Bucket' in df_display.columns else [])\
-                             .format({'WR (Target)': "{:.1f}%"})
-    st.dataframe(styled, use_container_width=True, hide_index=True)
-
-def render_regime_historical_table(df_c, regime_id):
-    """Deep forensic table for specific regimes (Module Tabs 3,4,5)"""
-    if df_c.empty: return
-    df_display = df_c.copy()
-    
-    wr_col = f'R{regime_id} WR'
-    trades_col = f'R{regime_id} Trades'
-    
-    df_display = df_display.sort_values(by=[wr_col], ascending=[False])
-    cols = ['Module', 'Engine', 'Hist_Bucket', wr_col, trades_col, 'WR (Global)', 'Trades (Global)']
-    valid_cols = [c for c in cols if c in df_display.columns]
-    df_display = df_display[valid_cols]
-    
-    styled = df_display.style.map(highlight_buckets, subset=['Hist_Bucket'] if 'Hist_Bucket' in df_display.columns else [])\
-                             .format({wr_col: "{:.1f}%", 'WR (Global)': "{:.1f}%"})
-    st.dataframe(styled, use_container_width=True, hide_index=True)
+# Inyectamos dinámicamente el Last 5 al df_config
+if not df_config.empty:
+    df_m_valid = df_master[df_master['Engine'] != 'NO_TRADE'] if not df_master.empty else None
+    df_config['Last 5'] = df_config['Engine'].apply(lambda e: get_last_5_string(e, df_m_valid))
 
 # =========================================================================
-# NAVIGATION & ROUTING
+# NAVIGATION
 # =========================================================================
 st.sidebar.title("OmniSwarm Quant")
 st.sidebar.markdown("---")
@@ -177,26 +137,76 @@ if st.sidebar.button("Refresh Data"):
     st.cache_data.clear()
     st.rerun()
 
+# =========================================================================
+# VIEW: HOME
+# =========================================================================
 if nav_category == "HOME":
     st.title("System Overview")
     status = risk_profile.get("account_status", "ACTIVE")
     if status in ["ACTIVE", "DEMO", "PASSED"]: st.success(f"System Online | Status: {status}")
     else: st.error(f"Execution Locked | Status: {status}")
     
+    # --- BLOCK 1: Markov Predictive Forecast ---
     if system_forecast:
-        st.markdown("### 🔮 Markov Predictive Forecast (Target For Tomorrow)")
+        st.markdown("### 🔮 Markov Predictive Forecast")
         cols = st.columns(len(system_forecast))
         for i, (mod, data) in enumerate(system_forecast.items()):
+            pred_r = data.get("predicted_regime_tomorrow", "?")
+            prob = data.get("probability", 0)
             with cols[i]:
-                prob = data.get("probability", 0)
-                pred_r = data.get("predicted_regime_tomorrow", "?")
-                delta_color = "normal" if prob > 50 else "off"
-                st.metric(f"Module: {mod}", f"Regime {pred_r}", f"{prob}% Prob", delta_color=delta_color)
-        st.markdown("---")
+                st.markdown(f"""
+                <div class="forecast-card">
+                    <div class="fc-title">[ {mod} ]</div>
+                    <div class="fc-data">TARGET: <span class="fc-highlight">R{pred_r}</span> | PROB: {prob}%</div>
+                </div>
+                """, unsafe_allow_html=True)
+        st.write("")
     
-    st.markdown("### 🌐 Global Swarm Authorization (All Modules)")
-    render_global_table(df_config)
+    # --- BLOCK 2: Global Historical Performance ---
+    st.markdown("### 🌐 Global Historical Performance")
+    if not df_config.empty:
+        total_trades = df_config['TT Global'].sum()
+        avg_wr = (df_config['WR Global'] * df_config['TT Global']).sum() / total_trades if total_trades > 0 else 0
+        
+        wins = 0; losses = 0; max_l_streak = 0
+        df_m_valid = df_master[df_master['Engine'] != 'NO_TRADE'] if not df_master.empty else None
+        if df_m_valid is not None and not df_m_valid.empty and 'Is_Win' in df_m_valid.columns:
+            wins = len(df_m_valid[df_m_valid['Is_Win'] == 1])
+            losses = len(df_m_valid[df_m_valid['Is_Win'] == 0])
+            df_asc = df_m_valid.sort_values('Timestamp', ascending=True)
+            curr_streak = 0
+            for val in df_asc['Is_Win']:
+                if val == 0:
+                    curr_streak += 1
+                    max_l_streak = max(max_l_streak, curr_streak)
+                else: curr_streak = 0
+                
+        c1, c2, c3, c4, c5 = st.columns(5)
+        c1.metric("Total Trades", total_trades)
+        c2.metric("Global WR", f"{avg_wr:.1f}%")
+        c3.metric("Net Wins", wins)
+        c4.metric("Net Losses", losses)
+        c5.metric("Max L-Streak", max_l_streak)
+        st.markdown("---")
+        
+        # --- BLOCK 3: The Global Matrix ---
+        st.markdown("### 📊 The Global Matrix")
+        df_home = df_config.copy()
+        
+        # Filtrar y ordenar exacto a la directiva
+        df_home = df_home.sort_values(by='TT Global', ascending=False)
+        cols_home = ['Module', 'Engine', 'TT Global', 'WR Global', 'Last 5', 'TT R0', 'WR R0', 'TT R1', 'WR R1', 'TT R2', 'WR R2']
+        df_home = df_home[cols_home]
+        
+        format_dict = {'WR Global': "{:.1f}%", 'WR R0': "{:.1f}%", 'WR R1': "{:.1f}%", 'WR R2': "{:.1f}%"}
+        styled_home = df_home.style.format(format_dict)
+        st.dataframe(styled_home, use_container_width=True, hide_index=True)
+    else:
+        st.warning("No global data available.")
 
+# =========================================================================
+# VIEW: RISK MANAGEMENT (Zero-Trust)
+# =========================================================================
 elif nav_category == "Risk Management":
     st.title("Risk Management (Zero-Trust)")
     st.markdown("Live scan from NinjaTrader memory to assign rules to real account.")
@@ -215,7 +225,7 @@ elif nav_category == "Risk Management":
                 st.session_state.active_account = data.get("active_account", "")
                 st.success("✅ NinjaTrader Server successfully interrogated.")
             else: st.error(f"❌ NT8 Rejected connection (Error {res.status_code}).")
-        except Exception as e: st.error(f"❌ Connection to NT8 failed on port 8080. Error: {e}")
+        except Exception as e: st.error(f"❌ Connection to NT8 failed on port 8080. Check IP/Firewall. Error: {e}")
 
     if st.session_state.scanned_accounts:
         st.markdown("---")
@@ -280,6 +290,9 @@ elif nav_category == "Risk Management":
                     else: st.error(f"❌ Gateway rejected configuration (Error {res.status_code}).")
                 except Exception as e: st.error(f"❌ Connection failed. Check IP/Firewall. Error: {e}")
 
+# =========================================================================
+# VIEW: TRADE LOG
+# =========================================================================
 elif nav_category == "Trade Log":
     st.title("Trade Log")
     time_filter = st.radio("Timeframe", ["Today", "7 Days", "15 Days", "1 Month", "3 Months", "6 Months", "1 Year", "All-Time"], horizontal=True)
@@ -314,54 +327,74 @@ elif nav_category == "Trade Log":
         else: st.warning("No data found for the selected timeframe.")
     else: st.error("Database is empty.")
 
+# =========================================================================
+# VIEW: MODULES
+# =========================================================================
 elif nav_category == "Modules":
     st.title("Modules Dashboard")
-    selected_module = st.selectbox("Select Target Module", ["MCL", "MGC", "MES", "MNQ_DAY", "MNQ_NIGHT"])
+    
+    # --- BLOCK 1: Module Selector ---
+    selected_module = st.selectbox("Select Target Module:", ["MCL", "MGC", "MES", "MNQ_DAY", "MNQ_NIGHT"])
     df_c_mod = df_config[df_config['Module'] == selected_module].copy()
     
-    # Render HUD
-    render_module_hud(selected_module, system_forecast)
+    # --- BLOCK 2: Module Intelligence Header (HUD) ---
+    f_data = system_forecast.get(selected_module, {})
+    if f_data:
+        pred_r = f_data.get('predicted_regime_tomorrow', '?')
+        prob = f_data.get('probability', 0)
+        st.markdown(f"""
+        <div class="module-hud">
+            [ NEXT SESSION FORECAST ] &nbsp;&nbsp;🎯 TARGET: <span style='color: #00C853; font-weight: 700;'>R{pred_r}</span> &nbsp;&nbsp;|&nbsp;&nbsp; PROB: {prob}%
+        </div>
+        """, unsafe_allow_html=True)
     
-    # TABS
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "🌐 Global Overview", 
+    # --- BLOCK 3: The Analytical Tabs ---
+    tab1, tab2, tab3 = st.tabs([
         "🚀 Next Session Line-up", 
-        "📊 Regime 0 Historical", 
-        "📊 Regime 1 Historical", 
-        "📊 Regime 2 Historical"
+        "🌐 Global & Multi-Regime Matrix", 
+        "🛡️ Quarantine & Friction"
     ])
     
     with tab1:
-        render_global_table(df_c_mod)
-        
+        st.markdown("### Next Session Line-up")
+        if not df_c_mod.empty:
+            df_t1 = df_c_mod.copy()
+            # Sort categorico por Bucket (A -> B -> C) luego WR Target Descendente
+            df_t1['Bucket_Rank'] = df_t1['Bucket'].map({'A': 1, 'B': 2, 'C': 3})
+            df_t1 = df_t1.sort_values(by=['Bucket_Rank', 'WR Target'], ascending=[True, False])
+            
+            cols_t1 = ['Engine', 'Bucket', 'TT Target', 'WR Target', 'TT Global', 'WR Global', 'Diag']
+            df_t1 = df_t1[cols_t1]
+            
+            styled_t1 = df_t1.style.map(highlight_buckets, subset=['Bucket'])\
+                                   .format({'WR Target': "{:.1f}%", 'WR Global': "{:.1f}%"})
+            st.dataframe(styled_t1, use_container_width=True, hide_index=True)
+            
     with tab2:
-        pred_regime = system_forecast.get(selected_module, {}).get("predicted_regime_tomorrow", "?")
-        st.info(f"🚀 Execution logic and buckets strictly optimized for predicted **Regime {pred_regime}**")
-        render_lineup_table(df_c_mod)
-        
+        st.markdown("### Global & Multi-Regime Matrix")
+        if not df_c_mod.empty:
+            df_t2 = df_c_mod.copy()
+            df_t2 = df_t2.sort_values(by='TT Global', ascending=False)
+            
+            cols_t2 = ['Engine', 'TT Global', 'WR Global', 'Last 5', 'TT R0', 'WR R0', 'TT R1', 'WR R1', 'TT R2', 'WR R2']
+            df_t2 = df_t2[cols_t2]
+            
+            format_dict_t2 = {'WR Global': "{:.1f}%", 'WR R0': "{:.1f}%", 'WR R1': "{:.1f}%", 'WR R2': "{:.1f}%"}
+            styled_t2 = df_t2.style.format(format_dict_t2)
+            st.dataframe(styled_t2, use_container_width=True, hide_index=True)
+            
     with tab3:
-        st.markdown("### Regime 0 Forensic Analysis")
+        st.markdown("### Quarantine & Friction Analysis")
         if not df_c_mod.empty:
-            df_c_mod['Hist_Bucket'] = df_c_mod.apply(lambda r: classify_historical_bucket(r, 0), axis=1)
-            t3_a, t3_b, t3_c = st.tabs(["Bucket A (Snipers)", "Bucket B (Friction/New)", "Bucket C (Quarantine)"])
-            with t3_a: render_regime_historical_table(df_c_mod[df_c_mod['Hist_Bucket'] == 'A'], 0)
-            with t3_b: render_regime_historical_table(df_c_mod[df_c_mod['Hist_Bucket'] == 'B'], 0)
-            with t3_c: render_regime_historical_table(df_c_mod[df_c_mod['Hist_Bucket'] == 'C'], 0)
+            # Filtrar solo B y C
+            df_t3 = df_c_mod[df_c_mod['Bucket'].isin(['B', 'C'])].copy()
+            # Ordenar C primero, luego B
+            df_t3['Bucket_Rank'] = df_t3['Bucket'].map({'C': 1, 'B': 2})
+            df_t3 = df_t3.sort_values(by=['Bucket_Rank', 'WR Target'], ascending=[True, False])
             
-    with tab4:
-        st.markdown("### Regime 1 Forensic Analysis")
-        if not df_c_mod.empty:
-            df_c_mod['Hist_Bucket'] = df_c_mod.apply(lambda r: classify_historical_bucket(r, 1), axis=1)
-            t4_a, t4_b, t4_c = st.tabs(["Bucket A (Snipers)", "Bucket B (Friction/New)", "Bucket C (Quarantine)"])
-            with t4_a: render_regime_historical_table(df_c_mod[df_c_mod['Hist_Bucket'] == 'A'], 1)
-            with t4_b: render_regime_historical_table(df_c_mod[df_c_mod['Hist_Bucket'] == 'B'], 1)
-            with t4_c: render_regime_historical_table(df_c_mod[df_c_mod['Hist_Bucket'] == 'C'], 1)
+            cols_t3 = ['Engine', 'Bucket', 'TT Target', 'WR Target', 'Last 5', 'Diag']
+            df_t3 = df_t3[cols_t3]
             
-    with tab5:
-        st.markdown("### Regime 2 Forensic Analysis")
-        if not df_c_mod.empty:
-            df_c_mod['Hist_Bucket'] = df_c_mod.apply(lambda r: classify_historical_bucket(r, 2), axis=1)
-            t5_a, t5_b, t5_c = st.tabs(["Bucket A (Snipers)", "Bucket B (Friction/New)", "Bucket C (Quarantine)"])
-            with t5_a: render_regime_historical_table(df_c_mod[df_c_mod['Hist_Bucket'] == 'A'], 2)
-            with t5_b: render_regime_historical_table(df_c_mod[df_c_mod['Hist_Bucket'] == 'B'], 2)
-            with t5_c: render_regime_historical_table(df_c_mod[df_c_mod['Hist_Bucket'] == 'C'], 2)
+            styled_t3 = df_t3.style.map(highlight_buckets, subset=['Bucket'])\
+                                   .format({'WR Target': "{:.1f}%"})
+            st.dataframe(styled_t3, use_container_width=True, hide_index=True)
