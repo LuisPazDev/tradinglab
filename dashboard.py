@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 st.set_page_config(page_title="OmniSwarm Quant", layout="wide")
 
 # =========================================================================
-# CSS PARA ESTÉTICA Y CENTRADO ABSOLUTO (RENDERIZADO HTML PURO)
+# CSS PARA ESTÉTICA, CENTRADO ABSOLUTO Y RESPONSIVIDAD (MÓVIL A TV)
 # =========================================================================
 st.markdown("""
     <style>
@@ -48,36 +48,40 @@ st.markdown("""
         font-weight: 500;
     }
 
-    /* Absolute HTML Table Centering & Styling */
+    /* Absolute HTML Table Centering, Sizing & Responsiveness */
     .table-container {
-        display: flex;
-        justify-content: center;
         width: 100%;
+        overflow-x: auto; /* Responsive horizontal scroll for mobile */
+        -webkit-overflow-scrolling: touch;
         margin-top: 10px;
         margin-bottom: 20px;
-        overflow-x: auto;
+        border-radius: 8px;
     }
     .custom-table {
         border-collapse: collapse;
+        width: 100%; /* Force all tables to occupy full available width symmetrically */
+        min-width: 800px; /* Prevent extreme squishing on small mobile screens */
         margin: 0 auto;
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        font-size: 0.85rem; /* Reduced font size for a cleaner, professional look */
         color: #E0E0E0;
         background-color: #1A1C23;
         border: 1px solid #2D303E;
-        border-radius: 8px;
     }
     .custom-table th {
         background-color: #262730;
         color: #FAFAFA;
         font-weight: 600;
-        padding: 10px 15px;
+        padding: 10px 12px;
         text-align: center !important;
         border-bottom: 1px solid #2D303E;
+        white-space: nowrap; /* Prevent headers from stacking */
     }
     .custom-table td {
-        padding: 8px 15px;
+        padding: 8px 12px;
         text-align: center !important;
         border-bottom: 1px solid #2D303E;
+        white-space: nowrap; /* Prevent "Last 5" and other data from crowding/stacking */
     }
     .custom-table tr:hover {
         background-color: #2D303E;
@@ -181,7 +185,7 @@ def render_html_table(df, bucket_cols=None):
     # Inject Custom CSS Class
     html = html.replace('<table', '<table class="custom-table"')
     
-    # Wrap in Flexbox Container for strict centering
+    # Wrap in Flexbox Container for strict centering & responsiveness
     return f'<div class="table-container">{html}</div>'
 
 def get_last_5_string(engine_name, df_m):
@@ -239,17 +243,17 @@ def render_regime_metrics(df_c, df_m, regime_id):
     
     if tt_col not in df_c.columns: return
     
-    # Filtrar solo los motores que operaron en este régimen
+    # Filter engines active in this regime
     df_reg = df_c[df_c[tt_col] > 0]
     engines_count = len(df_reg)
     total_trades = df_reg[tt_col].sum()
     avg_wr = (df_reg[wr_col] * df_reg[tt_col]).sum() / total_trades if total_trades > 0 else 0
     
-    # Calcular Wins/Losses con precisión en base a las estadísticas del régimen
+    # Calculate Wins/Losses
     wins = int(round((avg_wr / 100) * total_trades)) if total_trades > 0 else 0
     losses = total_trades - wins
     
-    # Intentar extraer Max Streak si df_master tiene la data del Régimen
+    # Extract Max Streak specifically for this Regime
     max_l_streak = "N/A"
     has_regime_col = False
     regime_col_name = ''
@@ -399,7 +403,7 @@ elif nav_category == "Risk Management":
                 max_contracts = st.number_input("Max Physical Contracts", value=int(risk_profile.get("max_contracts", 15)), step=1)
             
             with c_lim2:
-                daily_cap = st.number_input("Daily Loss Cap - $", value=float(risk_profile.get("daily_cap_usd", 1250.0)), step=50.0)
+                daily_cap = st.number_input("Daily Profit Cap - $", value=float(risk_profile.get("daily_cap_usd", 1250.0)), step=50.0)
                 profit_target = st.number_input("Profit Target - $", value=float(risk_profile.get("profit_target", 1500.0)), step=100.0)
                 
             st.write("")
@@ -420,12 +424,24 @@ elif nav_category == "Risk Management":
                         "max_contracts": max_contracts
                     }
                 }
+                
+                payload_nt8 = {
+                    "passphrase": WEBHOOK_PASSPHRASE,
+                    "command": "SYNC_BALANCE",
+                    "target_account": selected_acc_name
+                }
+                
                 try:
-                    res = requests.post(VPS_WEBHOOK_URL, json=payload_gateway, timeout=5)
-                    if res.status_code == 200: 
+                    res_py = requests.post(VPS_WEBHOOK_URL, json=payload_gateway, timeout=5)
+                    try:
+                        requests.post(NT8_WEBHOOK_URL, json=payload_nt8, timeout=3)
+                    except Exception as e_nt8:
+                        st.warning(f"⚠️ Risk params saved, but direct ping to NT8 for Hot-Swap failed: {e_nt8}")
+
+                    if res_py.status_code == 200: 
                         st.success(f"✅ Shield Active! NinjaTrader will execute orders on **{selected_acc_name}**.")
                         st.session_state.active_account = selected_acc_name
-                    else: st.error(f"❌ Gateway rejected configuration (Error {res.status_code}).")
+                    else: st.error(f"❌ Gateway rejected configuration (Error {res_py.status_code}).")
                 except Exception as e: st.error(f"❌ Connection failed. Check IP/Firewall. Error: {e}")
 
 # =========================================================================
