@@ -133,10 +133,24 @@ def render_engine_table(df_c, exclude_cols=None):
     if df_c.empty: return
     df_display = df_c.copy()
         
+    # 1. ORDENAR PRIMERO (Mientras todas las columnas existen)
+    sort_cols = ['Bucket', 'WR (Target)']
+    valid_sort_cols = [c for c in sort_cols if c in df_display.columns]
+    
+    if valid_sort_cols:
+        asc_list = [True, False][:len(valid_sort_cols)]
+        df_display = df_display.sort_values(by=valid_sort_cols, ascending=asc_list)
+
+    # 2. SELECCIONAR Y EXCLUIR COLUMNAS DESPUÉS
     cols = ['Module', 'Engine', 'Bucket', 'Target Regime', 'WR (Target)', 'WR (Global)', 'Trades (Target)', 'Trades (Global)', 'Diag']
-    if exclude_cols: cols = [c for c in cols if c not in exclude_cols]
+    valid_cols = [c for c in cols if c in df_display.columns]
+    
+    if exclude_cols: 
+        valid_cols = [c for c in valid_cols if c not in exclude_cols]
         
-    df_display = df_display[cols].sort_values(by=['Bucket', 'WR (Target)'], ascending=[True, False])
+    df_display = df_display[valid_cols]
+
+    # 3. ESTILIZAR Y RENDERIZAR
     styled = df_display.style.map(highlight_buckets, subset=['Bucket'] if 'Bucket' in df_display.columns else [])\
                              .format({'WR (Target)': "{:.1f}%", 'WR (Global)': "{:.1f}%"})
     st.dataframe(styled, use_container_width=True, hide_index=True)
