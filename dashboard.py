@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 
 st.set_page_config(page_title="OmniSwarm Quant", layout="wide")
 
+# CSS para Centrado Absoluto y Estética Minimalista
 st.markdown("""
     <style>
     .block-container { padding-top: 2rem; padding-bottom: 2rem; }
@@ -44,6 +45,14 @@ st.markdown("""
         font-size: 1.2rem;
         font-weight: 500;
     }
+
+    /* Force Table Centering in Streamlit */
+    [data-testid="stTable"] th, [data-testid="stTable"] td {
+        text-align: center !important;
+    }
+    .stDataFrame [data-testid="stTable"] {
+        margin: 0 auto;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -62,7 +71,7 @@ def get_file_path(filename):
     return filename
 
 # =========================================================================
-# DATA LOADING
+# DATA LOADING & PRE-PROCESSING
 # =========================================================================
 @st.cache_data(ttl=30)
 def load_data():
@@ -108,11 +117,32 @@ df_master, df_config, risk_profile, system_forecast = load_data()
 # =========================================================================
 # UTILITIES & FORMATTING
 # =========================================================================
+def get_historical_bucket(trades, wr):
+    """Calcula el Bucket dinámicamente para regímenes históricos"""
+    if trades < 5: return "B"
+    if wr >= 62.5: return "A"
+    return "C"
+
 def highlight_buckets(val):
-    if val == "A": return 'background-color: rgba(0, 200, 83, 0.1); color: #00C853;'
-    if val == "B": return 'background-color: rgba(200, 170, 0, 0.06); color: #CCA700;'
-    if val == "C": return 'background-color: rgba(213, 0, 0, 0.1); color: #D50000;'
+    if val == "A": return 'background-color: rgba(0, 200, 83, 0.1); color: #00C853; font-weight: bold;'
+    if val == "B": return 'background-color: rgba(200, 170, 0, 0.06); color: #CCA700; font-weight: bold;'
+    if val == "C": return 'background-color: rgba(213, 0, 0, 0.1); color: #D50000; font-weight: bold;'
     return ''
+
+def style_dataframe(df, bucket_cols=None):
+    """Aplica formato de centrado y colores a cualquier tabla"""
+    if bucket_cols is None: bucket_cols = []
+    format_dict = {col: "{:.1f}%" for col in df.columns if 'WR' in col}
+    
+    # Centrado absoluto de Pandas Styler
+    styled = df.style.set_properties(**{'text-align': 'center'}) \
+                     .set_table_styles([dict(selector='th', props=[('text-align', 'center')])]) \
+                     .format(format_dict)
+    
+    for col in bucket_cols:
+        if col in df.columns:
+            styled = styled.map(highlight_buckets, subset=[col])
+    return styled
 
 def get_last_5_string(engine_name, df_m):
     if df_m is None or df_m.empty: return "N/A"
@@ -121,10 +151,39 @@ def get_last_5_string(engine_name, df_m):
     last_5 = trades.tail(5)['Is_Win'].tolist()
     return " - ".join(["W" if x == 1 else "L" for x in last_5])
 
-# Inyectamos dinámicamente el Last 5 al df_config
+# Inyectar Last 5 y Buckets Históricos al df_config principal
 if not df_config.empty:
     df_m_valid = df_master[df_master['Engine'] != 'NO_TRADE'] if not df_master.empty else None
     df_config['Last 5'] = df_config['Engine'].apply(lambda e: get_last_5_string(e, df_m_valid))
+    df_config['Bucket R0'] = df_config.apply(lambda r: get_historical_bucket(r['TT R0'], r['WR R0']), axis=1)
+    df_config['Bucket R1'] = df_config.apply(lambda r: get_historical_bucket(r['TT R1'], r['WR R1']), axis=1)
+    df_config['Bucket R2'] = df_config.apply(lambda r: get_historical_bucket(r['TT R2'], r['WR R2']), axis=1)
+
+def render_historical_metrics(df_c, df_m):
+    """Renderiza las 5 métricas top (Usable en HOME y MODULES)"""
+    if df_c.empty: return
+    total_trades = df_c['TT Global'].sum()
+    avg_wr = (df_c['WR Global'] * df_c['TT Global']).sum() / total_trades if total_trades > 0 else 0
+    
+    wins = 0; losses = 0; max_l_streak = 0
+    if df_m is not None and not df_m.empty and 'Is_Win' in df_m.columns:
+        wins = len(df_m[df_m['Is_Win'] == 1])
+        losses = len(df_m[df_m['Is_Win'] == 0])
+        df_asc = df_m.sort_values('Timestamp', ascending=True)
+        curr_streak = 0
+        for val in df_asc['Is_Win']:
+            if val == 0:
+                curr_streak += 1
+                max_l_streak = max(max_l_streak, curr_streak)
+            else: curr_streak = 0
+            
+    c1, c2, c3, c4, c5 = st.columns(5)
+    c1.metric("Total Trades", total_trades)
+    c2.metric("Global WR", f"{avg_wr:.1f}%")
+    c3.metric("Net Wins", wins)
+    c4.metric("Net Losses", losses)
+    c5.metric("Max L-Streak", max_l_streak)
+    st.markdown("---")
 
 # =========================================================================
 # NAVIGATION
@@ -165,41 +224,23 @@ if nav_category == "HOME":
     # --- BLOCK 2: Global Historical Performance ---
     st.markdown("### 🌐 Global Historical Performance")
     if not df_config.empty:
-        total_trades = df_config['TT Global'].sum()
-        avg_wr = (df_config['WR Global'] * df_config['TT Global']).sum() / total_trades if total_trades > 0 else 0
-        
-        wins = 0; losses = 0; max_l_streak = 0
         df_m_valid = df_master[df_master['Engine'] != 'NO_TRADE'] if not df_master.empty else None
-        if df_m_valid is not None and not df_m_valid.empty and 'Is_Win' in df_m_valid.columns:
-            wins = len(df_m_valid[df_m_valid['Is_Win'] == 1])
-            losses = len(df_m_valid[df_m_valid['Is_Win'] == 0])
-            df_asc = df_m_valid.sort_values('Timestamp', ascending=True)
-            curr_streak = 0
-            for val in df_asc['Is_Win']:
-                if val == 0:
-                    curr_streak += 1
-                    max_l_streak = max(max_l_streak, curr_streak)
-                else: curr_streak = 0
-                
-        c1, c2, c3, c4, c5 = st.columns(5)
-        c1.metric("Total Trades", total_trades)
-        c2.metric("Global WR", f"{avg_wr:.1f}%")
-        c3.metric("Net Wins", wins)
-        c4.metric("Net Losses", losses)
-        c5.metric("Max L-Streak", max_l_streak)
-        st.markdown("---")
+        render_historical_metrics(df_config, df_m_valid)
         
         # --- BLOCK 3: The Global Matrix ---
         st.markdown("### 📊 The Global Matrix")
         df_home = df_config.copy()
-        
-        # Filtrar y ordenar exacto a la directiva
         df_home = df_home.sort_values(by='TT Global', ascending=False)
-        cols_home = ['Module', 'Engine', 'TT Global', 'WR Global', 'Last 5', 'TT R0', 'WR R0', 'TT R1', 'WR R1', 'TT R2', 'WR R2']
+        
+        cols_home = [
+            'Module', 'Engine', 'TT Global', 'WR Global', 'Last 5', 
+            'TT R0', 'WR R0', 'Bucket R0', 
+            'TT R1', 'WR R1', 'Bucket R1', 
+            'TT R2', 'WR R2', 'Bucket R2'
+        ]
         df_home = df_home[cols_home]
         
-        format_dict = {'WR Global': "{:.1f}%", 'WR R0': "{:.1f}%", 'WR R1': "{:.1f}%", 'WR R2': "{:.1f}%"}
-        styled_home = df_home.style.format(format_dict)
+        styled_home = style_dataframe(df_home, bucket_cols=['Bucket R0', 'Bucket R1', 'Bucket R2'])
         st.dataframe(styled_home, use_container_width=True, hide_index=True)
     else:
         st.warning("No global data available.")
@@ -305,25 +346,12 @@ elif nav_category == "Trade Log":
         df_log = df_log.sort_values('Timestamp', ascending=False)
         if not df_log.empty:
             df_log['Result'] = df_log['Is_Win'].apply(lambda x: "WIN" if x == 1 else "LOSS")
-            wins = len(df_log[df_log['Is_Win'] == 1])
-            losses = len(df_log[df_log['Is_Win'] == 0])
-            total = len(df_log)
-            wr = (wins / total) * 100 if total > 0 else 0
-            df_asc = df_log.sort_values('Timestamp', ascending=True)
-            max_l_streak, curr_streak = 0, 0
-            for val in df_asc['Is_Win']:
-                if val == 0:
-                    curr_streak += 1
-                    max_l_streak = max(max_l_streak, curr_streak)
-                else: curr_streak = 0
-            col1, col2, col3, col4, col5 = st.columns(5)
-            col1.metric("Trades", total)
-            col2.metric("Win Rate", f"{wr:.1f}%")
-            col3.metric("Net Wins", wins)
-            col4.metric("Net Losses", losses)
-            col5.metric("Max L-Streak", max_l_streak)
+            
+            # Centrar la tabla de Trade Log también
             show_cols = ['Timestamp', 'Module', 'Engine', 'Action', 'Result']
-            st.dataframe(df_log[[c for c in show_cols if c in df_log.columns]], use_container_width=True, hide_index=True)
+            df_log_display = df_log[[c for c in show_cols if c in df_log.columns]]
+            styled_log = style_dataframe(df_log_display)
+            st.dataframe(styled_log, use_container_width=True, hide_index=True)
         else: st.warning("No data found for the selected timeframe.")
     else: st.error("Database is empty.")
 
@@ -347,54 +375,54 @@ elif nav_category == "Modules":
             [ NEXT SESSION FORECAST ] &nbsp;&nbsp;🎯 TARGET: <span style='color: #00C853; font-weight: 700;'>R{pred_r}</span> &nbsp;&nbsp;|&nbsp;&nbsp; PROB: {prob}%
         </div>
         """, unsafe_allow_html=True)
+        
+    # --- BLOCK 3: Module Historical Performance ---
+    st.markdown(f"### 🌐 Historical Performance: {selected_module}")
+    df_m_mod = df_master[(df_master['Module'] == selected_module) & (df_master['Engine'] != 'NO_TRADE')] if not df_master.empty else None
+    render_historical_metrics(df_c_mod, df_m_mod)
     
-    # --- BLOCK 3: The Analytical Tabs ---
-    tab1, tab2, tab3 = st.tabs([
-        "🚀 Next Session Line-up", 
-        "🌐 Global & Multi-Regime Matrix", 
-        "🛡️ Quarantine & Friction"
-    ])
+    # --- BLOCK 4: The Analytical Tabs ---
+    tab1, tab2 = st.tabs(["🚀 Next Session Line-up", "📊 Regime Breakdown"])
     
+    # TAB 1: Next Session Line-up
     with tab1:
-        st.markdown("### Next Session Line-up")
+        st.markdown("### Execution Plan (Target Regime Only)")
         if not df_c_mod.empty:
             df_t1 = df_c_mod.copy()
-            # Sort categorico por Bucket (A -> B -> C) luego WR Target Descendente
             df_t1['Bucket_Rank'] = df_t1['Bucket'].map({'A': 1, 'B': 2, 'C': 3})
             df_t1 = df_t1.sort_values(by=['Bucket_Rank', 'WR Target'], ascending=[True, False])
             
             cols_t1 = ['Engine', 'Bucket', 'TT Target', 'WR Target', 'TT Global', 'WR Global', 'Diag']
             df_t1 = df_t1[cols_t1]
             
-            styled_t1 = df_t1.style.map(highlight_buckets, subset=['Bucket'])\
-                                   .format({'WR Target': "{:.1f}%", 'WR Global': "{:.1f}%"})
+            styled_t1 = style_dataframe(df_t1, bucket_cols=['Bucket'])
             st.dataframe(styled_t1, use_container_width=True, hide_index=True)
             
+    # TAB 2: Regime Breakdown (Forensic Lab)
     with tab2:
-        st.markdown("### Global & Multi-Regime Matrix")
-        if not df_c_mod.empty:
-            df_t2 = df_c_mod.copy()
-            df_t2 = df_t2.sort_values(by='TT Global', ascending=False)
+        st.markdown("### Forensic Multi-Regime Analysis")
+        t_r0, t_r1, t_r2 = st.tabs(["[ Regime 0 ]", "[ Regime 1 ]", "[ Regime 2 ]"])
+        
+        def render_sub_bucket_table(df_regime, regime_id, bucket_label, title):
+            df_sub = df_regime[df_regime[f'Bucket R{regime_id}'] == bucket_label]
+            if not df_sub.empty:
+                st.markdown(f"#### {title}")
+                cols_sub = ['Engine', f'Bucket R{regime_id}', f'TT R{regime_id}', f'WR R{regime_id}', 'TT Global', 'WR Global']
+                df_sub = df_sub[cols_sub].sort_values(by=f'WR R{regime_id}', ascending=False)
+                styled_sub = style_dataframe(df_sub, bucket_cols=[f'Bucket R{regime_id}'])
+                st.dataframe(styled_sub, use_container_width=True, hide_index=True)
+        
+        with t_r0:
+            render_sub_bucket_table(df_c_mod, 0, 'A', "🎯 Bucket A (Snipers)")
+            render_sub_bucket_table(df_c_mod, 0, 'B', "⚠️ Bucket B (Friction/New)")
+            render_sub_bucket_table(df_c_mod, 0, 'C', "🚫 Bucket C (Quarantine)")
             
-            cols_t2 = ['Engine', 'TT Global', 'WR Global', 'Last 5', 'TT R0', 'WR R0', 'TT R1', 'WR R1', 'TT R2', 'WR R2']
-            df_t2 = df_t2[cols_t2]
+        with t_r1:
+            render_sub_bucket_table(df_c_mod, 1, 'A', "🎯 Bucket A (Snipers)")
+            render_sub_bucket_table(df_c_mod, 1, 'B', "⚠️ Bucket B (Friction/New)")
+            render_sub_bucket_table(df_c_mod, 1, 'C', "🚫 Bucket C (Quarantine)")
             
-            format_dict_t2 = {'WR Global': "{:.1f}%", 'WR R0': "{:.1f}%", 'WR R1': "{:.1f}%", 'WR R2': "{:.1f}%"}
-            styled_t2 = df_t2.style.format(format_dict_t2)
-            st.dataframe(styled_t2, use_container_width=True, hide_index=True)
-            
-    with tab3:
-        st.markdown("### Quarantine & Friction Analysis")
-        if not df_c_mod.empty:
-            # Filtrar solo B y C
-            df_t3 = df_c_mod[df_c_mod['Bucket'].isin(['B', 'C'])].copy()
-            # Ordenar C primero, luego B
-            df_t3['Bucket_Rank'] = df_t3['Bucket'].map({'C': 1, 'B': 2})
-            df_t3 = df_t3.sort_values(by=['Bucket_Rank', 'WR Target'], ascending=[True, False])
-            
-            cols_t3 = ['Engine', 'Bucket', 'TT Target', 'WR Target', 'Last 5', 'Diag']
-            df_t3 = df_t3[cols_t3]
-            
-            styled_t3 = df_t3.style.map(highlight_buckets, subset=['Bucket'])\
-                                   .format({'WR Target': "{:.1f}%"})
-            st.dataframe(styled_t3, use_container_width=True, hide_index=True)
+        with t_r2:
+            render_sub_bucket_table(df_c_mod, 2, 'A', "🎯 Bucket A (Snipers)")
+            render_sub_bucket_table(df_c_mod, 2, 'B', "⚠️ Bucket B (Friction/New)")
+            render_sub_bucket_table(df_c_mod, 2, 'C', "🚫 Bucket C (Quarantine)")
