@@ -3,854 +3,698 @@
         "module": "MCL",
         "engine_name": "Asia_Brk_L",
         "bucket": "A",
-        "reason": "\u00d3ptimo y Maduro",
-        "wr": 69.2,
-        "trades": 26,
-        "regimes_breakdown": {
-            "R0": "63.2% (19T) \u2705",
-            "R1": "83.3% (6T) \u2705",
-            "R2": "N/A"
-        },
-        "last_5": "W W W W L"
+        "reason": "Especialista en R1 (WR: 83.3%)",
+        "wr_global": 69.2,
+        "wr_predicted_regime": 83.3,
+        "predicted_regime_evaluated": 1,
+        "total_trades_global": 26,
+        "total_trades_in_regime": 6
     },
     "MCL::Asia_Brk_S": {
         "module": "MCL",
         "engine_name": "Asia_Brk_S",
         "bucket": "A",
-        "reason": "\u00d3ptimo y Maduro",
-        "wr": 76.0,
-        "trades": 25,
-        "regimes_breakdown": {
-            "R0": "62.5% (8T) \u2705",
-            "R1": "82.4% (17T) \u2705",
-            "R2": "N/A"
-        },
-        "last_5": "W W W L W"
+        "reason": "Especialista en R1 (WR: 82.4%)",
+        "wr_global": 76.0,
+        "wr_predicted_regime": 82.4,
+        "predicted_regime_evaluated": 1,
+        "total_trades_global": 25,
+        "total_trades_in_regime": 17
     },
     "MCL::Lon_Brk_L": {
         "module": "MCL",
         "engine_name": "Lon_Brk_L",
         "bucket": "A",
-        "reason": "\u00d3ptimo y Maduro",
-        "wr": 77.1,
-        "trades": 35,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "75.8% (33T) \u2705",
-            "R2": "N/A"
-        },
-        "last_5": "W W W L W"
+        "reason": "Especialista en R1 (WR: 75.8%)",
+        "wr_global": 77.1,
+        "wr_predicted_regime": 75.8,
+        "predicted_regime_evaluated": 1,
+        "total_trades_global": 35,
+        "total_trades_in_regime": 33
     },
     "MCL::Lon_Brk_S": {
         "module": "MCL",
         "engine_name": "Lon_Brk_S",
         "bucket": "A",
-        "reason": "\u00d3ptimo y Maduro",
-        "wr": 70.8,
-        "trades": 24,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "69.6% (23T) \u2705",
-            "R2": "N/A"
-        },
-        "last_5": "W W L L W"
+        "reason": "Especialista en R1 (WR: 69.6%)",
+        "wr_global": 70.8,
+        "wr_predicted_regime": 69.6,
+        "predicted_regime_evaluated": 1,
+        "total_trades_global": 24,
+        "total_trades_in_regime": 23
     },
     "MCL::PM_Fade_L": {
         "module": "MCL",
         "engine_name": "PM_Fade_L",
-        "bucket": "B",
-        "reason": "Inmaduro (6/20 trades)",
-        "wr": 100.0,
-        "trades": 6,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "100.0% (5T) \u2705",
-            "R2": "N/A"
-        },
-        "last_5": "W W W W W"
+        "bucket": "A",
+        "reason": "Especialista en R1 (WR: 100.0%)",
+        "wr_global": 100.0,
+        "wr_predicted_regime": 100.0,
+        "predicted_regime_evaluated": 1,
+        "total_trades_global": 6,
+        "total_trades_in_regime": 5
     },
     "MCL::Pit_Brk_S": {
         "module": "MCL",
         "engine_name": "Pit_Brk_S",
         "bucket": "A",
-        "reason": "\u00d3ptimo y Maduro",
-        "wr": 66.7,
-        "trades": 45,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "68.3% (41T) \u2705",
-            "R2": "N/A"
-        },
-        "last_5": "W W W L L"
+        "reason": "Especialista en R1 (WR: 68.3%)",
+        "wr_global": 66.7,
+        "wr_predicted_regime": 68.3,
+        "predicted_regime_evaluated": 1,
+        "total_trades_global": 45,
+        "total_trades_in_regime": 41
     },
     "MCL::Pit_Fade_L": {
         "module": "MCL",
         "engine_name": "Pit_Fade_L",
         "bucket": "B",
-        "reason": "Inmaduro (5/20 trades)",
-        "wr": 80.0,
-        "trades": 5,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "N/A",
-            "R2": "N/A"
-        },
-        "last_5": "W W W W L"
+        "reason": "Inmaduro en R1. WR Global \u00d3ptimo (80.0%)",
+        "wr_global": 80.0,
+        "wr_predicted_regime": 0.0,
+        "predicted_regime_evaluated": 1,
+        "total_trades_global": 5,
+        "total_trades_in_regime": 0
     },
     "MES::AE_L": {
         "module": "MES",
         "engine_name": "AE_L",
         "bucket": "B",
-        "reason": "Inmaduro (5/20 trades)",
-        "wr": 80.0,
-        "trades": 5,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "N/A",
-            "R2": "N/A"
-        },
-        "last_5": "L W W W W"
+        "reason": "Inmaduro en R0. WR Global \u00d3ptimo (80.0%)",
+        "wr_global": 80.0,
+        "wr_predicted_regime": 100.0,
+        "predicted_regime_evaluated": 0,
+        "total_trades_global": 5,
+        "total_trades_in_regime": 2
     },
     "MES::AM10_Swp_L": {
         "module": "MES",
         "engine_name": "AM10_Swp_L",
         "bucket": "B",
-        "reason": "Inmaduro (11/20 trades)",
-        "wr": 90.9,
-        "trades": 11,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "N/A",
-            "R2": "N/A"
-        },
-        "last_5": "L W W W W"
+        "reason": "Inmaduro en R0. WR Global \u00d3ptimo (90.9%)",
+        "wr_global": 90.9,
+        "wr_predicted_regime": 100.0,
+        "predicted_regime_evaluated": 0,
+        "total_trades_global": 11,
+        "total_trades_in_regime": 3
     },
     "MES::AM10_Swp_S": {
         "module": "MES",
         "engine_name": "AM10_Swp_S",
         "bucket": "A",
-        "reason": "\u00d3ptimo y Maduro",
-        "wr": 65.2,
-        "trades": 23,
-        "regimes_breakdown": {
-            "R0": "42.9% (7T) \ud83d\udeab",
-            "R1": "88.9% (9T) \u2705",
-            "R2": "57.1% (7T) \ud83d\udeab"
-        },
-        "last_5": "W W W W L"
+        "reason": "Especialista en R0 (WR: 80.0%)",
+        "wr_global": 65.2,
+        "wr_predicted_regime": 80.0,
+        "predicted_regime_evaluated": 0,
+        "total_trades_global": 23,
+        "total_trades_in_regime": 5
     },
     "MES::Apex_S": {
         "module": "MES",
         "engine_name": "Apex_S",
         "bucket": "B",
-        "reason": "Inmaduro (14/20 trades)",
-        "wr": 64.3,
-        "trades": 14,
-        "regimes_breakdown": {
-            "R0": "33.3% (6T) \ud83d\udeab",
-            "R1": "87.5% (8T) \u2705",
-            "R2": "N/A"
-        },
-        "last_5": "W W L W L"
+        "reason": "Inmaduro en R0. WR Global \u00d3ptimo (64.3%)",
+        "wr_global": 64.3,
+        "wr_predicted_regime": 0.0,
+        "predicted_regime_evaluated": 0,
+        "total_trades_global": 14,
+        "total_trades_in_regime": 0
     },
     "MES::Gap_Fade_L": {
         "module": "MES",
         "engine_name": "Gap_Fade_L",
-        "bucket": "A",
-        "reason": "\u00d3ptimo y Maduro",
-        "wr": 76.5,
-        "trades": 34,
-        "regimes_breakdown": {
-            "R0": "93.8% (16T) \u2705",
-            "R1": "46.2% (13T) \ud83d\udeab",
-            "R2": "100.0% (5T) \u2705"
-        },
-        "last_5": "W W W W W"
+        "bucket": "B",
+        "reason": "Inmaduro en R0. WR Global \u00d3ptimo (76.5%)",
+        "wr_global": 76.5,
+        "wr_predicted_regime": 100.0,
+        "predicted_regime_evaluated": 0,
+        "total_trades_global": 34,
+        "total_trades_in_regime": 4
     },
     "MES::Gap_Fade_S": {
         "module": "MES",
         "engine_name": "Gap_Fade_S",
         "bucket": "A",
-        "reason": "\u00d3ptimo y Maduro",
-        "wr": 78.1,
-        "trades": 32,
-        "regimes_breakdown": {
-            "R0": "76.9% (13T) \u2705",
-            "R1": "90.0% (10T) \u2705",
-            "R2": "66.7% (9T) \u2705"
-        },
-        "last_5": "W W W L L"
+        "reason": "Especialista en R0 (WR: 66.7%)",
+        "wr_global": 78.1,
+        "wr_predicted_regime": 66.7,
+        "predicted_regime_evaluated": 0,
+        "total_trades_global": 32,
+        "total_trades_in_regime": 9
     },
     "MES::Grind_L": {
         "module": "MES",
         "engine_name": "Grind_L",
         "bucket": "A",
-        "reason": "\u00d3ptimo y Maduro",
-        "wr": 77.3,
-        "trades": 22,
-        "regimes_breakdown": {
-            "R0": "71.4% (7T) \u2705",
-            "R1": "N/A",
-            "R2": "78.6% (14T) \u2705"
-        },
-        "last_5": "W W W W W"
+        "reason": "Especialista en R0 (WR: 78.6%)",
+        "wr_global": 77.3,
+        "wr_predicted_regime": 78.6,
+        "predicted_regime_evaluated": 0,
+        "total_trades_global": 22,
+        "total_trades_in_regime": 14
     },
     "MES::Grind_S": {
         "module": "MES",
         "engine_name": "Grind_S",
         "bucket": "B",
-        "reason": "Inmaduro (9/20 trades)",
-        "wr": 88.9,
-        "trades": 9,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "N/A",
-            "R2": "N/A"
-        },
-        "last_5": "W W L W W"
+        "reason": "Inmaduro en R0. WR Global \u00d3ptimo (87.5%)",
+        "wr_global": 87.5,
+        "wr_predicted_regime": 100.0,
+        "predicted_regime_evaluated": 0,
+        "total_trades_global": 8,
+        "total_trades_in_regime": 3
     },
     "MES::IB_Fade_L": {
         "module": "MES",
         "engine_name": "IB_Fade_L",
         "bucket": "A",
-        "reason": "\u00d3ptimo y Maduro",
-        "wr": 81.6,
-        "trades": 38,
-        "regimes_breakdown": {
-            "R0": "71.4% (7T) \u2705",
-            "R1": "80.0% (10T) \u2705",
-            "R2": "85.7% (21T) \u2705"
-        },
-        "last_5": "W W W W W"
+        "reason": "Especialista en R0 (WR: 85.0%)",
+        "wr_global": 81.6,
+        "wr_predicted_regime": 85.0,
+        "predicted_regime_evaluated": 0,
+        "total_trades_global": 38,
+        "total_trades_in_regime": 20
     },
     "MES::IB_Fade_S": {
         "module": "MES",
         "engine_name": "IB_Fade_S",
-        "bucket": "B",
-        "reason": "Inmaduro (18/20 trades)",
-        "wr": 77.8,
-        "trades": 18,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "N/A",
-            "R2": "78.6% (14T) \u2705"
-        },
-        "last_5": "W W W W L"
+        "bucket": "A",
+        "reason": "Especialista en R0 (WR: 78.6%)",
+        "wr_global": 77.8,
+        "wr_predicted_regime": 78.6,
+        "predicted_regime_evaluated": 0,
+        "total_trades_global": 18,
+        "total_trades_in_regime": 14
     },
     "MES::IB_L": {
         "module": "MES",
         "engine_name": "IB_L",
         "bucket": "A",
-        "reason": "\u00d3ptimo y Maduro",
-        "wr": 76.9,
-        "trades": 26,
-        "regimes_breakdown": {
-            "R0": "100.0% (6T) \u2705",
-            "R1": "N/A",
-            "R2": "70.0% (20T) \u2705"
-        },
-        "last_5": "W W L W W"
+        "reason": "Especialista en R0 (WR: 70.0%)",
+        "wr_global": 76.9,
+        "wr_predicted_regime": 70.0,
+        "predicted_regime_evaluated": 0,
+        "total_trades_global": 26,
+        "total_trades_in_regime": 20
     },
     "MES::M4_S": {
         "module": "MES",
         "engine_name": "M4_S",
         "bucket": "A",
-        "reason": "\u00d3ptimo y Maduro",
-        "wr": 76.2,
-        "trades": 21,
-        "regimes_breakdown": {
-            "R0": "66.7% (6T) \u2705",
-            "R1": "N/A",
-            "R2": "75.0% (12T) \u2705"
-        },
-        "last_5": "W W L W W"
+        "reason": "Especialista en R0 (WR: 75.0%)",
+        "wr_global": 76.2,
+        "wr_predicted_regime": 75.0,
+        "predicted_regime_evaluated": 0,
+        "total_trades_global": 21,
+        "total_trades_in_regime": 12
     },
     "MES::OR_Fake_S": {
         "module": "MES",
         "engine_name": "OR_Fake_S",
-        "bucket": "B",
-        "reason": "Inmaduro (8/20 trades)",
-        "wr": 75.0,
-        "trades": 8,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "N/A",
-            "R2": "71.4% (7T) \u2705"
-        },
-        "last_5": "W W W W L"
+        "bucket": "A",
+        "reason": "Especialista en R0 (WR: 71.4%)",
+        "wr_global": 75.0,
+        "wr_predicted_regime": 71.4,
+        "predicted_regime_evaluated": 0,
+        "total_trades_global": 8,
+        "total_trades_in_regime": 7
     },
     "MES::Retest_L_E": {
         "module": "MES",
         "engine_name": "Retest_L_E",
-        "bucket": "B",
-        "reason": "Inmaduro (13/20 trades)",
-        "wr": 92.3,
-        "trades": 13,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "N/A",
-            "R2": "90.0% (10T) \u2705"
-        },
-        "last_5": "W W W W W"
+        "bucket": "A",
+        "reason": "Especialista en R0 (WR: 90.0%)",
+        "wr_global": 92.3,
+        "wr_predicted_regime": 90.0,
+        "predicted_regime_evaluated": 0,
+        "total_trades_global": 13,
+        "total_trades_in_regime": 10
     },
     "MGC::Asia_Bullet_L": {
         "module": "MGC",
         "engine_name": "Asia_Bullet_L",
         "bucket": "A",
-        "reason": "\u00d3ptimo y Maduro",
-        "wr": 73.9,
-        "trades": 92,
-        "regimes_breakdown": {
-            "R0": "37.5% (8T) \ud83d\udeab",
-            "R1": "78.9% (57T) \u2705",
-            "R2": "74.1% (27T) \u2705"
-        },
-        "last_5": "W L W L W"
+        "reason": "Especialista en R1 (WR: 78.9%)",
+        "wr_global": 73.9,
+        "wr_predicted_regime": 78.9,
+        "predicted_regime_evaluated": 1,
+        "total_trades_global": 92,
+        "total_trades_in_regime": 57
     },
     "MGC::Asia_Fade_S": {
         "module": "MGC",
         "engine_name": "Asia_Fade_S",
         "bucket": "A",
-        "reason": "\u00d3ptimo y Maduro",
-        "wr": 67.6,
-        "trades": 34,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "67.9% (28T) \u2705",
-            "R2": "80.0% (5T) \u2705"
-        },
-        "last_5": "L L L W W"
+        "reason": "Especialista en R1 (WR: 67.9%)",
+        "wr_global": 67.6,
+        "wr_predicted_regime": 67.9,
+        "predicted_regime_evaluated": 1,
+        "total_trades_global": 34,
+        "total_trades_in_regime": 28
     },
     "MGC::COMEX_Swp_S_E": {
         "module": "MGC",
         "engine_name": "COMEX_Swp_S_E",
         "bucket": "B",
-        "reason": "Inmaduro (4/20 trades)",
-        "wr": 100.0,
-        "trades": 4,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "N/A",
-            "R2": "N/A"
-        },
-        "last_5": "W W W W"
+        "reason": "Inmaduro en R1. WR Global \u00d3ptimo (100.0%)",
+        "wr_global": 100.0,
+        "wr_predicted_regime": 100.0,
+        "predicted_regime_evaluated": 1,
+        "total_trades_global": 4,
+        "total_trades_in_regime": 2
     },
     "MGC::LP_Brk_L": {
         "module": "MGC",
         "engine_name": "LP_Brk_L",
-        "bucket": "B",
-        "reason": "Inmaduro (13/20 trades)",
-        "wr": 69.2,
-        "trades": 13,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "50.0% (6T) \ud83d\udeab",
-            "R2": "85.7% (7T) \u2705"
-        },
-        "last_5": "W W L W L"
+        "bucket": "C",
+        "reason": "T\u00f3xico en R1 (WR: 50.0%)",
+        "wr_global": 69.2,
+        "wr_predicted_regime": 50.0,
+        "predicted_regime_evaluated": 1,
+        "total_trades_global": 13,
+        "total_trades_in_regime": 6
     },
     "MGC::LP_Brk_S": {
         "module": "MGC",
         "engine_name": "LP_Brk_S",
         "bucket": "B",
-        "reason": "Inmaduro (2/20 trades)",
-        "wr": 100.0,
-        "trades": 2,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "N/A",
-            "R2": "N/A"
-        },
-        "last_5": "W W"
+        "reason": "Inmaduro en R1. WR Global \u00d3ptimo (100.0%)",
+        "wr_global": 100.0,
+        "wr_predicted_regime": 100.0,
+        "predicted_regime_evaluated": 1,
+        "total_trades_global": 2,
+        "total_trades_in_regime": 1
     },
     "MGC::LP_Rev_L": {
         "module": "MGC",
         "engine_name": "LP_Rev_L",
         "bucket": "A",
-        "reason": "\u00d3ptimo y Maduro",
-        "wr": 62.9,
-        "trades": 35,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "63.6% (33T) \u2705",
-            "R2": "N/A"
-        },
-        "last_5": "W W W W L"
+        "reason": "Especialista en R1 (WR: 63.6%)",
+        "wr_global": 62.9,
+        "wr_predicted_regime": 63.6,
+        "predicted_regime_evaluated": 1,
+        "total_trades_global": 35,
+        "total_trades_in_regime": 33
     },
     "MGC::LP_Rev_S": {
         "module": "MGC",
         "engine_name": "LP_Rev_S",
         "bucket": "B",
-        "reason": "Inmaduro (11/20 trades)",
-        "wr": 72.7,
-        "trades": 11,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "N/A",
-            "R2": "72.7% (11T) \u2705"
-        },
-        "last_5": "W W W W W"
+        "reason": "Inmaduro en R1. WR Global \u00d3ptimo (72.7%)",
+        "wr_global": 72.7,
+        "wr_predicted_regime": 0.0,
+        "predicted_regime_evaluated": 1,
+        "total_trades_global": 11,
+        "total_trades_in_regime": 0
     },
     "MGC::Lon_BO_L_E": {
         "module": "MGC",
         "engine_name": "Lon_BO_L_E",
         "bucket": "B",
-        "reason": "Inmaduro (5/20 trades)",
-        "wr": 80.0,
-        "trades": 5,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "N/A",
-            "R2": "N/A"
-        },
-        "last_5": "W W W L W"
+        "reason": "Inmaduro en R1. WR Global \u00d3ptimo (80.0%)",
+        "wr_global": 80.0,
+        "wr_predicted_regime": 66.7,
+        "predicted_regime_evaluated": 1,
+        "total_trades_global": 5,
+        "total_trades_in_regime": 3
     },
     "MGC::Lon_BO_S_E": {
         "module": "MGC",
         "engine_name": "Lon_BO_S_E",
-        "bucket": "B",
-        "reason": "Inmaduro (17/20 trades)",
-        "wr": 70.6,
-        "trades": 17,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "66.7% (15T) \u2705",
-            "R2": "N/A"
-        },
-        "last_5": "L W W W L"
+        "bucket": "A",
+        "reason": "Especialista en R1 (WR: 66.7%)",
+        "wr_global": 70.6,
+        "wr_predicted_regime": 66.7,
+        "predicted_regime_evaluated": 1,
+        "total_trades_global": 17,
+        "total_trades_in_regime": 15
     },
     "MGC::Lon_Viper_L": {
         "module": "MGC",
         "engine_name": "Lon_Viper_L",
-        "bucket": "B",
-        "reason": "Inmaduro (19/20 trades)",
-        "wr": 68.4,
-        "trades": 19,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "71.4% (7T) \u2705",
-            "R2": "63.6% (11T) \u2705"
-        },
-        "last_5": "L W W W L"
+        "bucket": "A",
+        "reason": "Especialista en R1 (WR: 71.4%)",
+        "wr_global": 68.4,
+        "wr_predicted_regime": 71.4,
+        "predicted_regime_evaluated": 1,
+        "total_trades_global": 19,
+        "total_trades_in_regime": 7
     },
     "MGC::Lon_Viper_S": {
         "module": "MGC",
         "engine_name": "Lon_Viper_S",
-        "bucket": "B",
-        "reason": "Inmaduro (12/20 trades)",
-        "wr": 75.0,
-        "trades": 12,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "72.7% (11T) \u2705",
-            "R2": "N/A"
-        },
-        "last_5": "W W W W W"
+        "bucket": "A",
+        "reason": "Especialista en R1 (WR: 72.7%)",
+        "wr_global": 75.0,
+        "wr_predicted_regime": 72.7,
+        "predicted_regime_evaluated": 1,
+        "total_trades_global": 12,
+        "total_trades_in_regime": 11
     },
     "MGC::V2_Rev_L": {
         "module": "MGC",
         "engine_name": "V2_Rev_L",
-        "bucket": "B",
-        "reason": "Inmaduro (8/20 trades)",
-        "wr": 75.0,
-        "trades": 8,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "80.0% (5T) \u2705",
-            "R2": "N/A"
-        },
-        "last_5": "W W W W W"
+        "bucket": "A",
+        "reason": "Especialista en R1 (WR: 80.0%)",
+        "wr_global": 75.0,
+        "wr_predicted_regime": 80.0,
+        "predicted_regime_evaluated": 1,
+        "total_trades_global": 8,
+        "total_trades_in_regime": 5
     },
     "MGC::V2_Rev_S": {
         "module": "MGC",
         "engine_name": "V2_Rev_S",
         "bucket": "B",
-        "reason": "Inmaduro (8/20 trades)",
-        "wr": 100.0,
-        "trades": 8,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "N/A",
-            "R2": "100.0% (6T) \u2705"
-        },
-        "last_5": "W W W W W"
+        "reason": "Inmaduro en R1. WR Global \u00d3ptimo (100.0%)",
+        "wr_global": 100.0,
+        "wr_predicted_regime": 100.0,
+        "predicted_regime_evaluated": 1,
+        "total_trades_global": 8,
+        "total_trades_in_regime": 2
     },
     "MNQ_DAY::AE_L": {
         "module": "MNQ_DAY",
         "engine_name": "AE_L",
         "bucket": "A",
-        "reason": "\u00d3ptimo y Maduro",
-        "wr": 77.4,
-        "trades": 93,
-        "regimes_breakdown": {
-            "R0": "78.9% (19T) \u2705",
-            "R1": "44.4% (18T) \ud83d\udeab",
-            "R2": "87.5% (56T) \u2705"
-        },
-        "last_5": "W L W W L"
+        "reason": "Especialista en R2 (WR: 87.5%)",
+        "wr_global": 77.4,
+        "wr_predicted_regime": 87.5,
+        "predicted_regime_evaluated": 2,
+        "total_trades_global": 93,
+        "total_trades_in_regime": 56
     },
     "MNQ_DAY::AE_S": {
         "module": "MNQ_DAY",
         "engine_name": "AE_S",
-        "bucket": "A",
-        "reason": "\u00d3ptimo y Maduro",
-        "wr": 80.8,
-        "trades": 26,
-        "regimes_breakdown": {
-            "R0": "88.9% (9T) \u2705",
-            "R1": "83.3% (12T) \u2705",
-            "R2": "60.0% (5T) \ud83d\udeab"
-        },
-        "last_5": "W W L W W"
+        "bucket": "C",
+        "reason": "T\u00f3xico en R2 (WR: 60.0%)",
+        "wr_global": 80.8,
+        "wr_predicted_regime": 60.0,
+        "predicted_regime_evaluated": 2,
+        "total_trades_global": 26,
+        "total_trades_in_regime": 5
     },
     "MNQ_DAY::Box_L": {
         "module": "MNQ_DAY",
         "engine_name": "Box_L",
-        "bucket": "B",
-        "reason": "Inmaduro (18/20 trades)",
-        "wr": 77.8,
-        "trades": 18,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "N/A",
-            "R2": "81.2% (16T) \u2705"
-        },
-        "last_5": "W W W W W"
+        "bucket": "A",
+        "reason": "Especialista en R2 (WR: 81.2%)",
+        "wr_global": 77.8,
+        "wr_predicted_regime": 81.2,
+        "predicted_regime_evaluated": 2,
+        "total_trades_global": 18,
+        "total_trades_in_regime": 16
     },
     "MNQ_DAY::Box_S": {
         "module": "MNQ_DAY",
         "engine_name": "Box_S",
-        "bucket": "B",
-        "reason": "Inmaduro (16/20 trades)",
-        "wr": 81.2,
-        "trades": 16,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "N/A",
-            "R2": "81.2% (16T) \u2705"
-        },
-        "last_5": "W W W W W"
+        "bucket": "A",
+        "reason": "Especialista en R2 (WR: 81.2%)",
+        "wr_global": 81.2,
+        "wr_predicted_regime": 81.2,
+        "predicted_regime_evaluated": 2,
+        "total_trades_global": 16,
+        "total_trades_in_regime": 16
     },
     "MNQ_DAY::Creep_S": {
         "module": "MNQ_DAY",
         "engine_name": "Creep_S",
-        "bucket": "A",
-        "reason": "\u00d3ptimo y Maduro",
-        "wr": 84.8,
-        "trades": 33,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "86.7% (30T) \u2705",
-            "R2": "N/A"
-        },
-        "last_5": "W W W W W"
+        "bucket": "B",
+        "reason": "Inmaduro en R2. WR Global \u00d3ptimo (84.8%)",
+        "wr_global": 84.8,
+        "wr_predicted_regime": 50.0,
+        "predicted_regime_evaluated": 2,
+        "total_trades_global": 33,
+        "total_trades_in_regime": 2
     },
     "MNQ_DAY::Ext_ORB_L": {
         "module": "MNQ_DAY",
         "engine_name": "Ext_ORB_L",
-        "bucket": "A",
-        "reason": "\u00d3ptimo y Maduro",
-        "wr": 68.0,
-        "trades": 25,
-        "regimes_breakdown": {
-            "R0": "100.0% (11T) \u2705",
-            "R1": "20.0% (5T) \ud83d\udeab",
-            "R2": "55.6% (9T) \ud83d\udeab"
-        },
-        "last_5": "L L L W W"
+        "bucket": "C",
+        "reason": "T\u00f3xico en R2 (WR: 55.6%)",
+        "wr_global": 68.0,
+        "wr_predicted_regime": 55.6,
+        "predicted_regime_evaluated": 2,
+        "total_trades_global": 25,
+        "total_trades_in_regime": 9
     },
     "MNQ_DAY::Ext_ORB_S": {
         "module": "MNQ_DAY",
         "engine_name": "Ext_ORB_S",
-        "bucket": "B",
-        "reason": "Inmaduro (14/20 trades)",
-        "wr": 92.9,
-        "trades": 14,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "100.0% (6T) \u2705",
-            "R2": "80.0% (5T) \u2705"
-        },
-        "last_5": "W W W L W"
+        "bucket": "A",
+        "reason": "Especialista en R2 (WR: 80.0%)",
+        "wr_global": 92.9,
+        "wr_predicted_regime": 80.0,
+        "predicted_regime_evaluated": 2,
+        "total_trades_global": 14,
+        "total_trades_in_regime": 5
     },
     "MNQ_DAY::Gap_L": {
         "module": "MNQ_DAY",
         "engine_name": "Gap_L",
-        "bucket": "B",
-        "reason": "Inmaduro (10/20 trades)",
-        "wr": 70.0,
-        "trades": 10,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "N/A",
-            "R2": "60.0% (5T) \ud83d\udeab"
-        },
-        "last_5": "L W W W W"
+        "bucket": "C",
+        "reason": "T\u00f3xico en R2 (WR: 60.0%)",
+        "wr_global": 70.0,
+        "wr_predicted_regime": 60.0,
+        "predicted_regime_evaluated": 2,
+        "total_trades_global": 10,
+        "total_trades_in_regime": 5
     },
     "MNQ_DAY::Grind_L": {
         "module": "MNQ_DAY",
         "engine_name": "Grind_L",
         "bucket": "A",
-        "reason": "\u00d3ptimo y Maduro",
-        "wr": 74.1,
-        "trades": 27,
-        "regimes_breakdown": {
-            "R0": "100.0% (7T) \u2705",
-            "R1": "40.0% (5T) \ud83d\udeab",
-            "R2": "73.3% (15T) \u2705"
-        },
-        "last_5": "W W W W W"
+        "reason": "Especialista en R2 (WR: 73.3%)",
+        "wr_global": 74.1,
+        "wr_predicted_regime": 73.3,
+        "predicted_regime_evaluated": 2,
+        "total_trades_global": 27,
+        "total_trades_in_regime": 15
     },
     "MNQ_DAY::Grind_S": {
         "module": "MNQ_DAY",
         "engine_name": "Grind_S",
-        "bucket": "B",
-        "reason": "Inmaduro (13/20 trades)",
-        "wr": 76.9,
-        "trades": 13,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "N/A",
-            "R2": "66.7% (9T) \u2705"
-        },
-        "last_5": "L W W W W"
+        "bucket": "A",
+        "reason": "Especialista en R2 (WR: 66.7%)",
+        "wr_global": 76.9,
+        "wr_predicted_regime": 66.7,
+        "predicted_regime_evaluated": 2,
+        "total_trades_global": 13,
+        "total_trades_in_regime": 9
     },
     "MNQ_DAY::IB_L": {
         "module": "MNQ_DAY",
         "engine_name": "IB_L",
         "bucket": "A",
-        "reason": "\u00d3ptimo y Maduro",
-        "wr": 77.5,
-        "trades": 40,
-        "regimes_breakdown": {
-            "R0": "90.9% (11T) \u2705",
-            "R1": "N/A",
-            "R2": "76.9% (26T) \u2705"
-        },
-        "last_5": "W W L L W"
+        "reason": "Especialista en R2 (WR: 76.9%)",
+        "wr_global": 77.5,
+        "wr_predicted_regime": 76.9,
+        "predicted_regime_evaluated": 2,
+        "total_trades_global": 40,
+        "total_trades_in_regime": 26
     },
     "MNQ_DAY::Late_S": {
         "module": "MNQ_DAY",
         "engine_name": "Late_S",
-        "bucket": "A",
-        "reason": "\u00d3ptimo y Maduro",
-        "wr": 84.0,
-        "trades": 25,
-        "regimes_breakdown": {
-            "R0": "81.2% (16T) \u2705",
-            "R1": "85.7% (7T) \u2705",
-            "R2": "N/A"
-        },
-        "last_5": "W W W W W"
+        "bucket": "B",
+        "reason": "Inmaduro en R2. WR Global \u00d3ptimo (84.0%)",
+        "wr_global": 84.0,
+        "wr_predicted_regime": 100.0,
+        "predicted_regime_evaluated": 2,
+        "total_trades_global": 25,
+        "total_trades_in_regime": 2
     },
     "MNQ_DAY::M4_S": {
         "module": "MNQ_DAY",
         "engine_name": "M4_S",
-        "bucket": "A",
-        "reason": "\u00d3ptimo y Maduro",
-        "wr": 73.1,
-        "trades": 26,
-        "regimes_breakdown": {
-            "R0": "57.1% (7T) \ud83d\udeab",
-            "R1": "100.0% (6T) \u2705",
-            "R2": "69.2% (13T) \u2705"
-        },
-        "last_5": "W L L W L"
+        "bucket": "B",
+        "reason": "[Fricci\u00f3n Reciente Z:-1.67] Especialista en R2 (WR: 69.2%)",
+        "wr_global": 73.1,
+        "wr_predicted_regime": 69.2,
+        "predicted_regime_evaluated": 2,
+        "total_trades_global": 26,
+        "total_trades_in_regime": 13
     },
     "MNQ_DAY::PH_Brk_L": {
         "module": "MNQ_DAY",
         "engine_name": "PH_Brk_L",
         "bucket": "B",
-        "reason": "Inmaduro (4/20 trades)",
-        "wr": 100.0,
-        "trades": 4,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "N/A",
-            "R2": "N/A"
-        },
-        "last_5": "W W W W"
+        "reason": "Inmaduro en R2. WR Global \u00d3ptimo (100.0%)",
+        "wr_global": 100.0,
+        "wr_predicted_regime": 100.0,
+        "predicted_regime_evaluated": 2,
+        "total_trades_global": 4,
+        "total_trades_in_regime": 1
     },
     "MNQ_DAY::PH_Rev_L": {
         "module": "MNQ_DAY",
         "engine_name": "PH_Rev_L",
         "bucket": "A",
-        "reason": "\u00d3ptimo y Maduro",
-        "wr": 83.3,
-        "trades": 24,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "85.7% (14T) \u2705",
-            "R2": "77.8% (9T) \u2705"
-        },
-        "last_5": "W W W W W"
+        "reason": "Especialista en R2 (WR: 77.8%)",
+        "wr_global": 83.3,
+        "wr_predicted_regime": 77.8,
+        "predicted_regime_evaluated": 2,
+        "total_trades_global": 24,
+        "total_trades_in_regime": 9
     },
     "MNQ_DAY::PH_Rev_S": {
         "module": "MNQ_DAY",
         "engine_name": "PH_Rev_S",
         "bucket": "B",
-        "reason": "Inmaduro (18/20 trades)",
-        "wr": 66.7,
-        "trades": 18,
-        "regimes_breakdown": {
-            "R0": "64.3% (14T) \u2705",
-            "R1": "N/A",
-            "R2": "N/A"
-        },
-        "last_5": "W L W L W"
+        "reason": "Inmaduro en R2. WR Global \u00d3ptimo (66.7%)",
+        "wr_global": 66.7,
+        "wr_predicted_regime": 100.0,
+        "predicted_regime_evaluated": 2,
+        "total_trades_global": 18,
+        "total_trades_in_regime": 2
     },
     "MNQ_DAY::Retest_L_E": {
         "module": "MNQ_DAY",
         "engine_name": "Retest_L_E",
-        "bucket": "B",
-        "reason": "Inmaduro (15/20 trades)",
-        "wr": 73.3,
-        "trades": 15,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "N/A",
-            "R2": "60.0% (10T) \ud83d\udeab"
-        },
-        "last_5": "W L W L W"
+        "bucket": "C",
+        "reason": "T\u00f3xico en R2 (WR: 60.0%)",
+        "wr_global": 73.3,
+        "wr_predicted_regime": 60.0,
+        "predicted_regime_evaluated": 2,
+        "total_trades_global": 15,
+        "total_trades_in_regime": 10
     },
     "MNQ_NIGHT::AsianGrind_L": {
         "module": "MNQ_NIGHT",
         "engine_name": "AsianGrind_L",
-        "bucket": "B",
-        "reason": "Inmaduro (15/20 trades)",
-        "wr": 80.0,
-        "trades": 15,
-        "regimes_breakdown": {
-            "R0": "77.8% (9T) \u2705",
-            "R1": "83.3% (6T) \u2705",
-            "R2": "N/A"
-        },
-        "last_5": "W W W W W"
+        "bucket": "A",
+        "reason": "Especialista en R1 (WR: 83.3%)",
+        "wr_global": 80.0,
+        "wr_predicted_regime": 83.3,
+        "predicted_regime_evaluated": 1,
+        "total_trades_global": 15,
+        "total_trades_in_regime": 6
     },
     "MNQ_NIGHT::Frank_L": {
         "module": "MNQ_NIGHT",
         "engine_name": "Frank_L",
-        "bucket": "B",
-        "reason": "Inmaduro (13/20 trades)",
-        "wr": 84.6,
-        "trades": 13,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "77.8% (9T) \u2705",
-            "R2": "N/A"
-        },
-        "last_5": "W W W W W"
+        "bucket": "A",
+        "reason": "Especialista en R1 (WR: 77.8%)",
+        "wr_global": 84.6,
+        "wr_predicted_regime": 77.8,
+        "predicted_regime_evaluated": 1,
+        "total_trades_global": 13,
+        "total_trades_in_regime": 9
     },
     "MNQ_NIGHT::Judas_L": {
         "module": "MNQ_NIGHT",
         "engine_name": "Judas_L",
         "bucket": "A",
-        "reason": "\u00d3ptimo y Maduro",
-        "wr": 77.8,
-        "trades": 27,
-        "regimes_breakdown": {
-            "R0": "77.8% (9T) \u2705",
-            "R1": "76.9% (13T) \u2705",
-            "R2": "80.0% (5T) \u2705"
-        },
-        "last_5": "L W W W W"
+        "reason": "Especialista en R1 (WR: 76.9%)",
+        "wr_global": 77.8,
+        "wr_predicted_regime": 76.9,
+        "predicted_regime_evaluated": 1,
+        "total_trades_global": 27,
+        "total_trades_in_regime": 13
     },
     "MNQ_NIGHT::P6_L": {
         "module": "MNQ_NIGHT",
         "engine_name": "P6_L",
         "bucket": "B",
-        "reason": "Inmaduro (9/20 trades)",
-        "wr": 88.9,
-        "trades": 9,
-        "regimes_breakdown": {
-            "R0": "N/A",
-            "R1": "N/A",
-            "R2": "N/A"
-        },
-        "last_5": "W W W W L"
+        "reason": "Inmaduro en R1. WR Global \u00d3ptimo (88.9%)",
+        "wr_global": 88.9,
+        "wr_predicted_regime": 66.7,
+        "predicted_regime_evaluated": 1,
+        "total_trades_global": 9,
+        "total_trades_in_regime": 3
     },
     "MNQ_NIGHT::P6_S": {
         "module": "MNQ_NIGHT",
         "engine_name": "P6_S",
         "bucket": "A",
-        "reason": "\u00d3ptimo y Maduro",
-        "wr": 75.8,
-        "trades": 33,
-        "regimes_breakdown": {
-            "R0": "75.0% (8T) \u2705",
-            "R1": "70.0% (20T) \u2705",
-            "R2": "100.0% (5T) \u2705"
-        },
-        "last_5": "W L W W L"
+        "reason": "Especialista en R1 (WR: 70.0%)",
+        "wr_global": 75.8,
+        "wr_predicted_regime": 70.0,
+        "predicted_regime_evaluated": 1,
+        "total_trades_global": 33,
+        "total_trades_in_regime": 20
     },
     "MNQ_NIGHT::Pre_Brk_S": {
         "module": "MNQ_NIGHT",
         "engine_name": "Pre_Brk_S",
         "bucket": "A",
-        "reason": "\u00d3ptimo y Maduro",
-        "wr": 72.4,
-        "trades": 29,
-        "regimes_breakdown": {
-            "R0": "75.0% (8T) \u2705",
-            "R1": "66.7% (12T) \u2705",
-            "R2": "77.8% (9T) \u2705"
-        },
-        "last_5": "W W L W W"
+        "reason": "Especialista en R1 (WR: 66.7%)",
+        "wr_global": 72.4,
+        "wr_predicted_regime": 66.7,
+        "predicted_regime_evaluated": 1,
+        "total_trades_global": 29,
+        "total_trades_in_regime": 12
     },
     "MNQ_NIGHT::Pre_Rev_L": {
         "module": "MNQ_NIGHT",
         "engine_name": "Pre_Rev_L",
-        "bucket": "B",
-        "reason": "Inmaduro (16/20 trades)",
-        "wr": 75.0,
-        "trades": 16,
-        "regimes_breakdown": {
-            "R0": "62.5% (8T) \u2705",
-            "R1": "85.7% (7T) \u2705",
-            "R2": "N/A"
-        },
-        "last_5": "W L W L W"
+        "bucket": "A",
+        "reason": "Especialista en R1 (WR: 85.7%)",
+        "wr_global": 75.0,
+        "wr_predicted_regime": 85.7,
+        "predicted_regime_evaluated": 1,
+        "total_trades_global": 16,
+        "total_trades_in_regime": 7
     },
     "MNQ_NIGHT::Pre_Rev_S": {
         "module": "MNQ_NIGHT",
         "engine_name": "Pre_Rev_S",
-        "bucket": "B",
-        "reason": "Inmaduro (15/20 trades)",
-        "wr": 80.0,
-        "trades": 15,
-        "regimes_breakdown": {
-            "R0": "85.7% (7T) \u2705",
-            "R1": "71.4% (7T) \u2705",
-            "R2": "N/A"
-        },
-        "last_5": "L W L W W"
+        "bucket": "A",
+        "reason": "Especialista en R1 (WR: 71.4%)",
+        "wr_global": 80.0,
+        "wr_predicted_regime": 71.4,
+        "predicted_regime_evaluated": 1,
+        "total_trades_global": 15,
+        "total_trades_in_regime": 7
     },
     "MNQ_NIGHT::Tokyo_L": {
         "module": "MNQ_NIGHT",
         "engine_name": "Tokyo_L",
-        "bucket": "A",
-        "reason": "\u00d3ptimo y Maduro",
-        "wr": 71.9,
-        "trades": 32,
-        "regimes_breakdown": {
-            "R0": "76.9% (13T) \u2705",
-            "R1": "54.5% (11T) \ud83d\udeab",
-            "R2": "87.5% (8T) \u2705"
-        },
-        "last_5": "W W W L L"
+        "bucket": "C",
+        "reason": "T\u00f3xico en R1 (WR: 54.5%)",
+        "wr_global": 71.9,
+        "wr_predicted_regime": 54.5,
+        "predicted_regime_evaluated": 1,
+        "total_trades_global": 32,
+        "total_trades_in_regime": 11
     },
     "MNQ_NIGHT::Tokyo_S": {
         "module": "MNQ_NIGHT",
         "engine_name": "Tokyo_S",
         "bucket": "B",
-        "reason": "Inmaduro (16/20 trades)",
-        "wr": 81.2,
-        "trades": 16,
-        "regimes_breakdown": {
-            "R0": "66.7% (6T) \u2705",
-            "R1": "N/A",
-            "R2": "85.7% (7T) \u2705"
+        "reason": "Inmaduro en R1. WR Global \u00d3ptimo (81.2%)",
+        "wr_global": 81.2,
+        "wr_predicted_regime": 100.0,
+        "predicted_regime_evaluated": 1,
+        "total_trades_global": 16,
+        "total_trades_in_regime": 3
+    },
+    "_SYSTEM_FORECAST_": {
+        "MCL": {
+            "today_regime": 1,
+            "predicted_regime_tomorrow": 1,
+            "probability": 94.2
         },
-        "last_5": "L W W W W"
+        "MES": {
+            "today_regime": 0,
+            "predicted_regime_tomorrow": 0,
+            "probability": 67.2
+        },
+        "MGC": {
+            "today_regime": 1,
+            "predicted_regime_tomorrow": 1,
+            "probability": 73.4
+        },
+        "MNQ_DAY": {
+            "today_regime": 0,
+            "predicted_regime_tomorrow": 2,
+            "probability": 44.6
+        },
+        "MNQ_NIGHT": {
+            "today_regime": 1,
+            "predicted_regime_tomorrow": 1,
+            "probability": 44.2
+        }
     }
 }
