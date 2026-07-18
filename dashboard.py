@@ -209,9 +209,14 @@ if nav_category == "HOME":
     st.markdown("### 🌐 Global Historical Performance")
     render_historical_metrics(df_config, df_master[df_master['Engine'] != 'NO_TRADE'] if not df_master.empty else None)
     st.markdown("### 📊 The Global Matrix")
-    df_home = df_config.sort_values(by='TT Global', ascending=False)
-    cols_home = ['Module', 'Engine', 'TT Global', 'WR Global', 'Last 5', 'TT R0', 'WR R0', 'Bucket R0', 'TT R1', 'WR R1', 'Bucket R1', 'TT R2', 'WR R2', 'Bucket R2']
-    st.markdown(render_html_table(df_home[cols_home], bucket_cols=['Bucket R0', 'Bucket R1', 'Bucket R2']), unsafe_allow_html=True)
+    
+    if not df_config.empty:
+        df_home = df_config.sort_values(by='TT Global', ascending=False)
+        # ESTRICTA ALINEACIÓN CON EL JSON: Se eliminan las columnas que no provee el ML.
+        cols_home = ['Module', 'Engine', 'TT Global', 'WR Global', 'TT R0', 'WR R0', 'TT R1', 'WR R1', 'TT R2', 'WR R2']
+        
+        valid_cols_home = [c for c in cols_home if c in df_home.columns]
+        st.markdown(render_html_table(df_home[valid_cols_home]), unsafe_allow_html=True)
 
 # =========================================================================
 # TRADE LOG
@@ -231,8 +236,7 @@ elif nav_category == "Trade Log":
         df_log = df_log.sort_values('Timestamp', ascending=False)
         df_log['Result'] = df_log['Is_Win'].apply(lambda x: "WIN" if x == 1 else "LOSS")
         
-        # Nueva columna Regime (asumiendo que viene del dataset)
-        show_cols = ['Timestamp', 'Module', 'Engine', 'Regime', 'Action', 'Result']
+        show_cols = ['Timestamp', 'Module', 'Engine', 'Regime_Label', 'Action', 'Result']
         st.markdown(render_html_table(df_log[[c for c in show_cols if c in df_log.columns]]), unsafe_allow_html=True)
     else: st.error("Database is empty.")
 
@@ -240,18 +244,31 @@ elif nav_category == "Modules":
     st.title("Modules Dashboard")
     selected_module = st.selectbox("Select Target Module:", ["MCL", "MGC", "MES", "MNQ_DAY", "MNQ_NIGHT"])
     df_c_mod = df_config[df_config['Module'] == selected_module].copy()
+    
     st.markdown(f"### 🌐 Performance: {selected_module}")
     render_historical_metrics(df_c_mod, df_master[(df_master['Module'] == selected_module) & (df_master['Engine'] != 'NO_TRADE')])
     
     t1, t2, t3 = st.tabs(["Global Matrix", "Next Session Plan", "Regime Breakdown"])
-    with t1: st.markdown(render_html_table(df_c_mod.sort_values(by='TT Global', ascending=False), bucket_cols=['Bucket R0', 'Bucket R1', 'Bucket R2']), unsafe_allow_html=True)
-    with t2: st.markdown(render_html_table(df_c_mod.sort_values(by=['Bucket', 'WR Target']), bucket_cols=['Bucket']), unsafe_allow_html=True)
+    
+    with t1: 
+        if not df_c_mod.empty:
+            cols_t1 = ['Engine', 'TT Global', 'WR Global', 'TT R0', 'WR R0', 'TT R1', 'WR R1', 'TT R2', 'WR R2']
+            valid_cols_t1 = [c for c in cols_t1 if c in df_c_mod.columns]
+            st.markdown(render_html_table(df_c_mod.sort_values(by='TT Global', ascending=False)[valid_cols_t1]), unsafe_allow_html=True)
+    
+    with t2: 
+        if not df_c_mod.empty:
+            st.info(f"Targeting Regime: **R{df_c_mod.iloc[0]['Target Regime'].replace('R', '')}**")
+            cols_t2 = ['Engine', 'Bucket', 'Target Regime', 'WR Target', 'TT Target', 'Diag']
+            valid_cols_t2 = [c for c in cols_t2 if c in df_c_mod.columns]
+            st.markdown(render_html_table(df_c_mod.sort_values(by=['Bucket', 'WR Target'])[valid_cols_t2], bucket_cols=['Bucket']), unsafe_allow_html=True)
+    
     with t3:
         for r_id in [0, 1, 2]:
-            st.markdown(f"#### Regime {r_id}")
-            render_regime_metrics(df_c_mod, df_master[df_master['Module'] == selected_module], r_id)
-            for b in ['A', 'B', 'C']:
-                df_sub = df_c_mod[df_c_mod[f'Bucket R{r_id}'] == b]
-                if not df_sub.empty:
-                    st.markdown(f"**Bucket {b}**")
-                    st.markdown(render_html_table(df_sub[[f'Engine', f'TT R{r_id}', f'WR R{r_id}']], bucket_cols=[f'Bucket R{r_id}']), unsafe_allow_html=True)
+            st.markdown(f"#### 🔍 Regime {r_id} Analytics")
+            # En base a los datos estrictos del ML, solo podemos mostrar el rendimiento por régimen.
+            # No hay asignación de Buckets por régimen en el JSON original.
+            if not df_c_mod.empty:
+                cols_r = ['Engine', 'Bucket', f'TT R{r_id}', f'WR R{r_id}']
+                valid_cols_r = [c for c in cols_r if c in df_c_mod.columns]
+                st.markdown(render_html_table(df_c_mod[valid_cols_r], bucket_cols=['Bucket']), unsafe_allow_html=True)
