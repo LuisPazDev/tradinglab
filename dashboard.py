@@ -8,7 +8,9 @@ from datetime import datetime, timedelta
 
 st.set_page_config(page_title="OmniSwarm Quant", layout="wide")
 
-# CSS para Centrado Absoluto y Estética Minimalista
+# =========================================================================
+# CSS PARA ESTÉTICA Y CENTRADO ABSOLUTO
+# =========================================================================
 st.markdown("""
     <style>
     .block-container { padding-top: 2rem; padding-bottom: 2rem; }
@@ -46,11 +48,8 @@ st.markdown("""
         font-weight: 500;
     }
 
-    /* Force Table Centering in Streamlit */
-    [data-testid="stTable"] th, [data-testid="stTable"] td {
-        text-align: center !important;
-    }
-    .stDataFrame [data-testid="stTable"] {
+    /* Force Table Centering in Streamlit HTML */
+    div[data-testid="stDataFrame"] table {
         margin: 0 auto;
     }
     </style>
@@ -115,10 +114,10 @@ def load_data():
 df_master, df_config, risk_profile, system_forecast = load_data()
 
 # =========================================================================
-# UTILITIES & FORMATTING
+# UTILITIES & STRICT FORMATTING
 # =========================================================================
 def get_historical_bucket(trades, wr):
-    """Calcula el Bucket dinámicamente para regímenes históricos"""
+    """Calculates Bucket dynamically for historical regimes"""
     if trades < 5: return "B"
     if wr >= 62.5: return "A"
     return "C"
@@ -130,13 +129,18 @@ def highlight_buckets(val):
     return ''
 
 def style_dataframe(df, bucket_cols=None):
-    """Aplica formato de centrado y colores a cualquier tabla"""
+    """Applies strict absolute centering to headers and cells, plus coloring"""
     if bucket_cols is None: bucket_cols = []
     format_dict = {col: "{:.1f}%" for col in df.columns if 'WR' in col}
     
-    # Centrado absoluto de Pandas Styler
+    # Pandas Styler rules for absolute centering
+    styles = [
+        dict(selector="th", props=[("text-align", "center")]),
+        dict(selector="td", props=[("text-align", "center")])
+    ]
+    
     styled = df.style.set_properties(**{'text-align': 'center'}) \
-                     .set_table_styles([dict(selector='th', props=[('text-align', 'center')])]) \
+                     .set_table_styles(styles) \
                      .format(format_dict)
     
     for col in bucket_cols:
@@ -151,7 +155,7 @@ def get_last_5_string(engine_name, df_m):
     last_5 = trades.tail(5)['Is_Win'].tolist()
     return " - ".join(["W" if x == 1 else "L" for x in last_5])
 
-# Inyectar Last 5 y Buckets Históricos al df_config principal
+# Inject Last 5 and Historical Buckets into df_config
 if not df_config.empty:
     df_m_valid = df_master[df_master['Engine'] != 'NO_TRADE'] if not df_master.empty else None
     df_config['Last 5'] = df_config['Engine'].apply(lambda e: get_last_5_string(e, df_m_valid))
@@ -160,7 +164,7 @@ if not df_config.empty:
     df_config['Bucket R2'] = df_config.apply(lambda r: get_historical_bucket(r['TT R2'], r['WR R2']), axis=1)
 
 def render_historical_metrics(df_c, df_m):
-    """Renderiza las 5 métricas top (Usable en HOME y MODULES)"""
+    """Renders the top 5 historical metrics"""
     if df_c.empty: return
     total_trades = df_c['TT Global'].sum()
     avg_wr = (df_c['WR Global'] * df_c['TT Global']).sum() / total_trades if total_trades > 0 else 0
@@ -347,7 +351,6 @@ elif nav_category == "Trade Log":
         if not df_log.empty:
             df_log['Result'] = df_log['Is_Win'].apply(lambda x: "WIN" if x == 1 else "LOSS")
             
-            # Centrar la tabla de Trade Log también
             show_cols = ['Timestamp', 'Module', 'Engine', 'Action', 'Result']
             df_log_display = df_log[[c for c in show_cols if c in df_log.columns]]
             styled_log = style_dataframe(df_log_display)
@@ -382,24 +385,42 @@ elif nav_category == "Modules":
     render_historical_metrics(df_c_mod, df_m_mod)
     
     # --- BLOCK 4: The Analytical Tabs ---
-    tab1, tab2 = st.tabs(["🚀 Next Session Line-up", "📊 Regime Breakdown"])
+    tab1, tab2, tab3 = st.tabs(["🌐 Global Matrix", "🚀 Next Session Line-up", "📊 Regime Breakdown"])
     
-    # TAB 1: Next Session Line-up
+    # TAB 1: Global Matrix (Specific to this Module)
     with tab1:
-        st.markdown("### Execution Plan (Target Regime Only)")
+        st.markdown(f"### The Global Matrix ({selected_module})")
         if not df_c_mod.empty:
             df_t1 = df_c_mod.copy()
-            df_t1['Bucket_Rank'] = df_t1['Bucket'].map({'A': 1, 'B': 2, 'C': 3})
-            df_t1 = df_t1.sort_values(by=['Bucket_Rank', 'WR Target'], ascending=[True, False])
+            df_t1 = df_t1.sort_values(by='TT Global', ascending=False)
             
-            cols_t1 = ['Engine', 'Bucket', 'TT Target', 'WR Target', 'TT Global', 'WR Global', 'Diag']
+            cols_t1 = [
+                'Engine', 'TT Global', 'WR Global', 'Last 5', 
+                'TT R0', 'WR R0', 'Bucket R0', 
+                'TT R1', 'WR R1', 'Bucket R1', 
+                'TT R2', 'WR R2', 'Bucket R2'
+            ]
             df_t1 = df_t1[cols_t1]
             
-            styled_t1 = style_dataframe(df_t1, bucket_cols=['Bucket'])
+            styled_t1 = style_dataframe(df_t1, bucket_cols=['Bucket R0', 'Bucket R1', 'Bucket R2'])
             st.dataframe(styled_t1, use_container_width=True, hide_index=True)
-            
-    # TAB 2: Regime Breakdown (Forensic Lab)
+    
+    # TAB 2: Next Session Line-up
     with tab2:
+        st.markdown("### Execution Plan (Target Regime Only)")
+        if not df_c_mod.empty:
+            df_t2 = df_c_mod.copy()
+            df_t2['Bucket_Rank'] = df_t2['Bucket'].map({'A': 1, 'B': 2, 'C': 3})
+            df_t2 = df_t2.sort_values(by=['Bucket_Rank', 'WR Target'], ascending=[True, False])
+            
+            cols_t2 = ['Engine', 'Bucket', 'TT Target', 'WR Target', 'TT Global', 'WR Global', 'Diag']
+            df_t2 = df_t2[cols_t2]
+            
+            styled_t2 = style_dataframe(df_t2, bucket_cols=['Bucket'])
+            st.dataframe(styled_t2, use_container_width=True, hide_index=True)
+            
+    # TAB 3: Regime Breakdown (Forensic Lab)
+    with tab3:
         st.markdown("### Forensic Multi-Regime Analysis")
         t_r0, t_r1, t_r2 = st.tabs(["[ Regime 0 ]", "[ Regime 1 ]", "[ Regime 2 ]"])
         
