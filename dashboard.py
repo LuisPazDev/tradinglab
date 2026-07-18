@@ -53,10 +53,8 @@ def load_data():
     if os.path.exists(get_file_path("risk_profile.json")):
         with open(get_file_path("risk_profile.json"), "r", encoding="utf-8-sig") as f: risk_data = json.load(f)
 
-    # 1. Extraemos el pronóstico de Markov del JSON
     system_forecast = config.pop("_SYSTEM_FORECAST_", {})
 
-    # 2. Mapeamos la nueva telemetría del ML Auditor
     config_rows = []
     for k, d in config.items():
         if isinstance(d, dict) and 'engine_name' in d:
@@ -69,7 +67,13 @@ def load_data():
                 'WR (Global)': d.get('wr_global', 0.0),
                 'Trades (Target)': d.get('total_trades_in_regime', 0),
                 'Trades (Global)': d.get('total_trades_global', 0),
-                'Diag': d.get('reason', '') # Razón cruda: Muestra Z-Score, Inmadurez o Freno Terminal
+                'Diag': d.get('reason', ''),
+                'R0 WR': d.get('r0_wr', 0.0),
+                'R0 Trades': d.get('r0_trades', 0),
+                'R1 WR': d.get('r1_wr', 0.0),
+                'R1 Trades': d.get('r1_trades', 0),
+                'R2 WR': d.get('r2_wr', 0.0),
+                'R2 Trades': d.get('r2_trades', 0)
             })
     
     return df_master, pd.DataFrame(config_rows), risk_data, system_forecast
@@ -77,7 +81,7 @@ def load_data():
 df_master, df_config, risk_profile, system_forecast = load_data()
 
 # =========================================================================
-# UI COMPONENTS
+# UI COMPONENTS & RENDERING
 # =========================================================================
 def highlight_buckets(val):
     if val == "A": return 'background-color: rgba(0, 200, 83, 0.1); color: #00C853;'
@@ -85,74 +89,81 @@ def highlight_buckets(val):
     if val == "C": return 'background-color: rgba(213, 0, 0, 0.1); color: #D50000;'
     return ''
 
-def render_top_row(df_c, df_m=None):
-    if df_c.empty:
-        st.warning("No data available.")
-        return
-    total_trades = df_c['Trades (Global)'].sum()
-    avg_wr = (df_c['WR (Global)'] * df_c['Trades (Global)']).sum() / total_trades if total_trades > 0 else 0
-    engines_count = len(df_c)
-    b_a = len(df_c[df_c['Bucket'] == 'A'])
-    b_b = len(df_c[df_c['Bucket'] == 'B'])
-    b_c = len(df_c[df_c['Bucket'] == 'C'])
-    wins = 0; losses = 0; max_l_streak = 0
-    
-    if df_m is not None and not df_m.empty and 'Is_Win' in df_m.columns:
-        wins = len(df_m[df_m['Is_Win'] == 1])
-        losses = len(df_m[df_m['Is_Win'] == 0])
-        df_asc = df_m.sort_values('Timestamp', ascending=True)
-        curr_streak = 0
-        for val in df_asc['Is_Win']:
-            if val == 0:
-                curr_streak += 1
-                max_l_streak = max(max_l_streak, curr_streak)
-            else: curr_streak = 0
-    else:
-        wins = int((avg_wr / 100) * total_trades)
-        losses = total_trades - wins
+def classify_historical_bucket(row, r_id):
+    """Dynamic Bucketing for Historical Terrains"""
+    wr = row[f'R{r_id} WR']
+    trades = row[f'R{r_id} Trades']
+    if trades < 5: return "B" # Friction/New
+    if wr >= 62.5: return "A" # Sniper
+    return "C" # Toxic/Quarantine
 
-    c1, c2, c3, c4, c5 = st.columns(5)
-    c1.metric("Total Trades", total_trades)
-    c2.metric("Avg Global WR", f"{avg_wr:.1f}%")
-    c3.metric("Net Wins", wins)
-    c4.metric("Net Losses", losses)
-    c5.metric("Max L-Streak", max_l_streak)
+def render_module_hud(module_name, forecast_dict):
+    f_data = forecast_dict.get(module_name, {})
+    if not f_data: return
     
-    st.write("") 
-    swarm_health = (b_a / engines_count * 100) if engines_count > 0 else 0
+    today_r = f_data.get('today_regime', '?')
+    pred_r = f_data.get('predicted_regime_tomorrow', '?')
+    prob = f_data.get('probability', 0)
     
-    c6, c7, c8, c9, c10 = st.columns(5)
-    c6.metric("Active Engines", engines_count)
-    c7.metric("Bucket A (Snipers)", b_a)
-    c8.metric("Bucket B (Friction/New)", b_b)
-    c9.metric("Bucket C (Quarantine)", b_c)
-    c10.metric("Swarm Health", f"{swarm_health:.1f}%")
+    hist = f_data.get('historical_sessions', {})
+    hist_r0 = hist.get('0', hist.get(0, 0))
+    hist_r1 = hist.get('1', hist.get(1, 0))
+    hist_r2 = hist.get('2', hist.get(2, 0))
+    
+    st.markdown("### 🧠 Module Intelligence Header")
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Last Session", f"Regime {today_r}")
+    c2.metric("Next Session Target", f"Regime {pred_r}", f"{prob}% Prob")
+    c3.metric("Historical Distribution", f"{hist_r0} (R0) | {hist_r1} (R1) | {hist_r2} (R2)")
     st.markdown("---")
 
-def render_engine_table(df_c, exclude_cols=None):
+def render_global_table(df_c):
+    """Wide table for Global Overview (Home & Module Tab 1)"""
     if df_c.empty: return
     df_display = df_c.copy()
-        
-    # 1. ORDENAR PRIMERO (Mientras todas las columnas existen)
-    sort_cols = ['Bucket', 'WR (Target)']
-    valid_sort_cols = [c for c in sort_cols if c in df_display.columns]
     
-    if valid_sort_cols:
-        asc_list = [True, False][:len(valid_sort_cols)]
-        df_display = df_display.sort_values(by=valid_sort_cols, ascending=asc_list)
-
-    # 2. SELECCIONAR Y EXCLUIR COLUMNAS DESPUÉS
-    cols = ['Module', 'Engine', 'Bucket', 'Target Regime', 'WR (Target)', 'WR (Global)', 'Trades (Target)', 'Trades (Global)', 'Diag']
+    # Sort first
+    df_display = df_display.sort_values(by=['Bucket', 'WR (Global)'], ascending=[True, False])
+    
+    # Select cols
+    cols = ['Module', 'Engine', 'Bucket', 'WR (Global)', 'Trades (Global)', 'R0 WR', 'R0 Trades', 'R1 WR', 'R1 Trades', 'R2 WR', 'R2 Trades']
     valid_cols = [c for c in cols if c in df_display.columns]
-    
-    if exclude_cols: 
-        valid_cols = [c for c in valid_cols if c not in exclude_cols]
-        
     df_display = df_display[valid_cols]
-
-    # 3. ESTILIZAR Y RENDERIZAR
+    
+    format_dict = {'WR (Global)': "{:.1f}%", 'R0 WR': "{:.1f}%", 'R1 WR': "{:.1f}%", 'R2 WR': "{:.1f}%"}
     styled = df_display.style.map(highlight_buckets, subset=['Bucket'] if 'Bucket' in df_display.columns else [])\
-                             .format({'WR (Target)': "{:.1f}%", 'WR (Global)': "{:.1f}%"})
+                             .format(format_dict)
+    st.dataframe(styled, use_container_width=True, hide_index=True)
+
+def render_lineup_table(df_c):
+    """Action table for Next Session (Module Tab 2)"""
+    if df_c.empty: return
+    df_display = df_c.copy()
+    
+    df_display = df_display.sort_values(by=['Bucket', 'WR (Target)'], ascending=[True, False])
+    cols = ['Module', 'Engine', 'Bucket', 'Target Regime', 'WR (Target)', 'Trades (Target)', 'Diag']
+    valid_cols = [c for c in cols if c in df_display.columns]
+    df_display = df_display[valid_cols]
+    
+    styled = df_display.style.map(highlight_buckets, subset=['Bucket'] if 'Bucket' in df_display.columns else [])\
+                             .format({'WR (Target)': "{:.1f}%"})
+    st.dataframe(styled, use_container_width=True, hide_index=True)
+
+def render_regime_historical_table(df_c, regime_id):
+    """Deep forensic table for specific regimes (Module Tabs 3,4,5)"""
+    if df_c.empty: return
+    df_display = df_c.copy()
+    
+    wr_col = f'R{regime_id} WR'
+    trades_col = f'R{regime_id} Trades'
+    
+    df_display = df_display.sort_values(by=[wr_col], ascending=[False])
+    cols = ['Module', 'Engine', 'Hist_Bucket', wr_col, trades_col, 'WR (Global)', 'Trades (Global)']
+    valid_cols = [c for c in cols if c in df_display.columns]
+    df_display = df_display[valid_cols]
+    
+    styled = df_display.style.map(highlight_buckets, subset=['Hist_Bucket'] if 'Hist_Bucket' in df_display.columns else [])\
+                             .format({wr_col: "{:.1f}%", 'WR (Global)': "{:.1f}%"})
     st.dataframe(styled, use_container_width=True, hide_index=True)
 
 # =========================================================================
@@ -172,7 +183,6 @@ if nav_category == "HOME":
     if status in ["ACTIVE", "DEMO", "PASSED"]: st.success(f"System Online | Status: {status}")
     else: st.error(f"Execution Locked | Status: {status}")
     
-    # 🔮 NUEVO PANEL: Pronóstico Predictivo de Markov
     if system_forecast:
         st.markdown("### 🔮 Markov Predictive Forecast (Target For Tomorrow)")
         cols = st.columns(len(system_forecast))
@@ -184,21 +194,18 @@ if nav_category == "HOME":
                 st.metric(f"Module: {mod}", f"Regime {pred_r}", f"{prob}% Prob", delta_color=delta_color)
         st.markdown("---")
     
-    df_m_valid = df_master[df_master['Engine'] != 'NO_TRADE'] if not df_master.empty else None
-    render_top_row(df_config, df_m_valid)
-    
-    st.markdown("### Global Swarm Authorization")
-    render_engine_table(df_config)
+    st.markdown("### 🌐 Global Swarm Authorization (All Modules)")
+    render_global_table(df_config)
 
 elif nav_category == "Risk Management":
     st.title("Risk Management (Zero-Trust)")
-    st.markdown("Consulta en vivo la memoria de NinjaTrader para asignar reglas a la cuenta real.")
+    st.markdown("Live scan from NinjaTrader memory to assign rules to real account.")
     
     if "scanned_accounts" not in st.session_state: st.session_state.scanned_accounts = []
     if "active_account" not in st.session_state: st.session_state.active_account = risk_profile.get("account_name", "")
 
-    st.markdown("### 1. Escáner de Conexiones Físicas")
-    if st.button("🔍 ESCANEAR BROKER (NT8)", use_container_width=True):
+    st.markdown("### 1. Physical Connections Scanner")
+    if st.button("🔍 SCAN BROKER (NT8)", use_container_width=True):
         payload = {"passphrase": WEBHOOK_PASSPHRASE, "command": "SCAN_ACCOUNTS"}
         try:
             res = requests.post(NT8_WEBHOOK_URL, json=payload, timeout=5)
@@ -206,50 +213,49 @@ elif nav_category == "Risk Management":
                 data = res.json()
                 st.session_state.scanned_accounts = data.get("accounts", [])
                 st.session_state.active_account = data.get("active_account", "")
-                st.success("✅ Servidor NinjaTrader interrogado exitosamente.")
-            else: st.error(f"❌ NT8 rechazó la conexión (Error {res.status_code}).")
-        except Exception as e: st.error(f"❌ Falló la conexión con NT8 en el puerto 8080. Verifique la IP o el Firewall. Error: {e}")
+                st.success("✅ NinjaTrader Server successfully interrogated.")
+            else: st.error(f"❌ NT8 Rejected connection (Error {res.status_code}).")
+        except Exception as e: st.error(f"❌ Connection to NT8 failed on port 8080. Error: {e}")
 
     if st.session_state.scanned_accounts:
         st.markdown("---")
-        st.markdown("### 2. Selección de Cuenta y Radiografía")
+        st.markdown("### 2. Account Selection & Telemetry")
         
         account_names = [acc["name"] for acc in st.session_state.scanned_accounts]
         default_index = account_names.index(st.session_state.active_account) if st.session_state.active_account in account_names else 0
         
-        selected_acc_name = st.selectbox("Selecciona la cuenta que deseas operar:", account_names, index=default_index)
+        selected_acc_name = st.selectbox("Select Target Account:", account_names, index=default_index)
         acc_data = next((acc for acc in st.session_state.scanned_accounts if acc["name"] == selected_acc_name), None)
         
         if acc_data:
-            st.info(f"📊 **Métricas extraídas directamente del servidor para {selected_acc_name}**")
+            st.info(f"📊 **Live Metrics for {selected_acc_name}**")
             colA, colB, colC, colD = st.columns(4)
             colA.metric("Net Liquidation", f"${acc_data['net_liq']:,.2f}")
             colB.metric("Cash Value", f"${acc_data['cash_value']:,.2f}")
-            colC.metric("PnL Realizado (Hoy)", f"${acc_data['pnl']:,.2f}")
+            colC.metric("Realized PnL (Today)", f"${acc_data['pnl']:,.2f}")
             
             dd_val = acc_data['trailing_dd']
-            if dd_val > 0: colD.metric("Colchón de Vida (Max DD)", f"${dd_val:,.2f}")
-            else: colD.metric("Colchón de Vida", "N/A (Sim/Sin Límite)")
+            if dd_val > 0: colD.metric("Drawdown Cushion (Max DD)", f"${dd_val:,.2f}")
+            else: colD.metric("Drawdown Cushion", "N/A (Sim/No Limit)")
 
             st.markdown("---")
-            st.markdown("### 3. Parámetros de Ejecución y Disciplina")
-            st.markdown("Estos límites le dictarán a NinjaTrader cuándo colocar el candado por protección.")
+            st.markdown("### 3. Execution Parameters & Discipline")
             
             c_type, c_lim1, c_lim2 = st.columns([1, 1, 1])
             with c_type:
-                acc_type = st.selectbox("Tipo de Cuenta", ["EVALUATION", "FUNDED", "DEMO"], index=0)
-                eod_fallback = st.number_input("Drawdown Matemático (Respaldo) - $", value=float(risk_profile.get("eod_drawdown_limit", 1500.0)), step=100.0)
+                acc_type = st.selectbox("Account Type", ["EVALUATION", "FUNDED", "DEMO"], index=0)
+                eod_fallback = st.number_input("Math Drawdown (Fallback) - $", value=float(risk_profile.get("eod_drawdown_limit", 1500.0)), step=100.0)
 
             with c_lim1:
-                base_risk = st.number_input("Riesgo Base por Trade (Bucket A) - $", value=float(risk_profile.get("base_risk_usd", 500.0)), step=50.0)
-                max_contracts = st.number_input("Límite Máximo de Contratos Físicos", value=int(risk_profile.get("max_contracts", 15)), step=1)
+                base_risk = st.number_input("Base Risk per Trade (Bucket A) - $", value=float(risk_profile.get("base_risk_usd", 500.0)), step=50.0)
+                max_contracts = st.number_input("Max Physical Contracts", value=int(risk_profile.get("max_contracts", 15)), step=1)
             
             with c_lim2:
-                daily_cap = st.number_input("Daily Loss Cap (Bloqueo por Pérdida) - $", value=float(risk_profile.get("daily_cap_usd", 1250.0)), step=50.0)
-                profit_target = st.number_input("Profit Target (Bloqueo por Meta) - $", value=float(risk_profile.get("profit_target", 1500.0)), step=100.0)
+                daily_cap = st.number_input("Daily Loss Cap - $", value=float(risk_profile.get("daily_cap_usd", 1250.0)), step=50.0)
+                profit_target = st.number_input("Profit Target - $", value=float(risk_profile.get("profit_target", 1500.0)), step=100.0)
                 
             st.write("")
-            if st.button("🚀 ENVIAR AL VPS Y ESTABLECER COMO CUENTA ACTIVA", type="primary", use_container_width=True):
+            if st.button("🚀 PUSH TO VPS & SET ACTIVE ACCOUNT", type="primary", use_container_width=True):
                 payload_gateway = {
                     "passphrase": WEBHOOK_PASSPHRASE,
                     "event": "UPDATE_RISK",
@@ -269,10 +275,10 @@ elif nav_category == "Risk Management":
                 try:
                     res = requests.post(VPS_WEBHOOK_URL, json=payload_gateway, timeout=5)
                     if res.status_code == 200: 
-                        st.success(f"✅ ¡Blindaje Activo! NinjaTrader ejecutará órdenes en **{selected_acc_name}**.")
+                        st.success(f"✅ Shield Active! NinjaTrader will execute orders on **{selected_acc_name}**.")
                         st.session_state.active_account = selected_acc_name
-                    else: st.error(f"❌ El Gateway rechazó la configuración (Error {res.status_code}).")
-                except Exception as e: st.error(f"❌ Falló la conexión (Puerto 80). Verifique la IP o el Firewall. Error: {e}")
+                    else: st.error(f"❌ Gateway rejected configuration (Error {res.status_code}).")
+                except Exception as e: st.error(f"❌ Connection failed. Check IP/Firewall. Error: {e}")
 
 elif nav_category == "Trade Log":
     st.title("Trade Log")
@@ -311,24 +317,51 @@ elif nav_category == "Trade Log":
 elif nav_category == "Modules":
     st.title("Modules Dashboard")
     selected_module = st.selectbox("Select Target Module", ["MCL", "MGC", "MES", "MNQ_DAY", "MNQ_NIGHT"])
-    df_c_mod = df_config[df_config['Module'] == selected_module]
-    df_m_mod = df_master[(df_master['Module'] == selected_module) & (df_master['Engine'] != 'NO_TRADE')] if not df_master.empty else None
+    df_c_mod = df_config[df_config['Module'] == selected_module].copy()
     
-    # NUEVAS PESTAÑAS: Alineadas con el Semáforo de Riesgo 
-    tab1, tab2, tab3, tab4 = st.tabs(["Overview (All)", "Bucket A (Snipers)", "Bucket B (Friction/New)", "Bucket C (Quarantine)"])
+    # Render HUD
+    render_module_hud(selected_module, system_forecast)
+    
+    # TABS
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "🌐 Global Overview", 
+        "🚀 Next Session Line-up", 
+        "📊 Regime 0 Historical", 
+        "📊 Regime 1 Historical", 
+        "📊 Regime 2 Historical"
+    ])
     
     with tab1:
-        render_top_row(df_c_mod, df_m_mod)
-        render_engine_table(df_c_mod)
+        render_global_table(df_c_mod)
+        
     with tab2:
-        df_c_a = df_c_mod[df_c_mod['Bucket'] == 'A']
-        render_top_row(df_c_a, None)
-        render_engine_table(df_c_a, exclude_cols=['Bucket'])
+        pred_regime = system_forecast.get(selected_module, {}).get("predicted_regime_tomorrow", "?")
+        st.info(f"🚀 Execution logic and buckets strictly optimized for predicted **Regime {pred_regime}**")
+        render_lineup_table(df_c_mod)
+        
     with tab3:
-        df_c_b = df_c_mod[df_c_mod['Bucket'] == 'B']
-        render_top_row(df_c_b, None)
-        render_engine_table(df_c_b, exclude_cols=['Bucket'])
+        st.markdown("### Regime 0 Forensic Analysis")
+        if not df_c_mod.empty:
+            df_c_mod['Hist_Bucket'] = df_c_mod.apply(lambda r: classify_historical_bucket(r, 0), axis=1)
+            t3_a, t3_b, t3_c = st.tabs(["Bucket A (Snipers)", "Bucket B (Friction/New)", "Bucket C (Quarantine)"])
+            with t3_a: render_regime_historical_table(df_c_mod[df_c_mod['Hist_Bucket'] == 'A'], 0)
+            with t3_b: render_regime_historical_table(df_c_mod[df_c_mod['Hist_Bucket'] == 'B'], 0)
+            with t3_c: render_regime_historical_table(df_c_mod[df_c_mod['Hist_Bucket'] == 'C'], 0)
+            
     with tab4:
-        df_c_c = df_c_mod[df_c_mod['Bucket'] == 'C']
-        render_top_row(df_c_c, None)
-        render_engine_table(df_c_c, exclude_cols=['Bucket'])
+        st.markdown("### Regime 1 Forensic Analysis")
+        if not df_c_mod.empty:
+            df_c_mod['Hist_Bucket'] = df_c_mod.apply(lambda r: classify_historical_bucket(r, 1), axis=1)
+            t4_a, t4_b, t4_c = st.tabs(["Bucket A (Snipers)", "Bucket B (Friction/New)", "Bucket C (Quarantine)"])
+            with t4_a: render_regime_historical_table(df_c_mod[df_c_mod['Hist_Bucket'] == 'A'], 1)
+            with t4_b: render_regime_historical_table(df_c_mod[df_c_mod['Hist_Bucket'] == 'B'], 1)
+            with t4_c: render_regime_historical_table(df_c_mod[df_c_mod['Hist_Bucket'] == 'C'], 1)
+            
+    with tab5:
+        st.markdown("### Regime 2 Forensic Analysis")
+        if not df_c_mod.empty:
+            df_c_mod['Hist_Bucket'] = df_c_mod.apply(lambda r: classify_historical_bucket(r, 2), axis=1)
+            t5_a, t5_b, t5_c = st.tabs(["Bucket A (Snipers)", "Bucket B (Friction/New)", "Bucket C (Quarantine)"])
+            with t5_a: render_regime_historical_table(df_c_mod[df_c_mod['Hist_Bucket'] == 'A'], 2)
+            with t5_b: render_regime_historical_table(df_c_mod[df_c_mod['Hist_Bucket'] == 'B'], 2)
+            with t5_c: render_regime_historical_table(df_c_mod[df_c_mod['Hist_Bucket'] == 'C'], 2)
