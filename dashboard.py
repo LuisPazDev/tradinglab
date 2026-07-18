@@ -5,6 +5,7 @@ import json
 import os
 import requests
 from datetime import datetime, timedelta
+import numpy as np
 
 st.set_page_config(page_title="OmniSwarm Quant", layout="wide")
 
@@ -445,27 +446,83 @@ elif nav_category == "Risk Management":
                 except Exception as e: st.error(f"❌ Connection failed. Check IP/Firewall. Error: {e}")
 
 # =========================================================================
-# VIEW: TRADE LOG
+# VIEW: TRADE LOG (UPDATED EXACTLY AS REQUESTED)
 # =========================================================================
 elif nav_category == "Trade Log":
     st.title("Trade Log")
-    time_filter = st.radio("Timeframe", ["Today", "7 Days", "15 Days", "1 Month", "3 Months", "6 Months", "1 Year", "All-Time"], horizontal=True)
+    time_filter = st.radio("Timeframe", ["Last Session", "7 Days", "15 Days", "1 Month", "3 Months", "6 Months", "1 Year", "All-Time"], horizontal=True)
+    
     if not df_master.empty:
         df_log = df_master[df_master['Engine'] != 'NO_TRADE'].copy()
-        if time_filter != "All-Time":
-            days_map = {"Today": 1, "7 Days": 7, "15 Days": 15, "1 Month": 30, "3 Months": 90, "6 Months": 180, "1 Year": 365}
+        
+        # --- 1. Lógica de Filtros de Tiempo ---
+        if time_filter == "Last Session":
+            if not df_log.empty:
+                last_date = df_log['Timestamp'].dt.date.max()
+                df_log = df_log[df_log['Timestamp'].dt.date == last_date]
+        elif time_filter != "All-Time":
+            days_map = {"7 Days": 7, "15 Days": 15, "1 Month": 30, "3 Months": 90, "6 Months": 180, "1 Year": 365}
             cutoff_date = datetime.now() - timedelta(days=days_map[time_filter])
             df_log = df_log[df_log['Timestamp'] >= cutoff_date]
+            
         df_log = df_log.sort_values('Timestamp', ascending=False)
+        
         if not df_log.empty:
+            # --- 2. Panel Analítico Superior (Estilo HOME) ---
+            wins = len(df_log[df_log['Is_Win'] == 1])
+            losses = len(df_log[df_log['Is_Win'] == 0])
+            total = len(df_log)
+            wr = (wins / total * 100) if total > 0 else 0
+            
+            df_asc = df_log.sort_values('Timestamp', ascending=True)
+            curr_streak = 0
+            max_l_streak = 0
+            for val in df_asc['Is_Win']:
+                if val == 0:
+                    curr_streak += 1
+                    max_l_streak = max(max_l_streak, curr_streak)
+                else: curr_streak = 0
+            
+            st.markdown(f"### Performance for {time_filter}")
+            c1, c2, c3, c4, c5 = st.columns(5)
+            c1.metric("Total Trades", total)
+            c2.metric("Win Rate", f"{wr:.1f}%")
+            c3.metric("Net Wins", wins)
+            c4.metric("Net Losses", losses)
+            c5.metric("Max L-Streak", max_l_streak)
+            st.markdown("---")
+            
+            # --- 3. Lógica para extraer Bucket y formatear Regime ---
+            def get_trade_bucket(engine, regime_val):
+                """Busca el Bucket asignado a ese motor en ese régimen específico"""
+                if pd.isna(regime_val): return "N/A"
+                try:
+                    r_id = int(regime_val)
+                    if r_id not in [0, 1, 2]: return "N/A"
+                    engine_data = df_config[df_config['Engine'] == engine]
+                    if not engine_data.empty and f'Bucket R{r_id}' in engine_data.columns:
+                        return engine_data.iloc[0][f'Bucket R{r_id}']
+                except:
+                    pass
+                return "N/A"
+
             df_log['Result'] = df_log['Is_Win'].apply(lambda x: "WIN" if x == 1 else "LOSS")
             
-            show_cols = ['Timestamp', 'Module', 'Engine', 'Action', 'Result']
+            if 'Regime_Label' in df_log.columns:
+                df_log['Regime'] = df_log['Regime_Label'].apply(lambda x: f"R{int(x)}" if pd.notnull(x) else "N/A")
+                df_log['Bucket'] = df_log.apply(lambda r: get_trade_bucket(r['Engine'], r['Regime_Label']), axis=1)
+            else:
+                df_log['Regime'] = "N/A"
+                df_log['Bucket'] = "N/A"
+            
+            # --- 4. Renderización de la Tabla Enriquecida ---
+            show_cols = ['Timestamp', 'Module', 'Engine', 'Regime', 'Bucket', 'Action', 'Result']
             df_log_display = df_log[[c for c in show_cols if c in df_log.columns]]
             
-            html_log = render_html_table(df_log_display)
+            html_log = render_html_table(df_log_display, bucket_cols=['Bucket'])
             st.markdown(html_log, unsafe_allow_html=True)
-        else: st.warning("No data found for the selected timeframe.")
+        else: 
+            st.warning("No data found for the selected timeframe.")
     else: st.error("Database is empty.")
 
 # =========================================================================
