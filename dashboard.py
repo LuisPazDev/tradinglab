@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 st.set_page_config(page_title="OmniSwarm Quant", layout="wide")
 
 # =========================================================================
-# CSS PARA ESTÉTICA Y CENTRADO ABSOLUTO
+# CSS PARA ESTÉTICA Y CENTRADO ABSOLUTO (RENDERIZADO HTML PURO)
 # =========================================================================
 st.markdown("""
     <style>
@@ -48,9 +48,39 @@ st.markdown("""
         font-weight: 500;
     }
 
-    /* Force Table Centering in Streamlit HTML */
-    div[data-testid="stDataFrame"] table {
+    /* Absolute HTML Table Centering & Styling */
+    .table-container {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        margin-top: 10px;
+        margin-bottom: 20px;
+        overflow-x: auto;
+    }
+    .custom-table {
+        border-collapse: collapse;
         margin: 0 auto;
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        color: #E0E0E0;
+        background-color: #1A1C23;
+        border: 1px solid #2D303E;
+        border-radius: 8px;
+    }
+    .custom-table th {
+        background-color: #262730;
+        color: #FAFAFA;
+        font-weight: 600;
+        padding: 10px 15px;
+        text-align: center !important;
+        border-bottom: 1px solid #2D303E;
+    }
+    .custom-table td {
+        padding: 8px 15px;
+        text-align: center !important;
+        border-bottom: 1px solid #2D303E;
+    }
+    .custom-table tr:hover {
+        background-color: #2D303E;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -114,7 +144,7 @@ def load_data():
 df_master, df_config, risk_profile, system_forecast = load_data()
 
 # =========================================================================
-# UTILITIES & STRICT FORMATTING
+# UTILITIES & STRICT HTML FORMATTING
 # =========================================================================
 def get_historical_bucket(trades, wr):
     """Calculates Bucket dynamically for historical regimes"""
@@ -128,25 +158,31 @@ def highlight_buckets(val):
     if val == "C": return 'background-color: rgba(213, 0, 0, 0.1); color: #D50000; font-weight: bold;'
     return ''
 
-def style_dataframe(df, bucket_cols=None):
-    """Applies strict absolute centering to headers and cells, plus coloring"""
+def render_html_table(df, bucket_cols=None):
+    """Converts DataFrame to absolute centered HTML table"""
+    if df.empty: return ""
     if bucket_cols is None: bucket_cols = []
+    
     format_dict = {col: "{:.1f}%" for col in df.columns if 'WR' in col}
     
-    # Pandas Styler rules for absolute centering
-    styles = [
-        dict(selector="th", props=[("text-align", "center")]),
-        dict(selector="td", props=[("text-align", "center")])
-    ]
+    # Pandas properties
+    styled = df.style.set_properties(**{'text-align': 'center'})
     
-    styled = df.style.set_properties(**{'text-align': 'center'}) \
-                     .set_table_styles(styles) \
-                     .format(format_dict)
-    
+    # Apply Bucket Colors
     for col in bucket_cols:
         if col in df.columns:
             styled = styled.map(highlight_buckets, subset=[col])
-    return styled
+            
+    styled = styled.format(format_dict)
+    
+    # Convert to HTML hiding index
+    html = styled.hide(axis="index").to_html()
+    
+    # Inject Custom CSS Class
+    html = html.replace('<table', '<table class="custom-table"')
+    
+    # Wrap in Flexbox Container for strict centering
+    return f'<div class="table-container">{html}</div>'
 
 def get_last_5_string(engine_name, df_m):
     if df_m is None or df_m.empty: return "N/A"
@@ -164,10 +200,11 @@ if not df_config.empty:
     df_config['Bucket R2'] = df_config.apply(lambda r: get_historical_bucket(r['TT R2'], r['WR R2']), axis=1)
 
 def render_historical_metrics(df_c, df_m):
-    """Renders the top 5 historical metrics"""
+    """Renders the top 6 global historical metrics"""
     if df_c.empty: return
-    total_trades = df_c['TT Global'].sum()
+    total_trades = df_c['TT Global'].sum() if 'TT Global' in df_c.columns else 0
     avg_wr = (df_c['WR Global'] * df_c['TT Global']).sum() / total_trades if total_trades > 0 else 0
+    engines_count = len(df_c)
     
     wins = 0; losses = 0; max_l_streak = 0
     if df_m is not None and not df_m.empty and 'Is_Win' in df_m.columns:
@@ -180,14 +217,70 @@ def render_historical_metrics(df_c, df_m):
                 curr_streak += 1
                 max_l_streak = max(max_l_streak, curr_streak)
             else: curr_streak = 0
+    else:
+        wins = int((avg_wr / 100) * total_trades)
+        losses = total_trades - wins
             
-    c1, c2, c3, c4, c5 = st.columns(5)
+    c1, c2, c3, c4, c5, c6 = st.columns(6)
     c1.metric("Total Trades", total_trades)
     c2.metric("Global WR", f"{avg_wr:.1f}%")
     c3.metric("Net Wins", wins)
     c4.metric("Net Losses", losses)
     c5.metric("Max L-Streak", max_l_streak)
+    c6.metric("Total Engines", engines_count)
     st.markdown("---")
+
+def render_regime_metrics(df_c, df_m, regime_id):
+    """Renders the 6 metrics strictly filtered for a specific Regime"""
+    if df_c.empty: return
+    
+    tt_col = f'TT R{regime_id}'
+    wr_col = f'WR R{regime_id}'
+    
+    if tt_col not in df_c.columns: return
+    
+    # Filtrar solo los motores que operaron en este régimen
+    df_reg = df_c[df_c[tt_col] > 0]
+    engines_count = len(df_reg)
+    total_trades = df_reg[tt_col].sum()
+    avg_wr = (df_reg[wr_col] * df_reg[tt_col]).sum() / total_trades if total_trades > 0 else 0
+    
+    # Calcular Wins/Losses con precisión en base a las estadísticas del régimen
+    wins = int(round((avg_wr / 100) * total_trades)) if total_trades > 0 else 0
+    losses = total_trades - wins
+    
+    # Intentar extraer Max Streak si df_master tiene la data del Régimen
+    max_l_streak = "N/A"
+    has_regime_col = False
+    regime_col_name = ''
+    if df_m is not None and not df_m.empty:
+        for col in ['Regime', 'predicted_regime_evaluated', 'Module_Regime']:
+            if col in df_m.columns:
+                has_regime_col = True
+                regime_col_name = col
+                break
+                
+    if has_regime_col:
+        df_m_reg = df_m[df_m[regime_col_name] == regime_id]
+        if not df_m_reg.empty and 'Is_Win' in df_m_reg.columns:
+            df_asc = df_m_reg.sort_values('Timestamp', ascending=True)
+            curr_streak = 0
+            max_val = 0
+            for val in df_asc['Is_Win']:
+                if val == 0:
+                    curr_streak += 1
+                    max_val = max(max_val, curr_streak)
+                else: curr_streak = 0
+            max_l_streak = max_val
+
+    c1, c2, c3, c4, c5, c6 = st.columns(6)
+    c1.metric(f"TT R{regime_id}", total_trades)
+    c2.metric(f"WR R{regime_id}", f"{avg_wr:.1f}%")
+    c3.metric("Net Wins", wins)
+    c4.metric("Net Losses", losses)
+    c5.metric("Max L-Streak", max_l_streak)
+    c6.metric("Total Engines", engines_count)
+    st.write("")
 
 # =========================================================================
 # NAVIGATION
@@ -244,8 +337,8 @@ if nav_category == "HOME":
         ]
         df_home = df_home[cols_home]
         
-        styled_home = style_dataframe(df_home, bucket_cols=['Bucket R0', 'Bucket R1', 'Bucket R2'])
-        st.dataframe(styled_home, use_container_width=True, hide_index=True)
+        html_home = render_html_table(df_home, bucket_cols=['Bucket R0', 'Bucket R1', 'Bucket R2'])
+        st.markdown(html_home, unsafe_allow_html=True)
     else:
         st.warning("No global data available.")
 
@@ -353,8 +446,9 @@ elif nav_category == "Trade Log":
             
             show_cols = ['Timestamp', 'Module', 'Engine', 'Action', 'Result']
             df_log_display = df_log[[c for c in show_cols if c in df_log.columns]]
-            styled_log = style_dataframe(df_log_display)
-            st.dataframe(styled_log, use_container_width=True, hide_index=True)
+            
+            html_log = render_html_table(df_log_display)
+            st.markdown(html_log, unsafe_allow_html=True)
         else: st.warning("No data found for the selected timeframe.")
     else: st.error("Database is empty.")
 
@@ -402,8 +496,8 @@ elif nav_category == "Modules":
             ]
             df_t1 = df_t1[cols_t1]
             
-            styled_t1 = style_dataframe(df_t1, bucket_cols=['Bucket R0', 'Bucket R1', 'Bucket R2'])
-            st.dataframe(styled_t1, use_container_width=True, hide_index=True)
+            html_t1 = render_html_table(df_t1, bucket_cols=['Bucket R0', 'Bucket R1', 'Bucket R2'])
+            st.markdown(html_t1, unsafe_allow_html=True)
     
     # TAB 2: Next Session Line-up
     with tab2:
@@ -416,8 +510,8 @@ elif nav_category == "Modules":
             cols_t2 = ['Engine', 'Bucket', 'TT Target', 'WR Target', 'TT Global', 'WR Global', 'Diag']
             df_t2 = df_t2[cols_t2]
             
-            styled_t2 = style_dataframe(df_t2, bucket_cols=['Bucket'])
-            st.dataframe(styled_t2, use_container_width=True, hide_index=True)
+            html_t2 = render_html_table(df_t2, bucket_cols=['Bucket'])
+            st.markdown(html_t2, unsafe_allow_html=True)
             
     # TAB 3: Regime Breakdown (Forensic Lab)
     with tab3:
@@ -430,20 +524,23 @@ elif nav_category == "Modules":
                 st.markdown(f"#### {title}")
                 cols_sub = ['Engine', f'Bucket R{regime_id}', f'TT R{regime_id}', f'WR R{regime_id}', 'TT Global', 'WR Global']
                 df_sub = df_sub[cols_sub].sort_values(by=f'WR R{regime_id}', ascending=False)
-                styled_sub = style_dataframe(df_sub, bucket_cols=[f'Bucket R{regime_id}'])
-                st.dataframe(styled_sub, use_container_width=True, hide_index=True)
+                html_sub = render_html_table(df_sub, bucket_cols=[f'Bucket R{regime_id}'])
+                st.markdown(html_sub, unsafe_allow_html=True)
         
         with t_r0:
+            render_regime_metrics(df_c_mod, df_m_mod, 0)
             render_sub_bucket_table(df_c_mod, 0, 'A', "🎯 Bucket A (Snipers)")
             render_sub_bucket_table(df_c_mod, 0, 'B', "⚠️ Bucket B (Friction/New)")
             render_sub_bucket_table(df_c_mod, 0, 'C', "🚫 Bucket C (Quarantine)")
             
         with t_r1:
+            render_regime_metrics(df_c_mod, df_m_mod, 1)
             render_sub_bucket_table(df_c_mod, 1, 'A', "🎯 Bucket A (Snipers)")
             render_sub_bucket_table(df_c_mod, 1, 'B', "⚠️ Bucket B (Friction/New)")
             render_sub_bucket_table(df_c_mod, 1, 'C', "🚫 Bucket C (Quarantine)")
             
         with t_r2:
+            render_regime_metrics(df_c_mod, df_m_mod, 2)
             render_sub_bucket_table(df_c_mod, 2, 'A', "🎯 Bucket A (Snipers)")
             render_sub_bucket_table(df_c_mod, 2, 'B', "⚠️ Bucket B (Friction/New)")
             render_sub_bucket_table(df_c_mod, 2, 'C', "🚫 Bucket C (Quarantine)")
