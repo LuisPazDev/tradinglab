@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
 import json
@@ -52,7 +52,7 @@ st.markdown("""
     /* Absolute HTML Table Centering, Sizing & Responsiveness */
     .table-container {
         width: 100%;
-        overflow-x: auto; /* Responsive horizontal scroll for mobile */
+        overflow-x: auto;
         -webkit-overflow-scrolling: touch;
         margin-top: 10px;
         margin-bottom: 20px;
@@ -60,11 +60,11 @@ st.markdown("""
     }
     .custom-table {
         border-collapse: collapse;
-        width: 100%; /* Force all tables to occupy full available width symmetrically */
-        min-width: 800px; /* Prevent extreme squishing on small mobile screens */
+        width: 100%;
+        min-width: 800px;
         margin: 0 auto;
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-        font-size: 0.85rem; /* Reduced font size for a cleaner, professional look */
+        font-size: 0.85rem;
         color: #E0E0E0;
         background-color: #1A1C23;
         border: 1px solid #2D303E;
@@ -76,13 +76,13 @@ st.markdown("""
         padding: 10px 12px;
         text-align: center !important;
         border-bottom: 1px solid #2D303E;
-        white-space: nowrap; /* Prevent headers from stacking */
+        white-space: nowrap;
     }
     .custom-table td {
         padding: 8px 12px;
         text-align: center !important;
         border-bottom: 1px solid #2D303E;
-        white-space: nowrap; /* Prevent "Last 5" and other data from crowding/stacking */
+        white-space: nowrap;
     }
     .custom-table tr:hover {
         background-color: #2D303E;
@@ -152,7 +152,6 @@ df_master, df_config, risk_profile, system_forecast = load_data()
 # UTILITIES & STRICT HTML FORMATTING
 # =========================================================================
 def get_historical_bucket(trades, wr):
-    """Calculates Bucket dynamically for historical regimes"""
     if trades < 5: return "B"
     if wr >= 62.5: return "A"
     return "C"
@@ -164,29 +163,19 @@ def highlight_buckets(val):
     return ''
 
 def render_html_table(df, bucket_cols=None):
-    """Converts DataFrame to absolute centered HTML table"""
     if df.empty: return ""
     if bucket_cols is None: bucket_cols = []
     
     format_dict = {col: "{:.1f}%" for col in df.columns if 'WR' in col}
-    
-    # Pandas properties
     styled = df.style.set_properties(**{'text-align': 'center'})
     
-    # Apply Bucket Colors
     for col in bucket_cols:
         if col in df.columns:
             styled = styled.map(highlight_buckets, subset=[col])
             
     styled = styled.format(format_dict)
-    
-    # Convert to HTML hiding index
     html = styled.hide(axis="index").to_html()
-    
-    # Inject Custom CSS Class
     html = html.replace('<table', '<table class="custom-table"')
-    
-    # Wrap in Flexbox Container for strict centering & responsiveness
     return f'<div class="table-container">{html}</div>'
 
 def get_last_5_string(engine_name, df_m):
@@ -205,7 +194,6 @@ if not df_config.empty:
     df_config['Bucket R2'] = df_config.apply(lambda r: get_historical_bucket(r['TT R2'], r['WR R2']), axis=1)
 
 def render_historical_metrics(df_c, df_m):
-    """Renders the top 6 global historical metrics"""
     if df_c.empty: return
     total_trades = df_c['TT Global'].sum() if 'TT Global' in df_c.columns else 0
     avg_wr = (df_c['WR Global'] * df_c['TT Global']).sum() / total_trades if total_trades > 0 else 0
@@ -236,25 +224,19 @@ def render_historical_metrics(df_c, df_m):
     st.markdown("---")
 
 def render_regime_metrics(df_c, df_m, regime_id):
-    """Renders the 6 metrics strictly filtered for a specific Regime"""
     if df_c.empty: return
-    
     tt_col = f'TT R{regime_id}'
     wr_col = f'WR R{regime_id}'
-    
     if tt_col not in df_c.columns: return
     
-    # Filter engines active in this regime
     df_reg = df_c[df_c[tt_col] > 0]
     engines_count = len(df_reg)
     total_trades = df_reg[tt_col].sum()
     avg_wr = (df_reg[wr_col] * df_reg[tt_col]).sum() / total_trades if total_trades > 0 else 0
     
-    # Calculate Wins/Losses
     wins = int(round((avg_wr / 100) * total_trades)) if total_trades > 0 else 0
     losses = total_trades - wins
     
-    # Extract Max Streak specifically for this Regime
     max_l_streak = "N/A"
     has_regime_col = False
     regime_col_name = ''
@@ -307,7 +289,6 @@ if nav_category == "HOME":
     if status in ["ACTIVE", "DEMO", "PASSED"]: st.success(f"System Online | Status: {status}")
     else: st.error(f"Execution Locked | Status: {status}")
     
-    # --- BLOCK 1: Markov Predictive Forecast ---
     if system_forecast:
         st.markdown("### 🔮 Markov Predictive Forecast")
         cols = st.columns(len(system_forecast))
@@ -323,13 +304,11 @@ if nav_category == "HOME":
                 """, unsafe_allow_html=True)
         st.write("")
     
-    # --- BLOCK 2: Global Historical Performance ---
     st.markdown("### 🌐 Global Historical Performance")
     if not df_config.empty:
         df_m_valid = df_master[df_master['Engine'] != 'NO_TRADE'] if not df_master.empty else None
         render_historical_metrics(df_config, df_m_valid)
         
-        # --- BLOCK 3: The Global Matrix ---
         st.markdown("### 📊 The Global Matrix")
         df_home = df_config.copy()
         df_home = df_home.sort_values(by='TT Global', ascending=False)
@@ -348,7 +327,7 @@ if nav_category == "HOME":
         st.warning("No global data available.")
 
 # =========================================================================
-# VIEW: RISK MANAGEMENT (Zero-Trust)
+# VIEW: RISK MANAGEMENT
 # =========================================================================
 elif nav_category == "Risk Management":
     st.title("Risk Management (Zero-Trust)")
@@ -437,7 +416,7 @@ elif nav_category == "Risk Management":
                     try:
                         requests.post(NT8_WEBHOOK_URL, json=payload_nt8, timeout=3)
                     except Exception as e_nt8:
-                        st.warning(f"⚠️ Risk params saved, but direct ping to NT8 for Hot-Swap failed: {e_nt8}")
+                        st.warning(f"⚠️ Risk params saved, but direct ping to NT8 failed: {e_nt8}")
 
                     if res_py.status_code == 200: 
                         st.success(f"✅ Shield Active! NinjaTrader will execute orders on **{selected_acc_name}**.")
@@ -446,7 +425,7 @@ elif nav_category == "Risk Management":
                 except Exception as e: st.error(f"❌ Connection failed. Check IP/Firewall. Error: {e}")
 
 # =========================================================================
-# VIEW: TRADE LOG (UPDATED EXACTLY AS REQUESTED)
+# VIEW: TRADE LOG (ML FILTERED BACKTEST INCLUDED)
 # =========================================================================
 elif nav_category == "Trade Log":
     st.title("Trade Log")
@@ -468,33 +447,8 @@ elif nav_category == "Trade Log":
         df_log = df_log.sort_values('Timestamp', ascending=False)
         
         if not df_log.empty:
-            # --- 2. Panel Analítico Superior (Estilo HOME) ---
-            wins = len(df_log[df_log['Is_Win'] == 1])
-            losses = len(df_log[df_log['Is_Win'] == 0])
-            total = len(df_log)
-            wr = (wins / total * 100) if total > 0 else 0
-            
-            df_asc = df_log.sort_values('Timestamp', ascending=True)
-            curr_streak = 0
-            max_l_streak = 0
-            for val in df_asc['Is_Win']:
-                if val == 0:
-                    curr_streak += 1
-                    max_l_streak = max(max_l_streak, curr_streak)
-                else: curr_streak = 0
-            
-            st.markdown(f"### Performance for {time_filter}")
-            c1, c2, c3, c4, c5 = st.columns(5)
-            c1.metric("Total Trades", total)
-            c2.metric("Win Rate", f"{wr:.1f}%")
-            c3.metric("Net Wins", wins)
-            c4.metric("Net Losses", losses)
-            c5.metric("Max L-Streak", max_l_streak)
-            st.markdown("---")
-            
-            # --- 3. Lógica para extraer Bucket y formatear Regime ---
+            # --- 2. Extraer Bucket e Inyectarlo antes de Calcular ---
             def get_trade_bucket(engine, regime_val):
-                """Busca el Bucket asignado a ese motor en ese régimen específico"""
                 if pd.isna(regime_val): return "N/A"
                 try:
                     r_id = int(regime_val)
@@ -502,8 +456,7 @@ elif nav_category == "Trade Log":
                     engine_data = df_config[df_config['Engine'] == engine]
                     if not engine_data.empty and f'Bucket R{r_id}' in engine_data.columns:
                         return engine_data.iloc[0][f'Bucket R{r_id}']
-                except:
-                    pass
+                except: pass
                 return "N/A"
 
             df_log['Result'] = df_log['Is_Win'].apply(lambda x: "WIN" if x == 1 else "LOSS")
@@ -514,8 +467,53 @@ elif nav_category == "Trade Log":
             else:
                 df_log['Regime'] = "N/A"
                 df_log['Bucket'] = "N/A"
+
+            # Helper for Streak Calculation
+            def get_streak(df_sub):
+                if df_sub.empty: return 0
+                df_asc = df_sub.sort_values('Timestamp', ascending=True)
+                c, m = 0, 0
+                for v in df_asc['Is_Win']:
+                    if v == 0:
+                        c += 1
+                        m = max(m, c)
+                    else: c = 0
+                return m
             
-            # --- 4. Renderización de la Tabla Enriquecida ---
+            # --- 3. Panel Analítico RAW (La Cruda Realidad) ---
+            wins_raw = len(df_log[df_log['Is_Win'] == 1])
+            losses_raw = len(df_log[df_log['Is_Win'] == 0])
+            total_raw = len(df_log)
+            wr_raw = (wins_raw / total_raw * 100) if total_raw > 0 else 0
+            streak_raw = get_streak(df_log)
+            
+            st.markdown(f"### 🩸 RAW EXECUTION (All Trades)")
+            c1, c2, c3, c4, c5 = st.columns(5)
+            c1.metric("Total Trades", total_raw)
+            c2.metric("Win Rate", f"{wr_raw:.1f}%")
+            c3.metric("Net Wins", wins_raw)
+            c4.metric("Net Losses", losses_raw)
+            c5.metric("Max L-Streak", streak_raw)
+            
+            # --- 4. Panel Analítico FILTERED (El filtro ML en acción) ---
+            df_filt = df_log[df_log['Bucket'].isin(['A', 'B'])]
+            wins_filt = len(df_filt[df_filt['Is_Win'] == 1])
+            losses_filt = len(df_filt[df_filt['Is_Win'] == 0])
+            total_filt = len(df_filt)
+            wr_filt = (wins_filt / total_filt * 100) if total_filt > 0 else 0
+            streak_filt = get_streak(df_filt)
+            
+            st.markdown(f"### 🛡️ ML FILTERED (Buckets A & B Only)")
+            c1, c2, c3, c4, c5 = st.columns(5)
+            c1.metric("Total Trades", total_filt)
+            c2.metric("Win Rate", f"{wr_filt:.1f}%")
+            c3.metric("Net Wins", wins_filt)
+            c4.metric("Net Losses", losses_filt)
+            c5.metric("Max L-Streak", streak_filt)
+            
+            st.markdown("---")
+            
+            # --- 5. Renderización de la Tabla Enriquecida ---
             show_cols = ['Timestamp', 'Module', 'Engine', 'Regime', 'Bucket', 'Action', 'Result']
             df_log_display = df_log[[c for c in show_cols if c in df_log.columns]]
             
@@ -531,11 +529,9 @@ elif nav_category == "Trade Log":
 elif nav_category == "Modules":
     st.title("Modules Dashboard")
     
-    # --- BLOCK 1: Module Selector ---
     selected_module = st.selectbox("Select Target Module:", ["MCL", "MGC", "MES", "MNQ_DAY", "MNQ_NIGHT"])
     df_c_mod = df_config[df_config['Module'] == selected_module].copy()
     
-    # --- BLOCK 2: Module Intelligence Header (HUD) ---
     f_data = system_forecast.get(selected_module, {})
     if f_data:
         pred_r = f_data.get('predicted_regime_tomorrow', '?')
@@ -546,15 +542,12 @@ elif nav_category == "Modules":
         </div>
         """, unsafe_allow_html=True)
         
-    # --- BLOCK 3: Module Historical Performance ---
     st.markdown(f"### 🌐 Historical Performance: {selected_module}")
     df_m_mod = df_master[(df_master['Module'] == selected_module) & (df_master['Engine'] != 'NO_TRADE')] if not df_master.empty else None
     render_historical_metrics(df_c_mod, df_m_mod)
     
-    # --- BLOCK 4: The Analytical Tabs ---
     tab1, tab2, tab3 = st.tabs(["🌐 Global Matrix", "🚀 Next Session Line-up", "📊 Regime Breakdown"])
     
-    # TAB 1: Global Matrix (Specific to this Module)
     with tab1:
         st.markdown(f"### The Global Matrix ({selected_module})")
         if not df_c_mod.empty:
@@ -572,7 +565,6 @@ elif nav_category == "Modules":
             html_t1 = render_html_table(df_t1, bucket_cols=['Bucket R0', 'Bucket R1', 'Bucket R2'])
             st.markdown(html_t1, unsafe_allow_html=True)
     
-    # TAB 2: Next Session Line-up
     with tab2:
         st.markdown("### Execution Plan (Target Regime Only)")
         if not df_c_mod.empty:
@@ -586,7 +578,6 @@ elif nav_category == "Modules":
             html_t2 = render_html_table(df_t2, bucket_cols=['Bucket'])
             st.markdown(html_t2, unsafe_allow_html=True)
             
-    # TAB 3: Regime Breakdown (Forensic Lab)
     with tab3:
         st.markdown("### Forensic Multi-Regime Analysis")
         t_r0, t_r1, t_r2 = st.tabs(["[ Regime 0 ]", "[ Regime 1 ]", "[ Regime 2 ]"])
