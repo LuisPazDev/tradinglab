@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
 import json
@@ -10,83 +10,35 @@ import numpy as np
 st.set_page_config(page_title="OmniSwarm Quant", layout="wide")
 
 # =========================================================================
-# CSS PARA ESTÉTICA, CENTRADO ABSOLUTO Y RESPONSIVIDAD (MÓVIL A TV)
+# CSS PARA ESTÉTICA, CENTRADO ABSOLUTO Y RESPONSIVIDAD
 # =========================================================================
 st.markdown("""
     <style>
     .block-container { padding-top: 2rem; padding-bottom: 2rem; }
     h1, h2, h3 { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 400; color: #E0E0E0;}
     
-    /* Global Metrics Styling */
     .stMetric label { font-size: 0.85rem !important; color: #A0A0A0 !important; }
     .stMetric value { font-size: 1.5rem !important; }
     
-    /* Buttons */
     div.stButton > button[kind="primary"] { background-color: #28a745; color: white; border: none; border-radius: 4px; font-weight: bold; }
     div.stButton > button[kind="primary"]:hover { background-color: #218838; }
     
-    /* Minimalist Forecast Cards */
     .forecast-card {
-        background-color: #1A1C23;
-        border: 1px solid #2D303E;
-        border-radius: 8px;
-        padding: 12px;
-        text-align: center;
-        margin-bottom: 10px;
+        background-color: #1A1C23; border: 1px solid #2D303E; border-radius: 8px; padding: 12px; text-align: center; margin-bottom: 10px;
     }
     .fc-title { font-size: 1rem; color: #A0A0A0; font-weight: 600; margin-bottom: 5px; }
     .fc-data { font-size: 1.1rem; color: #E0E0E0; font-weight: 400; }
     .fc-highlight { color: #00C853; font-weight: 700; }
     
     .module-hud {
-        background: linear-gradient(90deg, #1A1C23, #15161B);
-        border-left: 4px solid #00C853;
-        padding: 15px;
-        border-radius: 6px;
-        margin-bottom: 20px;
-        color: #E0E0E0;
-        font-size: 1.2rem;
-        font-weight: 500;
+        background: linear-gradient(90deg, #1A1C23, #15161B); border-left: 4px solid #00C853; padding: 15px; border-radius: 6px; margin-bottom: 20px; color: #E0E0E0; font-size: 1.2rem; font-weight: 500;
     }
 
-    /* Absolute HTML Table Centering, Sizing & Responsiveness */
-    .table-container {
-        width: 100%;
-        overflow-x: auto; /* Responsive horizontal scroll for mobile */
-        -webkit-overflow-scrolling: touch;
-        margin-top: 10px;
-        margin-bottom: 20px;
-        border-radius: 8px;
-    }
-    .custom-table {
-        border-collapse: collapse;
-        width: 100%; /* Force all tables to occupy full available width symmetrically */
-        min-width: 800px; /* Prevent extreme squishing on small mobile screens */
-        margin: 0 auto;
-        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-        font-size: 0.85rem; /* Reduced font size for a cleaner, professional look */
-        color: #E0E0E0;
-        background-color: #1A1C23;
-        border: 1px solid #2D303E;
-    }
-    .custom-table th {
-        background-color: #262730;
-        color: #FAFAFA;
-        font-weight: 600;
-        padding: 10px 12px;
-        text-align: center !important;
-        border-bottom: 1px solid #2D303E;
-        white-space: nowrap; /* Prevent headers from stacking */
-    }
-    .custom-table td {
-        padding: 8px 12px;
-        text-align: center !important;
-        border-bottom: 1px solid #2D303E;
-        white-space: nowrap; /* Prevent "Last 5" and other data from crowding/stacking */
-    }
-    .custom-table tr:hover {
-        background-color: #2D303E;
-    }
+    .table-container { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 10px; margin-bottom: 20px; border-radius: 8px; }
+    .custom-table { border-collapse: collapse; width: 100%; min-width: 800px; margin: 0 auto; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 0.85rem; color: #E0E0E0; background-color: #1A1C23; border: 1px solid #2D303E; }
+    .custom-table th { background-color: #262730; color: #FAFAFA; font-weight: 600; padding: 10px 12px; text-align: center !important; border-bottom: 1px solid #2D303E; white-space: nowrap; }
+    .custom-table td { padding: 8px 12px; text-align: center !important; border-bottom: 1px solid #2D303E; white-space: nowrap; }
+    .custom-table tr:hover { background-color: #2D303E; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -129,19 +81,26 @@ def load_data():
             config_rows.append({
                 'Module': d.get('module', 'N/A'), 
                 'Engine': d.get('engine_name', k), 
-                'Bucket': d.get('bucket', 'B'), 
+                'Bucket': d.get('bucket', 'C'), # Default C preventivo
                 'Target Regime': f"R{d.get('predicted_regime_evaluated', '?')}",
                 'WR Target': d.get('wr_predicted_regime', 0.0),
                 'WR Global': d.get('wr_global', 0.0),
                 'TT Target': d.get('total_trades_in_regime', 0),
                 'TT Global': d.get('total_trades_global', 0),
                 'Diag': d.get('reason', ''),
+                
+                # AHORA LEE LOS BUCKETS DIRECTAMENTE DEL ML
                 'WR R0': d.get('r0_wr', 0.0),
                 'TT R0': d.get('r0_trades', 0),
+                'Bucket R0': d.get('bucket_r0', 'C'),
+                
                 'WR R1': d.get('r1_wr', 0.0),
                 'TT R1': d.get('r1_trades', 0),
+                'Bucket R1': d.get('bucket_r1', 'C'),
+                
                 'WR R2': d.get('r2_wr', 0.0),
-                'TT R2': d.get('r2_trades', 0)
+                'TT R2': d.get('r2_trades', 0),
+                'Bucket R2': d.get('bucket_r2', 'C')
             })
     
     return df_master, pd.DataFrame(config_rows), risk_data, system_forecast
@@ -151,11 +110,16 @@ df_master, df_config, risk_profile, system_forecast = load_data()
 # =========================================================================
 # UTILITIES & STRICT HTML FORMATTING
 # =========================================================================
-def get_historical_bucket(trades, wr):
-    """Calculates Bucket dynamically for historical regimes"""
-    if trades < 5: return "B"
-    if wr >= 62.5: return "A"
-    return "C"
+def get_streak(df_sub):
+    if df_sub is None or df_sub.empty or 'Is_Win' not in df_sub.columns: return 0
+    df_asc = df_sub.sort_values('Timestamp', ascending=True)
+    c, m = 0, 0
+    for v in df_asc['Is_Win']:
+        if v == 0:
+            c += 1
+            m = max(m, c)
+        else: c = 0
+    return m
 
 def highlight_buckets(val):
     if val == "A": return 'background-color: rgba(0, 200, 83, 0.1); color: #00C853; font-weight: bold;'
@@ -164,29 +128,17 @@ def highlight_buckets(val):
     return ''
 
 def render_html_table(df, bucket_cols=None):
-    """Converts DataFrame to absolute centered HTML table"""
     if df.empty: return ""
     if bucket_cols is None: bucket_cols = []
-    
     format_dict = {col: "{:.1f}%" for col in df.columns if 'WR' in col}
-    
-    # Pandas properties
     styled = df.style.set_properties(**{'text-align': 'center'})
     
-    # Apply Bucket Colors
     for col in bucket_cols:
-        if col in df.columns:
-            styled = styled.map(highlight_buckets, subset=[col])
+        if col in df.columns: styled = styled.map(highlight_buckets, subset=[col])
             
     styled = styled.format(format_dict)
-    
-    # Convert to HTML hiding index
     html = styled.hide(axis="index").to_html()
-    
-    # Inject Custom CSS Class
     html = html.replace('<table', '<table class="custom-table"')
-    
-    # Wrap in Flexbox Container for strict centering & responsiveness
     return f'<div class="table-container">{html}</div>'
 
 def get_last_5_string(engine_name, df_m):
@@ -196,99 +148,129 @@ def get_last_5_string(engine_name, df_m):
     last_5 = trades.tail(5)['Is_Win'].tolist()
     return " - ".join(["W" if x == 1 else "L" for x in last_5])
 
-# Inject Last 5 and Historical Buckets into df_config
+# Inyectar Last 5 en df_config (ya NO inyectamos los buckets, porque ya vienen del JSON)
 if not df_config.empty:
     df_m_valid = df_master[df_master['Engine'] != 'NO_TRADE'] if not df_master.empty else None
     df_config['Last 5'] = df_config['Engine'].apply(lambda e: get_last_5_string(e, df_m_valid))
-    df_config['Bucket R0'] = df_config.apply(lambda r: get_historical_bucket(r['TT R0'], r['WR R0']), axis=1)
-    df_config['Bucket R1'] = df_config.apply(lambda r: get_historical_bucket(r['TT R1'], r['WR R1']), axis=1)
-    df_config['Bucket R2'] = df_config.apply(lambda r: get_historical_bucket(r['TT R2'], r['WR R2']), axis=1)
 
 def render_historical_metrics(df_c, df_m):
-    """Renders the top 6 global historical metrics"""
     if df_c.empty: return
-    total_trades = df_c['TT Global'].sum() if 'TT Global' in df_c.columns else 0
-    avg_wr = (df_c['WR Global'] * df_c['TT Global']).sum() / total_trades if total_trades > 0 else 0
     engines_count = len(df_c)
     
-    wins = 0; losses = 0; max_l_streak = 0
     if df_m is not None and not df_m.empty and 'Is_Win' in df_m.columns:
-        wins = len(df_m[df_m['Is_Win'] == 1])
-        losses = len(df_m[df_m['Is_Win'] == 0])
-        df_asc = df_m.sort_values('Timestamp', ascending=True)
-        curr_streak = 0
-        for val in df_asc['Is_Win']:
-            if val == 0:
-                curr_streak += 1
-                max_l_streak = max(max_l_streak, curr_streak)
-            else: curr_streak = 0
+        total_raw = len(df_m)
+        wins_raw = len(df_m[df_m['Is_Win'] == 1])
+        losses_raw = len(df_m[df_m['Is_Win'] == 0])
+        wr_raw = (wins_raw / total_raw * 100) if total_raw > 0 else 0
+        streak_raw = get_streak(df_m)
     else:
-        wins = int((avg_wr / 100) * total_trades)
-        losses = total_trades - wins
+        total_raw, wr_raw, wins_raw, losses_raw, streak_raw = 0, 0, 0, 0, 0
             
+    st.markdown("#### 🩸 RAW EXECUTION (All Trades)")
     c1, c2, c3, c4, c5, c6 = st.columns(6)
-    c1.metric("Total Trades", total_trades)
-    c2.metric("Global WR", f"{avg_wr:.1f}%")
-    c3.metric("Net Wins", wins)
-    c4.metric("Net Losses", losses)
-    c5.metric("Max L-Streak", max_l_streak)
+    c1.metric("Total Trades", total_raw)
+    c2.metric("Global WR", f"{wr_raw:.1f}%")
+    c3.metric("Net Wins", wins_raw)
+    c4.metric("Net Losses", losses_raw)
+    c5.metric("Max L-Streak", streak_raw)
     c6.metric("Total Engines", engines_count)
+    
+    st.markdown("#### 🛡️ ML FILTERED (Buckets A & B Only)")
+    if df_m is not None and not df_m.empty and 'Regime_Label' in df_m.columns:
+        engine_bucket_map = {}
+        for _, row in df_c.iterrows():
+            engine_bucket_map[row['Engine']] = {
+                0: row.get('Bucket R0', 'C'),
+                1: row.get('Bucket R1', 'C'),
+                2: row.get('Bucket R2', 'C')
+            }
+        
+        def get_bucket(r):
+            if pd.isna(r['Regime_Label']): return "C"
+            try:
+                reg = int(r['Regime_Label'])
+                return engine_bucket_map.get(r['Engine'], {}).get(reg, "C")
+            except: return "C"
+            
+        df_m_filt = df_m.copy()
+        df_m_filt['Bucket'] = df_m_filt.apply(get_bucket, axis=1)
+        df_filt = df_m_filt[df_m_filt['Bucket'].isin(['A', 'B'])]
+        
+        total_filt = len(df_filt)
+        wins_filt = len(df_filt[df_filt['Is_Win'] == 1])
+        losses_filt = len(df_filt[df_filt['Is_Win'] == 0])
+        wr_filt = (wins_filt / total_filt * 100) if total_filt > 0 else 0
+        streak_filt = get_streak(df_filt)
+        engines_filt = df_filt['Engine'].nunique() if total_filt > 0 else 0
+    else:
+        total_filt, wr_filt, wins_filt, losses_filt, streak_filt, engines_filt = 0, 0, 0, 0, 0, 0
+
+    f1, f2, f3, f4, f5, f6 = st.columns(6)
+    f1.metric("Total Trades", total_filt)
+    f2.metric("Global WR", f"{wr_filt:.1f}%")
+    f3.metric("Net Wins", wins_filt)
+    f4.metric("Net Losses", losses_filt)
+    f5.metric("Max L-Streak", streak_filt)
+    f6.metric("Filtered Engines", engines_filt)
     st.markdown("---")
 
 def render_regime_metrics(df_c, df_m, regime_id):
-    """Renders the 6 metrics strictly filtered for a specific Regime"""
     if df_c.empty: return
-    
     tt_col = f'TT R{regime_id}'
-    wr_col = f'WR R{regime_id}'
-    
     if tt_col not in df_c.columns: return
     
-    # Filter engines active in this regime
-    df_reg = df_c[df_c[tt_col] > 0]
-    engines_count = len(df_reg)
-    total_trades = df_reg[tt_col].sum()
-    avg_wr = (df_reg[wr_col] * df_reg[tt_col]).sum() / total_trades if total_trades > 0 else 0
+    df_reg_config = df_c[df_c[tt_col] > 0]
+    engines_count = len(df_reg_config)
     
-    # Calculate Wins/Losses
-    wins = int(round((avg_wr / 100) * total_trades)) if total_trades > 0 else 0
-    losses = total_trades - wins
-    
-    # Extract Max Streak specifically for this Regime
-    max_l_streak = "N/A"
-    has_regime_col = False
-    regime_col_name = ''
-    if df_m is not None and not df_m.empty:
-        for col in ['Regime', 'predicted_regime_evaluated', 'Module_Regime']:
-            if col in df_m.columns:
-                has_regime_col = True
-                regime_col_name = col
-                break
-                
-    if has_regime_col:
-        df_m_reg = df_m[df_m[regime_col_name] == regime_id]
-        if not df_m_reg.empty and 'Is_Win' in df_m_reg.columns:
-            df_asc = df_m_reg.sort_values('Timestamp', ascending=True)
-            curr_streak = 0
-            max_val = 0
-            for val in df_asc['Is_Win']:
-                if val == 0:
-                    curr_streak += 1
-                    max_val = max(max_val, curr_streak)
-                else: curr_streak = 0
-            max_l_streak = max_val
+    df_m_reg = pd.DataFrame()
+    if df_m is not None and not df_m.empty and 'Regime_Label' in df_m.columns:
+        df_m_reg = df_m[df_m['Regime_Label'] == regime_id].copy()
 
+    if not df_m_reg.empty and 'Is_Win' in df_m_reg.columns:
+        total_raw = len(df_m_reg)
+        wins_raw = len(df_m_reg[df_m_reg['Is_Win'] == 1])
+        losses_raw = len(df_m_reg[df_m_reg['Is_Win'] == 0])
+        wr_raw = (wins_raw / total_raw * 100) if total_raw > 0 else 0
+        streak_raw = get_streak(df_m_reg)
+    else:
+        total_raw, wr_raw, wins_raw, losses_raw, streak_raw = 0, 0, 0, 0, 0
+
+    st.markdown(f"#### 🩸 RAW EXECUTION (Regime {regime_id})")
     c1, c2, c3, c4, c5, c6 = st.columns(6)
-    c1.metric(f"TT R{regime_id}", total_trades)
-    c2.metric(f"WR R{regime_id}", f"{avg_wr:.1f}%")
-    c3.metric("Net Wins", wins)
-    c4.metric("Net Losses", losses)
-    c5.metric("Max L-Streak", max_l_streak)
+    c1.metric(f"TT R{regime_id}", total_raw)
+    c2.metric(f"WR R{regime_id}", f"{wr_raw:.1f}%")
+    c3.metric("Net Wins", wins_raw)
+    c4.metric("Net Losses", losses_raw)
+    c5.metric("Max L-Streak", streak_raw)
     c6.metric("Total Engines", engines_count)
+
+    st.markdown("#### 🛡️ ML FILTERED (Buckets A & B Only)")
+    if not df_m_reg.empty:
+        bucket_col = f'Bucket R{regime_id}'
+        engine_bucket_map = df_c.set_index('Engine')[bucket_col].to_dict() if bucket_col in df_c.columns else {}
+        df_m_reg['Bucket'] = df_m_reg['Engine'].map(engine_bucket_map).fillna('C')
+        df_filt = df_m_reg[df_m_reg['Bucket'].isin(['A', 'B'])]
+        
+        total_filt = len(df_filt)
+        wins_filt = len(df_filt[df_filt['Is_Win'] == 1])
+        losses_filt = len(df_filt[df_filt['Is_Win'] == 0])
+        wr_filt = (wins_filt / total_filt * 100) if total_filt > 0 else 0
+        streak_filt = get_streak(df_filt)
+        engines_filt = df_filt['Engine'].nunique() if total_filt > 0 else 0
+    else:
+        total_filt, wr_filt, wins_filt, losses_filt, streak_filt, engines_filt = 0, 0, 0, 0, 0, 0
+        
+    f1, f2, f3, f4, f5, f6 = st.columns(6)
+    f1.metric(f"TT R{regime_id}", total_filt)
+    f2.metric(f"WR R{regime_id}", f"{wr_filt:.1f}%")
+    f3.metric("Net Wins", wins_filt)
+    f4.metric("Net Losses", losses_filt)
+    f5.metric("Max L-Streak", streak_filt)
+    f6.metric("Filtered Engines", engines_filt)
     st.write("")
 
 # =========================================================================
-# NAVIGATION
+# NAVIGATION & VIEWS
 # =========================================================================
 st.sidebar.title("OmniSwarm Quant")
 st.sidebar.markdown("---")
@@ -298,16 +280,12 @@ if st.sidebar.button("Refresh Data"):
     st.cache_data.clear()
     st.rerun()
 
-# =========================================================================
-# VIEW: HOME
-# =========================================================================
 if nav_category == "HOME":
     st.title("System Overview")
     status = risk_profile.get("account_status", "ACTIVE")
     if status in ["ACTIVE", "DEMO", "PASSED"]: st.success(f"System Online | Status: {status}")
     else: st.error(f"Execution Locked | Status: {status}")
     
-    # --- BLOCK 1: Markov Predictive Forecast ---
     if system_forecast:
         st.markdown("### 🔮 Markov Predictive Forecast")
         cols = st.columns(len(system_forecast))
@@ -323,13 +301,11 @@ if nav_category == "HOME":
                 """, unsafe_allow_html=True)
         st.write("")
     
-    # --- BLOCK 2: Global Historical Performance ---
     st.markdown("### 🌐 Global Historical Performance")
     if not df_config.empty:
         df_m_valid = df_master[df_master['Engine'] != 'NO_TRADE'] if not df_master.empty else None
         render_historical_metrics(df_config, df_m_valid)
         
-        # --- BLOCK 3: The Global Matrix ---
         st.markdown("### 📊 The Global Matrix")
         df_home = df_config.copy()
         df_home = df_home.sort_values(by='TT Global', ascending=False)
@@ -347,9 +323,6 @@ if nav_category == "HOME":
     else:
         st.warning("No global data available.")
 
-# =========================================================================
-# VIEW: RISK MANAGEMENT (Zero-Trust)
-# =========================================================================
 elif nav_category == "Risk Management":
     st.title("Risk Management (Zero-Trust)")
     st.markdown("Live scan from NinjaTrader memory to assign rules to real account.")
@@ -368,7 +341,7 @@ elif nav_category == "Risk Management":
                 st.session_state.active_account = data.get("active_account", "")
                 st.success("✅ NinjaTrader Server successfully interrogated.")
             else: st.error(f"❌ NT8 Rejected connection (Error {res.status_code}).")
-        except Exception as e: st.error(f"❌ Connection to NT8 failed on port 8080. Check IP/Firewall. Error: {e}")
+        except Exception as e: st.error(f"❌ Connection to NT8 failed. Check IP/Firewall. Error: {e}")
 
     if st.session_state.scanned_accounts:
         st.markdown("---")
@@ -415,39 +388,26 @@ elif nav_category == "Risk Management":
                     "target_account": selected_acc_name, 
                     "risk_data": {
                         "account_status": "ACTIVE", 
-                        "account_type": acc_type,
-                        "account_name": selected_acc_name, 
-                        "account_size": acc_data['net_liq'], 
-                        "profit_target": profit_target,
-                        "eod_drawdown_limit": eod_fallback,
-                        "daily_cap_usd": daily_cap,
-                        "base_risk_usd": base_risk,
-                        "max_contracts": max_contracts
+                        "account_type": acc_type, "account_name": selected_acc_name, 
+                        "account_size": acc_data['net_liq'], "profit_target": profit_target,
+                        "eod_drawdown_limit": eod_fallback, "daily_cap_usd": daily_cap,
+                        "base_risk_usd": base_risk, "max_contracts": max_contracts
                     }
                 }
                 
-                payload_nt8 = {
-                    "passphrase": WEBHOOK_PASSPHRASE,
-                    "command": "SYNC_BALANCE",
-                    "target_account": selected_acc_name
-                }
+                payload_nt8 = {"passphrase": WEBHOOK_PASSPHRASE, "command": "SYNC_BALANCE", "target_account": selected_acc_name}
                 
                 try:
                     res_py = requests.post(VPS_WEBHOOK_URL, json=payload_gateway, timeout=5)
-                    try:
-                        requests.post(NT8_WEBHOOK_URL, json=payload_nt8, timeout=3)
-                    except Exception as e_nt8:
-                        st.warning(f"⚠️ Risk params saved, but direct ping to NT8 for Hot-Swap failed: {e_nt8}")
+                    try: requests.post(NT8_WEBHOOK_URL, json=payload_nt8, timeout=3)
+                    except: pass
 
                     if res_py.status_code == 200: 
                         st.success(f"✅ Shield Active! NinjaTrader will execute orders on **{selected_acc_name}**.")
                         st.session_state.active_account = selected_acc_name
                     else: st.error(f"❌ Gateway rejected configuration (Error {res_py.status_code}).")
-                except Exception as e: st.error(f"❌ Connection failed. Check IP/Firewall. Error: {e}")
+                except Exception as e: st.error(f"❌ Connection failed. Error: {e}")
 
-# =========================================================================
-# VIEW: TRADE LOG (UPDATED EXACTLY AS REQUESTED)
-# =========================================================================
 elif nav_category == "Trade Log":
     st.title("Trade Log")
     time_filter = st.radio("Timeframe", ["Last Session", "7 Days", "15 Days", "1 Month", "3 Months", "6 Months", "1 Year", "All-Time"], horizontal=True)
@@ -455,7 +415,6 @@ elif nav_category == "Trade Log":
     if not df_master.empty:
         df_log = df_master[df_master['Engine'] != 'NO_TRADE'].copy()
         
-        # --- 1. Lógica de Filtros de Tiempo ---
         if time_filter == "Last Session":
             if not df_log.empty:
                 last_date = df_log['Timestamp'].dt.date.max()
@@ -468,43 +427,15 @@ elif nav_category == "Trade Log":
         df_log = df_log.sort_values('Timestamp', ascending=False)
         
         if not df_log.empty:
-            # --- 2. Panel Analítico Superior (Estilo HOME) ---
-            wins = len(df_log[df_log['Is_Win'] == 1])
-            losses = len(df_log[df_log['Is_Win'] == 0])
-            total = len(df_log)
-            wr = (wins / total * 100) if total > 0 else 0
-            
-            df_asc = df_log.sort_values('Timestamp', ascending=True)
-            curr_streak = 0
-            max_l_streak = 0
-            for val in df_asc['Is_Win']:
-                if val == 0:
-                    curr_streak += 1
-                    max_l_streak = max(max_l_streak, curr_streak)
-                else: curr_streak = 0
-            
-            st.markdown(f"### Performance for {time_filter}")
-            c1, c2, c3, c4, c5 = st.columns(5)
-            c1.metric("Total Trades", total)
-            c2.metric("Win Rate", f"{wr:.1f}%")
-            c3.metric("Net Wins", wins)
-            c4.metric("Net Losses", losses)
-            c5.metric("Max L-Streak", max_l_streak)
-            st.markdown("---")
-            
-            # --- 3. Lógica para extraer Bucket y formatear Regime ---
             def get_trade_bucket(engine, regime_val):
-                """Busca el Bucket asignado a ese motor en ese régimen específico"""
-                if pd.isna(regime_val): return "N/A"
+                if pd.isna(regime_val): return "C"
                 try:
                     r_id = int(regime_val)
-                    if r_id not in [0, 1, 2]: return "N/A"
                     engine_data = df_config[df_config['Engine'] == engine]
                     if not engine_data.empty and f'Bucket R{r_id}' in engine_data.columns:
                         return engine_data.iloc[0][f'Bucket R{r_id}']
-                except:
-                    pass
-                return "N/A"
+                except: pass
+                return "C"
 
             df_log['Result'] = df_log['Is_Win'].apply(lambda x: "WIN" if x == 1 else "LOSS")
             
@@ -512,30 +443,40 @@ elif nav_category == "Trade Log":
                 df_log['Regime'] = df_log['Regime_Label'].apply(lambda x: f"R{int(x)}" if pd.notnull(x) else "N/A")
                 df_log['Bucket'] = df_log.apply(lambda r: get_trade_bucket(r['Engine'], r['Regime_Label']), axis=1)
             else:
-                df_log['Regime'] = "N/A"
-                df_log['Bucket'] = "N/A"
+                df_log['Regime'], df_log['Bucket'] = "N/A", "C"
             
-            # --- 4. Renderización de la Tabla Enriquecida ---
+            wins_raw = len(df_log[df_log['Is_Win'] == 1])
+            losses_raw = len(df_log[df_log['Is_Win'] == 0])
+            total_raw = len(df_log)
+            wr_raw = (wins_raw / total_raw * 100) if total_raw > 0 else 0
+            
+            st.markdown(f"#### 🩸 RAW EXECUTION (All Trades)")
+            c1, c2, c3, c4, c5 = st.columns(5)
+            c1.metric("Total Trades", total_raw); c2.metric("Win Rate", f"{wr_raw:.1f}%"); c3.metric("Net Wins", wins_raw); c4.metric("Net Losses", losses_raw); c5.metric("Max L-Streak", get_streak(df_log))
+            
+            df_filt = df_log[df_log['Bucket'].isin(['A', 'B'])]
+            wins_filt = len(df_filt[df_filt['Is_Win'] == 1])
+            losses_filt = len(df_filt[df_filt['Is_Win'] == 0])
+            total_filt = len(df_filt)
+            wr_filt = (wins_filt / total_filt * 100) if total_filt > 0 else 0
+            
+            st.markdown(f"#### 🛡️ ML FILTERED (Buckets A & B Only)")
+            f1, f2, f3, f4, f5 = st.columns(5)
+            f1.metric("Total Trades", total_filt); f2.metric("Win Rate", f"{wr_filt:.1f}%"); f3.metric("Net Wins", wins_filt); f4.metric("Net Losses", losses_filt); f5.metric("Max L-Streak", get_streak(df_filt))
+            
+            st.markdown("---")
             show_cols = ['Timestamp', 'Module', 'Engine', 'Regime', 'Bucket', 'Action', 'Result']
-            df_log_display = df_log[[c for c in show_cols if c in df_log.columns]]
-            
-            html_log = render_html_table(df_log_display, bucket_cols=['Bucket'])
+            html_log = render_html_table(df_log[[c for c in show_cols if c in df_log.columns]], bucket_cols=['Bucket'])
             st.markdown(html_log, unsafe_allow_html=True)
         else: 
             st.warning("No data found for the selected timeframe.")
     else: st.error("Database is empty.")
 
-# =========================================================================
-# VIEW: MODULES
-# =========================================================================
 elif nav_category == "Modules":
     st.title("Modules Dashboard")
-    
-    # --- BLOCK 1: Module Selector ---
     selected_module = st.selectbox("Select Target Module:", ["MCL", "MGC", "MES", "MNQ_DAY", "MNQ_NIGHT"])
     df_c_mod = df_config[df_config['Module'] == selected_module].copy()
     
-    # --- BLOCK 2: Module Intelligence Header (HUD) ---
     f_data = system_forecast.get(selected_module, {})
     if f_data:
         pred_r = f_data.get('predicted_regime_tomorrow', '?')
@@ -546,47 +487,28 @@ elif nav_category == "Modules":
         </div>
         """, unsafe_allow_html=True)
         
-    # --- BLOCK 3: Module Historical Performance ---
     st.markdown(f"### 🌐 Historical Performance: {selected_module}")
     df_m_mod = df_master[(df_master['Module'] == selected_module) & (df_master['Engine'] != 'NO_TRADE')] if not df_master.empty else None
     render_historical_metrics(df_c_mod, df_m_mod)
     
-    # --- BLOCK 4: The Analytical Tabs ---
     tab1, tab2, tab3 = st.tabs(["🌐 Global Matrix", "🚀 Next Session Line-up", "📊 Regime Breakdown"])
     
-    # TAB 1: Global Matrix (Specific to this Module)
     with tab1:
         st.markdown(f"### The Global Matrix ({selected_module})")
         if not df_c_mod.empty:
-            df_t1 = df_c_mod.copy()
-            df_t1 = df_t1.sort_values(by='TT Global', ascending=False)
-            
-            cols_t1 = [
-                'Engine', 'TT Global', 'WR Global', 'Last 5', 
-                'TT R0', 'WR R0', 'Bucket R0', 
-                'TT R1', 'WR R1', 'Bucket R1', 
-                'TT R2', 'WR R2', 'Bucket R2'
-            ]
-            df_t1 = df_t1[cols_t1]
-            
-            html_t1 = render_html_table(df_t1, bucket_cols=['Bucket R0', 'Bucket R1', 'Bucket R2'])
-            st.markdown(html_t1, unsafe_allow_html=True)
+            df_t1 = df_c_mod.copy().sort_values(by='TT Global', ascending=False)
+            cols_t1 = ['Engine', 'TT Global', 'WR Global', 'Last 5', 'TT R0', 'WR R0', 'Bucket R0', 'TT R1', 'WR R1', 'Bucket R1', 'TT R2', 'WR R2', 'Bucket R2']
+            st.markdown(render_html_table(df_t1[cols_t1], bucket_cols=['Bucket R0', 'Bucket R1', 'Bucket R2']), unsafe_allow_html=True)
     
-    # TAB 2: Next Session Line-up
     with tab2:
         st.markdown("### Execution Plan (Target Regime Only)")
         if not df_c_mod.empty:
             df_t2 = df_c_mod.copy()
             df_t2['Bucket_Rank'] = df_t2['Bucket'].map({'A': 1, 'B': 2, 'C': 3})
             df_t2 = df_t2.sort_values(by=['Bucket_Rank', 'WR Target'], ascending=[True, False])
-            
             cols_t2 = ['Engine', 'Bucket', 'TT Target', 'WR Target', 'TT Global', 'WR Global', 'Diag']
-            df_t2 = df_t2[cols_t2]
+            st.markdown(render_html_table(df_t2[cols_t2], bucket_cols=['Bucket']), unsafe_allow_html=True)
             
-            html_t2 = render_html_table(df_t2, bucket_cols=['Bucket'])
-            st.markdown(html_t2, unsafe_allow_html=True)
-            
-    # TAB 3: Regime Breakdown (Forensic Lab)
     with tab3:
         st.markdown("### Forensic Multi-Regime Analysis")
         t_r0, t_r1, t_r2 = st.tabs(["[ Regime 0 ]", "[ Regime 1 ]", "[ Regime 2 ]"])
@@ -597,23 +519,11 @@ elif nav_category == "Modules":
                 st.markdown(f"#### {title}")
                 cols_sub = ['Engine', f'Bucket R{regime_id}', f'TT R{regime_id}', f'WR R{regime_id}', 'TT Global', 'WR Global']
                 df_sub = df_sub[cols_sub].sort_values(by=f'WR R{regime_id}', ascending=False)
-                html_sub = render_html_table(df_sub, bucket_cols=[f'Bucket R{regime_id}'])
-                st.markdown(html_sub, unsafe_allow_html=True)
+                st.markdown(render_html_table(df_sub, bucket_cols=[f'Bucket R{regime_id}']), unsafe_allow_html=True)
         
-        with t_r0:
-            render_regime_metrics(df_c_mod, df_m_mod, 0)
-            render_sub_bucket_table(df_c_mod, 0, 'A', "🎯 Bucket A (Snipers)")
-            render_sub_bucket_table(df_c_mod, 0, 'B', "⚠️ Bucket B (Friction/New)")
-            render_sub_bucket_table(df_c_mod, 0, 'C', "🚫 Bucket C (Quarantine)")
-            
-        with t_r1:
-            render_regime_metrics(df_c_mod, df_m_mod, 1)
-            render_sub_bucket_table(df_c_mod, 1, 'A', "🎯 Bucket A (Snipers)")
-            render_sub_bucket_table(df_c_mod, 1, 'B', "⚠️ Bucket B (Friction/New)")
-            render_sub_bucket_table(df_c_mod, 1, 'C', "🚫 Bucket C (Quarantine)")
-            
-        with t_r2:
-            render_regime_metrics(df_c_mod, df_m_mod, 2)
-            render_sub_bucket_table(df_c_mod, 2, 'A', "🎯 Bucket A (Snipers)")
-            render_sub_bucket_table(df_c_mod, 2, 'B', "⚠️ Bucket B (Friction/New)")
-            render_sub_bucket_table(df_c_mod, 2, 'C', "🚫 Bucket C (Quarantine)")
+        for idx, t_tab in enumerate([t_r0, t_r1, t_r2]):
+            with t_tab:
+                render_regime_metrics(df_c_mod, df_m_mod, idx)
+                render_sub_bucket_table(df_c_mod, idx, 'A', "🎯 Bucket A (Snipers)")
+                render_sub_bucket_table(df_c_mod, idx, 'B', "⚠️ Bucket B (Friction/New)")
+                render_sub_bucket_table(df_c_mod, idx, 'C', "🚫 Bucket C (Quarantine)")
