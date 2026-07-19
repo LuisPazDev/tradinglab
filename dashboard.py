@@ -151,6 +151,18 @@ df_master, df_config, risk_profile, system_forecast = load_data()
 # =========================================================================
 # UTILITIES & STRICT HTML FORMATTING
 # =========================================================================
+def get_streak(df_sub):
+    """Calcula la peor racha perdedora de un dataframe dado."""
+    if df_sub is None or df_sub.empty or 'Is_Win' not in df_sub.columns: return 0
+    df_asc = df_sub.sort_values('Timestamp', ascending=True)
+    c, m = 0, 0
+    for v in df_asc['Is_Win']:
+        if v == 0:
+            c += 1
+            m = max(m, c)
+        else: c = 0
+    return m
+
 def get_historical_bucket(trades, wr):
     if trades < 5: return "B"
     if wr >= 62.5: return "A"
@@ -194,79 +206,126 @@ if not df_config.empty:
     df_config['Bucket R2'] = df_config.apply(lambda r: get_historical_bucket(r['TT R2'], r['WR R2']), axis=1)
 
 def render_historical_metrics(df_c, df_m):
+    """Renderiza las métricas globales RAW vs FILTERED para HOME y Resumen de Módulos"""
     if df_c.empty: return
-    total_trades = df_c['TT Global'].sum() if 'TT Global' in df_c.columns else 0
-    avg_wr = (df_c['WR Global'] * df_c['TT Global']).sum() / total_trades if total_trades > 0 else 0
     engines_count = len(df_c)
     
-    wins = 0; losses = 0; max_l_streak = 0
+    # --- RAW METRICS ---
     if df_m is not None and not df_m.empty and 'Is_Win' in df_m.columns:
-        wins = len(df_m[df_m['Is_Win'] == 1])
-        losses = len(df_m[df_m['Is_Win'] == 0])
-        df_asc = df_m.sort_values('Timestamp', ascending=True)
-        curr_streak = 0
-        for val in df_asc['Is_Win']:
-            if val == 0:
-                curr_streak += 1
-                max_l_streak = max(max_l_streak, curr_streak)
-            else: curr_streak = 0
+        total_raw = len(df_m)
+        wins_raw = len(df_m[df_m['Is_Win'] == 1])
+        losses_raw = len(df_m[df_m['Is_Win'] == 0])
+        wr_raw = (wins_raw / total_raw * 100) if total_raw > 0 else 0
+        streak_raw = get_streak(df_m)
     else:
-        wins = int((avg_wr / 100) * total_trades)
-        losses = total_trades - wins
+        total_raw, wr_raw, wins_raw, losses_raw, streak_raw = 0, 0, 0, 0, 0
             
+    st.markdown("#### 🩸 RAW EXECUTION (All Trades)")
     c1, c2, c3, c4, c5, c6 = st.columns(6)
-    c1.metric("Total Trades", total_trades)
-    c2.metric("Global WR", f"{avg_wr:.1f}%")
-    c3.metric("Net Wins", wins)
-    c4.metric("Net Losses", losses)
-    c5.metric("Max L-Streak", max_l_streak)
+    c1.metric("Total Trades", total_raw)
+    c2.metric("Global WR", f"{wr_raw:.1f}%")
+    c3.metric("Net Wins", wins_raw)
+    c4.metric("Net Losses", losses_raw)
+    c5.metric("Max L-Streak", streak_raw)
     c6.metric("Total Engines", engines_count)
+    
+    # --- ML FILTERED METRICS ---
+    st.markdown("#### 🛡️ ML FILTERED (Buckets A & B Only)")
+    if df_m is not None and not df_m.empty and 'Regime_Label' in df_m.columns:
+        # Mapeo rápido de Bucket Histórico por Régimen y Motor
+        engine_bucket_map = {}
+        for _, row in df_c.iterrows():
+            engine_bucket_map[row['Engine']] = {
+                0: row.get('Bucket R0', 'N/A'),
+                1: row.get('Bucket R1', 'N/A'),
+                2: row.get('Bucket R2', 'N/A')
+            }
+        
+        def get_bucket(r):
+            if pd.isna(r['Regime_Label']): return "N/A"
+            try:
+                reg = int(r['Regime_Label'])
+                return engine_bucket_map.get(r['Engine'], {}).get(reg, "N/A")
+            except: return "N/A"
+            
+        df_m_filt = df_m.copy()
+        df_m_filt['Bucket'] = df_m_filt.apply(get_bucket, axis=1)
+        df_filt = df_m_filt[df_m_filt['Bucket'].isin(['A', 'B'])]
+        
+        total_filt = len(df_filt)
+        wins_filt = len(df_filt[df_filt['Is_Win'] == 1])
+        losses_filt = len(df_filt[df_filt['Is_Win'] == 0])
+        wr_filt = (wins_filt / total_filt * 100) if total_filt > 0 else 0
+        streak_filt = get_streak(df_filt)
+        engines_filt = df_filt['Engine'].nunique() if total_filt > 0 else 0
+    else:
+        total_filt, wr_filt, wins_filt, losses_filt, streak_filt, engines_filt = 0, 0, 0, 0, 0, 0
+
+    f1, f2, f3, f4, f5, f6 = st.columns(6)
+    f1.metric("Total Trades", total_filt)
+    f2.metric("Global WR", f"{wr_filt:.1f}%")
+    f3.metric("Net Wins", wins_filt)
+    f4.metric("Net Losses", losses_filt)
+    f5.metric("Max L-Streak", streak_filt)
+    f6.metric("Filtered Engines", engines_filt)
     st.markdown("---")
 
 def render_regime_metrics(df_c, df_m, regime_id):
+    """Renderiza las métricas RAW vs FILTERED exclusivamente para un régimen"""
     if df_c.empty: return
     tt_col = f'TT R{regime_id}'
-    wr_col = f'WR R{regime_id}'
     if tt_col not in df_c.columns: return
     
-    df_reg = df_c[df_c[tt_col] > 0]
-    engines_count = len(df_reg)
-    total_trades = df_reg[tt_col].sum()
-    avg_wr = (df_reg[wr_col] * df_reg[tt_col]).sum() / total_trades if total_trades > 0 else 0
+    df_reg_config = df_c[df_c[tt_col] > 0]
+    engines_count = len(df_reg_config)
     
-    wins = int(round((avg_wr / 100) * total_trades)) if total_trades > 0 else 0
-    losses = total_trades - wins
-    
-    max_l_streak = "N/A"
-    has_regime_col = False
-    regime_col_name = ''
-    if df_m is not None and not df_m.empty:
-        for col in ['Regime', 'predicted_regime_evaluated', 'Module_Regime']:
-            if col in df_m.columns:
-                has_regime_col = True
-                regime_col_name = col
-                break
-                
-    if has_regime_col:
-        df_m_reg = df_m[df_m[regime_col_name] == regime_id]
-        if not df_m_reg.empty and 'Is_Win' in df_m_reg.columns:
-            df_asc = df_m_reg.sort_values('Timestamp', ascending=True)
-            curr_streak = 0
-            max_val = 0
-            for val in df_asc['Is_Win']:
-                if val == 0:
-                    curr_streak += 1
-                    max_val = max(max_val, curr_streak)
-                else: curr_streak = 0
-            max_l_streak = max_val
+    # --- RAW METRICS (Filtered by Regime) ---
+    df_m_reg = pd.DataFrame()
+    if df_m is not None and not df_m.empty and 'Regime_Label' in df_m.columns:
+        df_m_reg = df_m[df_m['Regime_Label'] == regime_id].copy()
 
+    if not df_m_reg.empty and 'Is_Win' in df_m_reg.columns:
+        total_raw = len(df_m_reg)
+        wins_raw = len(df_m_reg[df_m_reg['Is_Win'] == 1])
+        losses_raw = len(df_m_reg[df_m_reg['Is_Win'] == 0])
+        wr_raw = (wins_raw / total_raw * 100) if total_raw > 0 else 0
+        streak_raw = get_streak(df_m_reg)
+    else:
+        total_raw, wr_raw, wins_raw, losses_raw, streak_raw = 0, 0, 0, 0, 0
+
+    st.markdown(f"#### 🩸 RAW EXECUTION (Regime {regime_id})")
     c1, c2, c3, c4, c5, c6 = st.columns(6)
-    c1.metric(f"TT R{regime_id}", total_trades)
-    c2.metric(f"WR R{regime_id}", f"{avg_wr:.1f}%")
-    c3.metric("Net Wins", wins)
-    c4.metric("Net Losses", losses)
-    c5.metric("Max L-Streak", max_l_streak)
+    c1.metric(f"TT R{regime_id}", total_raw)
+    c2.metric(f"WR R{regime_id}", f"{wr_raw:.1f}%")
+    c3.metric("Net Wins", wins_raw)
+    c4.metric("Net Losses", losses_raw)
+    c5.metric("Max L-Streak", streak_raw)
     c6.metric("Total Engines", engines_count)
+
+    # --- ML FILTERED METRICS (Filtered by Regime) ---
+    st.markdown("#### 🛡️ ML FILTERED (Buckets A & B Only)")
+    if not df_m_reg.empty:
+        bucket_col = f'Bucket R{regime_id}'
+        engine_bucket_map = df_c.set_index('Engine')[bucket_col].to_dict() if bucket_col in df_c.columns else {}
+        df_m_reg['Bucket'] = df_m_reg['Engine'].map(engine_bucket_map)
+        df_filt = df_m_reg[df_m_reg['Bucket'].isin(['A', 'B'])]
+        
+        total_filt = len(df_filt)
+        wins_filt = len(df_filt[df_filt['Is_Win'] == 1])
+        losses_filt = len(df_filt[df_filt['Is_Win'] == 0])
+        wr_filt = (wins_filt / total_filt * 100) if total_filt > 0 else 0
+        streak_filt = get_streak(df_filt)
+        engines_filt = df_filt['Engine'].nunique() if total_filt > 0 else 0
+    else:
+        total_filt, wr_filt, wins_filt, losses_filt, streak_filt, engines_filt = 0, 0, 0, 0, 0, 0
+        
+    f1, f2, f3, f4, f5, f6 = st.columns(6)
+    f1.metric(f"TT R{regime_id}", total_filt)
+    f2.metric(f"WR R{regime_id}", f"{wr_filt:.1f}%")
+    f3.metric("Net Wins", wins_filt)
+    f4.metric("Net Losses", losses_filt)
+    f5.metric("Max L-Streak", streak_filt)
+    f6.metric("Filtered Engines", engines_filt)
     st.write("")
 
 # =========================================================================
@@ -434,7 +493,6 @@ elif nav_category == "Trade Log":
     if not df_master.empty:
         df_log = df_master[df_master['Engine'] != 'NO_TRADE'].copy()
         
-        # --- 1. Lógica de Filtros de Tiempo ---
         if time_filter == "Last Session":
             if not df_log.empty:
                 last_date = df_log['Timestamp'].dt.date.max()
@@ -447,7 +505,6 @@ elif nav_category == "Trade Log":
         df_log = df_log.sort_values('Timestamp', ascending=False)
         
         if not df_log.empty:
-            # --- 2. Extraer Bucket e Inyectarlo antes de Calcular ---
             def get_trade_bucket(engine, regime_val):
                 if pd.isna(regime_val): return "N/A"
                 try:
@@ -467,27 +524,15 @@ elif nav_category == "Trade Log":
             else:
                 df_log['Regime'] = "N/A"
                 df_log['Bucket'] = "N/A"
-
-            # Helper for Streak Calculation
-            def get_streak(df_sub):
-                if df_sub.empty: return 0
-                df_asc = df_sub.sort_values('Timestamp', ascending=True)
-                c, m = 0, 0
-                for v in df_asc['Is_Win']:
-                    if v == 0:
-                        c += 1
-                        m = max(m, c)
-                    else: c = 0
-                return m
             
-            # --- 3. Panel Analítico RAW (La Cruda Realidad) ---
+            # --- RAW EXECUTION ---
             wins_raw = len(df_log[df_log['Is_Win'] == 1])
             losses_raw = len(df_log[df_log['Is_Win'] == 0])
             total_raw = len(df_log)
             wr_raw = (wins_raw / total_raw * 100) if total_raw > 0 else 0
             streak_raw = get_streak(df_log)
             
-            st.markdown(f"### 🩸 RAW EXECUTION (All Trades)")
+            st.markdown(f"#### 🩸 RAW EXECUTION (All Trades)")
             c1, c2, c3, c4, c5 = st.columns(5)
             c1.metric("Total Trades", total_raw)
             c2.metric("Win Rate", f"{wr_raw:.1f}%")
@@ -495,7 +540,7 @@ elif nav_category == "Trade Log":
             c4.metric("Net Losses", losses_raw)
             c5.metric("Max L-Streak", streak_raw)
             
-            # --- 4. Panel Analítico FILTERED (El filtro ML en acción) ---
+            # --- ML FILTERED ---
             df_filt = df_log[df_log['Bucket'].isin(['A', 'B'])]
             wins_filt = len(df_filt[df_filt['Is_Win'] == 1])
             losses_filt = len(df_filt[df_filt['Is_Win'] == 0])
@@ -503,17 +548,15 @@ elif nav_category == "Trade Log":
             wr_filt = (wins_filt / total_filt * 100) if total_filt > 0 else 0
             streak_filt = get_streak(df_filt)
             
-            st.markdown(f"### 🛡️ ML FILTERED (Buckets A & B Only)")
-            c1, c2, c3, c4, c5 = st.columns(5)
-            c1.metric("Total Trades", total_filt)
-            c2.metric("Win Rate", f"{wr_filt:.1f}%")
-            c3.metric("Net Wins", wins_filt)
-            c4.metric("Net Losses", losses_filt)
-            c5.metric("Max L-Streak", streak_filt)
+            st.markdown(f"#### 🛡️ ML FILTERED (Buckets A & B Only)")
+            f1, f2, f3, f4, f5 = st.columns(5)
+            f1.metric("Total Trades", total_filt)
+            f2.metric("Win Rate", f"{wr_filt:.1f}%")
+            f3.metric("Net Wins", wins_filt)
+            f4.metric("Net Losses", losses_filt)
+            f5.metric("Max L-Streak", streak_filt)
             
             st.markdown("---")
-            
-            # --- 5. Renderización de la Tabla Enriquecida ---
             show_cols = ['Timestamp', 'Module', 'Engine', 'Regime', 'Bucket', 'Action', 'Result']
             df_log_display = df_log[[c for c in show_cols if c in df_log.columns]]
             
