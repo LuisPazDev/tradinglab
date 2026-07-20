@@ -57,14 +57,41 @@ def get_file_path(filename):
     return filename
 
 # =========================================================================
-# DATA LOADING & PRE-PROCESSING
+# DATA LOADING & PRE-PROCESSING (ACTUALIZADO A DOBLE BÓVEDA)
 # =========================================================================
 @st.cache_data(ttl=30)
 def load_data():
-    df_master = pd.read_csv(get_file_path("master_ml_dataset.csv"), on_bad_lines='skip') if os.path.exists(get_file_path("master_ml_dataset.csv")) else pd.DataFrame()
-    if not df_master.empty and 'Timestamp' in df_master.columns:
-        df_master['Timestamp'] = pd.to_datetime(df_master['Timestamp'], errors='coerce')
+    # 1. ENSAMBLAJE DINÁMICO DESDE LAS BÓVEDAS PURAS
+    modules = ['MCL', 'MGC', 'MES', 'MNQ_DAY', 'MNQ_NIGHT']
+    df_list = []
+    
+    for mod in modules:
+        micro_path = get_file_path(f"{mod}_micro_trades.csv")
+        macro_path = get_file_path(f"{mod}_macro_history.csv")
+        
+        if os.path.exists(micro_path) and os.path.exists(macro_path):
+            df_micro = pd.read_csv(micro_path)
+            df_macro = pd.read_csv(macro_path)
+            
+            if not df_micro.empty and not df_macro.empty and 'Regime_Label' in df_macro.columns:
+                # Normalizar fechas para el cruce relacional
+                df_micro['Date'] = pd.to_datetime(df_micro['Date']).dt.normalize()
+                df_macro['Date'] = pd.to_datetime(df_macro['Date']).dt.normalize()
+                
+                # Inyectar el Régimen etiquetado por el ML Auditor a cada trade
+                df_merged = pd.merge(df_micro, df_macro[['Date', 'Regime_Label']], on='Date', how='inner')
+                df_merged['Module'] = mod
+                df_list.append(df_merged)
 
+    # 2. CONSTRUCCIÓN DE LA MATRIZ MAESTRA EN RAM
+    if df_list:
+        df_master = pd.concat(df_list, ignore_index=True)
+        if 'Timestamp' in df_master.columns:
+            df_master['Timestamp'] = pd.to_datetime(df_master['Timestamp'], errors='coerce')
+    else:
+        df_master = pd.DataFrame()
+
+    # 3. LECTURA DE RIESGO Y CONFIGURACIÓN (Intacto)
     config = {}
     if os.path.exists(get_file_path("engines_config.json")):
         with open(get_file_path("engines_config.json"), "r") as f: config = json.load(f)
@@ -89,7 +116,6 @@ def load_data():
                 'TT Global': d.get('total_trades_global', 0),
                 'Diag': d.get('reason', ''),
                 
-                # AHORA LEE LOS BUCKETS DIRECTAMENTE DEL ML
                 'WR R0': d.get('r0_wr', 0.0),
                 'TT R0': d.get('r0_trades', 0),
                 'Bucket R0': d.get('bucket_r0', 'C'),
@@ -148,7 +174,6 @@ def get_last_5_string(engine_name, df_m):
     last_5 = trades.tail(5)['Is_Win'].tolist()
     return " - ".join(["W" if x == 1 else "L" for x in last_5])
 
-# Inyectar Last 5 en df_config (ya NO inyectamos los buckets, porque ya vienen del JSON)
 if not df_config.empty:
     df_m_valid = df_master[df_master['Engine'] != 'NO_TRADE'] if not df_master.empty else None
     df_config['Last 5'] = df_config['Engine'].apply(lambda e: get_last_5_string(e, df_m_valid))
