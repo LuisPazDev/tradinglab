@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
 import json
@@ -74,9 +74,9 @@ def load_data():
             df_macro = pd.read_csv(macro_path)
             
             if not df_micro.empty and not df_macro.empty and 'Regime_Label' in df_macro.columns:
-                # Normalizar fechas para el cruce relacional
-                df_micro['Date'] = pd.to_datetime(df_micro['Date']).dt.normalize()
-                df_macro['Date'] = pd.to_datetime(df_macro['Date']).dt.normalize()
+                # Normalizar fechas para el cruce relacional (Añadido format='mixed')
+                df_micro['Date'] = pd.to_datetime(df_micro['Date'], format='mixed', errors='coerce').dt.normalize()
+                df_macro['Date'] = pd.to_datetime(df_macro['Date'], format='mixed', errors='coerce').dt.normalize()
                 
                 # Inyectar el Régimen etiquetado por el ML Auditor a cada trade
                 df_merged = pd.merge(df_micro, df_macro[['Date', 'Regime_Label']], on='Date', how='inner')
@@ -87,11 +87,12 @@ def load_data():
     if df_list:
         df_master = pd.concat(df_list, ignore_index=True)
         if 'Timestamp' in df_master.columns:
-            df_master['Timestamp'] = pd.to_datetime(df_master['Timestamp'], errors='coerce')
+            # Añadido format='mixed'
+            df_master['Timestamp'] = pd.to_datetime(df_master['Timestamp'], format='mixed', errors='coerce')
     else:
         df_master = pd.DataFrame()
 
-    # 3. LECTURA DE RIESGO Y CONFIGURACIÓN (Intacto)
+    # 3. LECTURA DE RIESGO Y CONFIGURACIÓN
     config = {}
     if os.path.exists(get_file_path("engines_config.json")):
         with open(get_file_path("engines_config.json"), "r") as f: config = json.load(f)
@@ -167,16 +168,31 @@ def render_html_table(df, bucket_cols=None):
     html = html.replace('<table', '<table class="custom-table"')
     return f'<div class="table-container">{html}</div>'
 
-def get_last_5_string(engine_name, df_m):
+# ACTULIZACIÓN DE GET_LAST_5 PARA ACEPTAR FILTRO DE RÉGIMEN
+def get_last_5_string(engine_name, df_m, regime_val=None):
     if df_m is None or df_m.empty: return "N/A"
-    trades = df_m[df_m['Engine'] == engine_name].sort_values('Timestamp')
+    
+    trades = df_m[df_m['Engine'] == engine_name]
+    
+    if regime_val is not None:
+        trades = trades[trades['Regime_Label'] == regime_val]
+        
+    trades = trades.sort_values('Timestamp')
     if trades.empty: return "N/A"
+    
     last_5 = trades.tail(5)['Is_Win'].tolist()
     return " - ".join(["W" if x == 1 else "L" for x in last_5])
 
 if not df_config.empty:
     df_m_valid = df_master[df_master['Engine'] != 'NO_TRADE'] if not df_master.empty else None
+    
+    # Inyectamos el Last 5 Global
     df_config['Last 5'] = df_config['Engine'].apply(lambda e: get_last_5_string(e, df_m_valid))
+    
+    # Inyectamos el Last 5 Exclusivo por Régimen
+    df_config['Last 5 R0'] = df_config['Engine'].apply(lambda e: get_last_5_string(e, df_m_valid, regime_val=0))
+    df_config['Last 5 R1'] = df_config['Engine'].apply(lambda e: get_last_5_string(e, df_m_valid, regime_val=1))
+    df_config['Last 5 R2'] = df_config['Engine'].apply(lambda e: get_last_5_string(e, df_m_valid, regime_val=2))
 
 def render_historical_metrics(df_c, df_m):
     if df_c.empty: return
@@ -442,8 +458,12 @@ elif nav_category == "Trade Log":
         
         if time_filter == "Last Session":
             if not df_log.empty:
-                last_date = df_log['Timestamp'].dt.date.max()
-                df_log = df_log[df_log['Timestamp'].dt.date == last_date]
+                valid_ts = df_log['Timestamp'].dropna()
+                if not valid_ts.empty:
+                    last_date = valid_ts.max().date()
+                    df_log = df_log[df_log['Timestamp'].dt.date == last_date]
+                else:
+                    df_log = pd.DataFrame(columns=df_log.columns) 
         elif time_filter != "All-Time":
             days_map = {"7 Days": 7, "15 Days": 15, "1 Month": 30, "3 Months": 90, "6 Months": 180, "1 Year": 365}
             cutoff_date = datetime.now() - timedelta(days=days_map[time_filter])
@@ -542,7 +562,8 @@ elif nav_category == "Modules":
             df_sub = df_regime[df_regime[f'Bucket R{regime_id}'] == bucket_label]
             if not df_sub.empty:
                 st.markdown(f"#### {title}")
-                cols_sub = ['Engine', f'Bucket R{regime_id}', f'TT R{regime_id}', f'WR R{regime_id}', 'TT Global', 'WR Global']
+                # AÑADIDO: Ahora se incluye la columna "Last 5 RX" en cada tabla
+                cols_sub = ['Engine', f'Bucket R{regime_id}', f'TT R{regime_id}', f'WR R{regime_id}', f'Last 5 R{regime_id}', 'TT Global', 'WR Global']
                 df_sub = df_sub[cols_sub].sort_values(by=f'WR R{regime_id}', ascending=False)
                 st.markdown(render_html_table(df_sub, bucket_cols=[f'Bucket R{regime_id}']), unsafe_allow_html=True)
         
