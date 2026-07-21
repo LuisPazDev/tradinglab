@@ -74,9 +74,9 @@ def load_data():
             df_macro = pd.read_csv(macro_path)
             
             if not df_micro.empty and not df_macro.empty and 'Regime_Label' in df_macro.columns:
-                # Normalizar fechas para el cruce relacional
-                df_micro['Date'] = pd.to_datetime(df_micro['Date']).dt.normalize()
-                df_macro['Date'] = pd.to_datetime(df_macro['Date']).dt.normalize()
+                # Normalizar fechas para el cruce relacional (Añadido format='mixed')
+                df_micro['Date'] = pd.to_datetime(df_micro['Date'], format='mixed', errors='coerce').dt.normalize()
+                df_macro['Date'] = pd.to_datetime(df_macro['Date'], format='mixed', errors='coerce').dt.normalize()
                 
                 # Inyectar el Régimen etiquetado por el ML Auditor a cada trade
                 df_merged = pd.merge(df_micro, df_macro[['Date', 'Regime_Label']], on='Date', how='inner')
@@ -87,7 +87,8 @@ def load_data():
     if df_list:
         df_master = pd.concat(df_list, ignore_index=True)
         if 'Timestamp' in df_master.columns:
-            df_master['Timestamp'] = pd.to_datetime(df_master['Timestamp'], errors='coerce')
+            # Añadido format='mixed'
+            df_master['Timestamp'] = pd.to_datetime(df_master['Timestamp'], format='mixed', errors='coerce')
     else:
         df_master = pd.DataFrame()
 
