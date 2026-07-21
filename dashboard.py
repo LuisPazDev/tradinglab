@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
 import json
@@ -74,9 +74,9 @@ def load_data():
             df_macro = pd.read_csv(macro_path)
             
             if not df_micro.empty and not df_macro.empty and 'Regime_Label' in df_macro.columns:
-                # Normalizar fechas para el cruce relacional (Añadido format='mixed')
-                df_micro['Date'] = pd.to_datetime(df_micro['Date'], format='mixed', errors='coerce').dt.normalize()
-                df_macro['Date'] = pd.to_datetime(df_macro['Date'], format='mixed', errors='coerce').dt.normalize()
+                # Normalizar fechas para el cruce relacional
+                df_micro['Date'] = pd.to_datetime(df_micro['Date']).dt.normalize()
+                df_macro['Date'] = pd.to_datetime(df_macro['Date']).dt.normalize()
                 
                 # Inyectar el Régimen etiquetado por el ML Auditor a cada trade
                 df_merged = pd.merge(df_micro, df_macro[['Date', 'Regime_Label']], on='Date', how='inner')
@@ -87,12 +87,11 @@ def load_data():
     if df_list:
         df_master = pd.concat(df_list, ignore_index=True)
         if 'Timestamp' in df_master.columns:
-            # Añadido format='mixed'
-            df_master['Timestamp'] = pd.to_datetime(df_master['Timestamp'], format='mixed', errors='coerce')
+            df_master['Timestamp'] = pd.to_datetime(df_master['Timestamp'], errors='coerce')
     else:
         df_master = pd.DataFrame()
 
-    # 3. LECTURA DE RIESGO Y CONFIGURACIÓN
+    # 3. LECTURA DE RIESGO Y CONFIGURACIÓN (Intacto)
     config = {}
     if os.path.exists(get_file_path("engines_config.json")):
         with open(get_file_path("engines_config.json"), "r") as f: config = json.load(f)
@@ -443,13 +442,8 @@ elif nav_category == "Trade Log":
         
         if time_filter == "Last Session":
             if not df_log.empty:
-                # CORRECCIÓN: Filtramos las fechas válidas (evitando los NaT corruptos)
-                valid_ts = df_log['Timestamp'].dropna()
-                if not valid_ts.empty:
-                    last_date = valid_ts.max().date()
-                    df_log = df_log[df_log['Timestamp'].dt.date == last_date]
-                else:
-                    df_log = pd.DataFrame(columns=df_log.columns) # Vaciar si no hay fechas válidas
+                last_date = df_log['Timestamp'].dt.date.max()
+                df_log = df_log[df_log['Timestamp'].dt.date == last_date]
         elif time_filter != "All-Time":
             days_map = {"7 Days": 7, "15 Days": 15, "1 Month": 30, "3 Months": 90, "6 Months": 180, "1 Year": 365}
             cutoff_date = datetime.now() - timedelta(days=days_map[time_filter])
