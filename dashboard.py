@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
 import json
@@ -39,9 +39,6 @@ st.markdown("""
     .custom-table th { background-color: #262730; color: #FAFAFA; font-weight: 600; padding: 10px 12px; text-align: center !important; border-bottom: 1px solid #2D303E; white-space: nowrap; }
     .custom-table td { padding: 8px 12px; text-align: center !important; border-bottom: 1px solid #2D303E; white-space: nowrap; }
     .custom-table tr:hover { background-color: #2D303E; }
-    
-    /* Pequeño ajuste para las tablas Macro que pueden ser más cortas */
-    .macro-table .custom-table { min-width: 100%; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -60,13 +57,13 @@ def get_file_path(filename):
     return filename
 
 # =========================================================================
-# DATA LOADING & PRE-PROCESSING 
+# DATA LOADING & PRE-PROCESSING (ACTUALIZADO A DOBLE BÓVEDA)
 # =========================================================================
 @st.cache_data(ttl=30)
 def load_data():
+    # 1. ENSAMBLAJE DINÁMICO DESDE LAS BÓVEDAS PURAS
     modules = ['MCL', 'MGC', 'MES', 'MNQ_DAY', 'MNQ_NIGHT']
     df_list = []
-    macro_dict = {} # NUEVO: Diccionario para almacenar el dataset macro puro en RAM
     
     for mod in modules:
         micro_path = get_file_path(f"{mod}_micro_trades.csv")
@@ -76,23 +73,26 @@ def load_data():
             df_micro = pd.read_csv(micro_path)
             df_macro = pd.read_csv(macro_path)
             
-            macro_dict[mod] = df_macro.copy() # Guardamos la data macro para la nueva pestaña
-            
             if not df_micro.empty and not df_macro.empty and 'Regime_Label' in df_macro.columns:
+                # Normalizar fechas para el cruce relacional (Añadido format='mixed')
                 df_micro['Date'] = pd.to_datetime(df_micro['Date'], format='mixed', errors='coerce').dt.normalize()
                 df_macro['Date'] = pd.to_datetime(df_macro['Date'], format='mixed', errors='coerce').dt.normalize()
                 
+                # Inyectar el Régimen etiquetado por el ML Auditor a cada trade
                 df_merged = pd.merge(df_micro, df_macro[['Date', 'Regime_Label']], on='Date', how='inner')
                 df_merged['Module'] = mod
                 df_list.append(df_merged)
 
+    # 2. CONSTRUCCIÓN DE LA MATRIZ MAESTRA EN RAM
     if df_list:
         df_master = pd.concat(df_list, ignore_index=True)
         if 'Timestamp' in df_master.columns:
+            # Añadido format='mixed'
             df_master['Timestamp'] = pd.to_datetime(df_master['Timestamp'], format='mixed', errors='coerce')
     else:
         df_master = pd.DataFrame()
 
+    # 3. LECTURA DE RIESGO Y CONFIGURACIÓN
     config = {}
     if os.path.exists(get_file_path("engines_config.json")):
         with open(get_file_path("engines_config.json"), "r") as f: config = json.load(f)
@@ -109,7 +109,7 @@ def load_data():
             config_rows.append({
                 'Module': d.get('module', 'N/A'), 
                 'Engine': d.get('engine_name', k), 
-                'Bucket': d.get('bucket', 'C'),
+                'Bucket': d.get('bucket', 'C'), # Default C preventivo
                 'Target Regime': f"R{d.get('predicted_regime_evaluated', '?')}",
                 'WR Target': d.get('wr_predicted_regime', 0.0),
                 'WR Global': d.get('wr_global', 0.0),
@@ -130,11 +130,9 @@ def load_data():
                 'Bucket R2': d.get('bucket_r2', 'C')
             })
     
-    # NUEVO: Retornamos el macro_dict
-    return df_master, pd.DataFrame(config_rows), risk_data, system_forecast, macro_dict
+    return df_master, pd.DataFrame(config_rows), risk_data, system_forecast
 
-# Desempaquetamos los 5 valores
-df_master, df_config, risk_profile, system_forecast, macro_data_dict = load_data()
+df_master, df_config, risk_profile, system_forecast = load_data()
 
 # =========================================================================
 # UTILITIES & STRICT HTML FORMATTING
@@ -170,19 +168,28 @@ def render_html_table(df, bucket_cols=None):
     html = html.replace('<table', '<table class="custom-table"')
     return f'<div class="table-container">{html}</div>'
 
+# ACTULIZACIÓN DE GET_LAST_5 PARA ACEPTAR FILTRO DE RÉGIMEN
 def get_last_5_string(engine_name, df_m, regime_val=None):
     if df_m is None or df_m.empty: return "N/A"
+    
     trades = df_m[df_m['Engine'] == engine_name]
+    
     if regime_val is not None:
         trades = trades[trades['Regime_Label'] == regime_val]
+        
     trades = trades.sort_values('Timestamp')
     if trades.empty: return "N/A"
+    
     last_5 = trades.tail(5)['Is_Win'].tolist()
     return " - ".join(["W" if x == 1 else "L" for x in last_5])
 
 if not df_config.empty:
     df_m_valid = df_master[df_master['Engine'] != 'NO_TRADE'] if not df_master.empty else None
+    
+    # Inyectamos el Last 5 Global
     df_config['Last 5'] = df_config['Engine'].apply(lambda e: get_last_5_string(e, df_m_valid))
+    
+    # Inyectamos el Last 5 Exclusivo por Régimen
     df_config['Last 5 R0'] = df_config['Engine'].apply(lambda e: get_last_5_string(e, df_m_valid, regime_val=0))
     df_config['Last 5 R1'] = df_config['Engine'].apply(lambda e: get_last_5_string(e, df_m_valid, regime_val=1))
     df_config['Last 5 R2'] = df_config['Engine'].apply(lambda e: get_last_5_string(e, df_m_valid, regime_val=2))
@@ -202,8 +209,12 @@ def render_historical_metrics(df_c, df_m):
             
     st.markdown("#### 🩸 RAW EXECUTION (All Trades)")
     c1, c2, c3, c4, c5, c6 = st.columns(6)
-    c1.metric("Total Trades", total_raw); c2.metric("Global WR", f"{wr_raw:.1f}%"); c3.metric("Net Wins", wins_raw)
-    c4.metric("Net Losses", losses_raw); c5.metric("Max L-Streak", streak_raw); c6.metric("Total Engines", engines_count)
+    c1.metric("Total Trades", total_raw)
+    c2.metric("Global WR", f"{wr_raw:.1f}%")
+    c3.metric("Net Wins", wins_raw)
+    c4.metric("Net Losses", losses_raw)
+    c5.metric("Max L-Streak", streak_raw)
+    c6.metric("Total Engines", engines_count)
     
     st.markdown("#### 🛡️ ML FILTERED (Buckets A & B Only)")
     if df_m is not None and not df_m.empty and 'Regime_Label' in df_m.columns:
@@ -217,7 +228,9 @@ def render_historical_metrics(df_c, df_m):
         
         def get_bucket(r):
             if pd.isna(r['Regime_Label']): return "C"
-            try: return engine_bucket_map.get(r['Engine'], {}).get(int(r['Regime_Label']), "C")
+            try:
+                reg = int(r['Regime_Label'])
+                return engine_bucket_map.get(r['Engine'], {}).get(reg, "C")
             except: return "C"
             
         df_m_filt = df_m.copy()
@@ -234,8 +247,12 @@ def render_historical_metrics(df_c, df_m):
         total_filt, wr_filt, wins_filt, losses_filt, streak_filt, engines_filt = 0, 0, 0, 0, 0, 0
 
     f1, f2, f3, f4, f5, f6 = st.columns(6)
-    f1.metric("Total Trades", total_filt); f2.metric("Global WR", f"{wr_filt:.1f}%"); f3.metric("Net Wins", wins_filt)
-    f4.metric("Net Losses", losses_filt); f5.metric("Max L-Streak", streak_filt); f6.metric("Filtered Engines", engines_filt)
+    f1.metric("Total Trades", total_filt)
+    f2.metric("Global WR", f"{wr_filt:.1f}%")
+    f3.metric("Net Wins", wins_filt)
+    f4.metric("Net Losses", losses_filt)
+    f5.metric("Max L-Streak", streak_filt)
+    f6.metric("Filtered Engines", engines_filt)
     st.markdown("---")
 
 def render_regime_metrics(df_c, df_m, regime_id):
@@ -261,8 +278,12 @@ def render_regime_metrics(df_c, df_m, regime_id):
 
     st.markdown(f"#### 🩸 RAW EXECUTION (Regime {regime_id})")
     c1, c2, c3, c4, c5, c6 = st.columns(6)
-    c1.metric(f"TT R{regime_id}", total_raw); c2.metric(f"WR R{regime_id}", f"{wr_raw:.1f}%"); c3.metric("Net Wins", wins_raw)
-    c4.metric("Net Losses", losses_raw); c5.metric("Max L-Streak", streak_raw); c6.metric("Total Engines", engines_count)
+    c1.metric(f"TT R{regime_id}", total_raw)
+    c2.metric(f"WR R{regime_id}", f"{wr_raw:.1f}%")
+    c3.metric("Net Wins", wins_raw)
+    c4.metric("Net Losses", losses_raw)
+    c5.metric("Max L-Streak", streak_raw)
+    c6.metric("Total Engines", engines_count)
 
     st.markdown("#### 🛡️ ML FILTERED (Buckets A & B Only)")
     if not df_m_reg.empty:
@@ -281,8 +302,12 @@ def render_regime_metrics(df_c, df_m, regime_id):
         total_filt, wr_filt, wins_filt, losses_filt, streak_filt, engines_filt = 0, 0, 0, 0, 0, 0
         
     f1, f2, f3, f4, f5, f6 = st.columns(6)
-    f1.metric(f"TT R{regime_id}", total_filt); f2.metric(f"WR R{regime_id}", f"{wr_filt:.1f}%"); f3.metric("Net Wins", wins_filt)
-    f4.metric("Net Losses", losses_filt); f5.metric("Max L-Streak", streak_filt); f6.metric("Filtered Engines", engines_filt)
+    f1.metric(f"TT R{regime_id}", total_filt)
+    f2.metric(f"WR R{regime_id}", f"{wr_filt:.1f}%")
+    f3.metric("Net Wins", wins_filt)
+    f4.metric("Net Losses", losses_filt)
+    f5.metric("Max L-Streak", streak_filt)
+    f6.metric("Filtered Engines", engines_filt)
     st.write("")
 
 # =========================================================================
@@ -290,8 +315,7 @@ def render_regime_metrics(df_c, df_m, regime_id):
 # =========================================================================
 st.sidebar.title("OmniSwarm Quant")
 st.sidebar.markdown("---")
-# NUEVO: Agregado "Macro Regime" a la navegación
-nav_category = st.sidebar.radio("Navigation", ["HOME", "Risk Management", "Trade Log", "Modules", "Macro Regime"])
+nav_category = st.sidebar.radio("Navigation", ["HOME", "Risk Management", "Trade Log", "Modules"])
 st.sidebar.markdown("---")
 if st.sidebar.button("Refresh Data"):
     st.cache_data.clear()
@@ -493,90 +517,6 @@ elif nav_category == "Trade Log":
             st.warning("No data found for the selected timeframe.")
     else: st.error("Database is empty.")
 
-# =========================================================================
-# NUEVA PESTAÑA: MACRO REGIME INTELLIGENCE
-# =========================================================================
-elif nav_category == "Macro Regime":
-    st.title("Macro Regime Intelligence")
-    st.markdown("Deep dive into Market Context, Sensor Anatomy, and Markov Probabilities.")
-
-    selected_module = st.selectbox("Select Target Module:", ["MCL", "MGC", "MES", "MNQ_DAY", "MNQ_NIGHT"])
-
-    df_macro = macro_data_dict.get(selected_module, pd.DataFrame())
-
-    if not df_macro.empty:
-        # Aseguramos el formato de fecha para el timeline
-        df_macro['Date'] = pd.to_datetime(df_macro['Date'], format='mixed', errors='coerce').dt.date
-        df_macro = df_macro.sort_values('Date')
-
-        tab_anatomy, tab_timeline, tab_markov = st.tabs(["🧬 Regime Anatomy", "📅 Historical Timeline", "🔮 Markov Engine"])
-
-        with tab_anatomy:
-            st.markdown("### The DNA of Market Regimes")
-            st.markdown("Average sensor readings clustered by AI (K-Means).")
-            
-            # Filtramos solo las columnas numéricas que son sensores macro
-            sensor_cols = [c for c in df_macro.columns if c.startswith('Macro_')]
-            
-            if sensor_cols:
-                # Calculamos el promedio de los sensores para cada régimen y redondeamos para lectura limpia
-                anatomy_df = df_macro.groupby('Regime_Label')[sensor_cols].mean().reset_index()
-                anatomy_df['Regime_Label'] = anatomy_df['Regime_Label'].apply(lambda x: f"R{int(x)}")
-                anatomy_df = anatomy_df.round(2)
-                
-                # Renderizamos en un div con clase para ajustar el ancho
-                html_anatomy = render_html_table(anatomy_df)
-                st.markdown(f'<div class="macro-table">{html_anatomy}</div>', unsafe_allow_html=True)
-            else:
-                st.warning("No macro sensors found in the dataset.")
-
-        with tab_timeline:
-            st.markdown("### Recent Climatology (Last 15 Sessions)")
-            # Tomamos los últimos 15 días
-            recent_df = df_macro.tail(15).sort_values('Date', ascending=False).copy()
-            recent_df['Regime_Label'] = recent_df['Regime_Label'].apply(lambda x: f"R{int(x)}")
-            recent_df = recent_df.round(2)
-            
-            # Seleccionamos las columnas más relevantes para mostrar en el timeline
-            priority_sensors = ['Macro_VIX', 'Macro_Ses_RVol', 'Macro_Gap', 'Macro_Rng_Ratio']
-            display_cols = ['Date', 'Regime_Label'] + [c for c in sensor_cols if c in priority_sensors]
-            
-            st.markdown(render_html_table(recent_df[display_cols], bucket_cols=[]), unsafe_allow_html=True)
-
-        with tab_markov:
-            st.markdown("### Markov Chain Diagnostics")
-            f_data = system_forecast.get(selected_module, {})
-            
-            if f_data:
-                today_r = f_data.get('today_regime', '?')
-                pred_r = f_data.get('predicted_regime_tomorrow', '?')
-                prob = f_data.get('probability', 0)
-                sess_counts = f_data.get('historical_sessions', {})
-                
-                st.markdown(f"""
-                <div class="module-hud">
-                    [ MARKET INERTIA ] &nbsp;&nbsp;TODAY: <b>R{today_r}</b> &nbsp;➔&nbsp; FORECAST: <span style='color: #00C853; font-weight: 700;'>R{pred_r}</span> ({prob}%)
-                </div>
-                """, unsafe_allow_html=True)
-                
-                st.markdown("#### Historical Distribution")
-                
-                # Los JSON guardan las llaves de enteros como strings ("0", "1", "2")
-                count_R0 = sess_counts.get("0", sess_counts.get(0, 0))
-                count_R1 = sess_counts.get("1", sess_counts.get(1, 0))
-                count_R2 = sess_counts.get("2", sess_counts.get(2, 0))
-                total_sess = count_R0 + count_R1 + count_R2
-                
-                if total_sess > 0:
-                    c1, c2, c3 = st.columns(3)
-                    c1.metric("R0 Dominance", f"{(count_R0/total_sess*100):.1f}%", f"{count_R0} sessions")
-                    c2.metric("R1 Dominance", f"{(count_R1/total_sess*100):.1f}%", f"{count_R1} sessions")
-                    c3.metric("R2 Dominance", f"{(count_R2/total_sess*100):.1f}%", f"{count_R2} sessions")
-            else:
-                st.warning("No Markov forecast data available for this module.")
-    else:
-        st.error("No Macro Data found for this module. Ensure the ML Auditor has run successfully.")
-
 elif nav_category == "Modules":
     st.title("Modules Dashboard")
     selected_module = st.selectbox("Select Target Module:", ["MCL", "MGC", "MES", "MNQ_DAY", "MNQ_NIGHT"])
@@ -622,6 +562,7 @@ elif nav_category == "Modules":
             df_sub = df_regime[df_regime[f'Bucket R{regime_id}'] == bucket_label]
             if not df_sub.empty:
                 st.markdown(f"#### {title}")
+                # AÑADIDO: Ahora se incluye la columna "Last 5 RX" en cada tabla
                 cols_sub = ['Engine', f'Bucket R{regime_id}', f'TT R{regime_id}', f'WR R{regime_id}', f'Last 5 R{regime_id}', 'TT Global', 'WR Global']
                 df_sub = df_sub[cols_sub].sort_values(by=f'WR R{regime_id}', ascending=False)
                 st.markdown(render_html_table(df_sub, bucket_cols=[f'Bucket R{regime_id}']), unsafe_allow_html=True)
