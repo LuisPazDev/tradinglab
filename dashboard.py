@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
 import json
@@ -91,7 +91,7 @@ def load_data():
     else:
         df_master = pd.DataFrame()
 
-    # 3. LECTURA DE RIESGO Y CONFIGURACIÓN (Intacto)
+    # 3. LECTURA DE RIESGO Y CONFIGURACIÓN
     config = {}
     if os.path.exists(get_file_path("engines_config.json")):
         with open(get_file_path("engines_config.json"), "r") as f: config = json.load(f)
@@ -442,8 +442,13 @@ elif nav_category == "Trade Log":
         
         if time_filter == "Last Session":
             if not df_log.empty:
-                last_date = df_log['Timestamp'].dt.date.max()
-                df_log = df_log[df_log['Timestamp'].dt.date == last_date]
+                # CORRECCIÓN: Filtramos las fechas válidas (evitando los NaT corruptos)
+                valid_ts = df_log['Timestamp'].dropna()
+                if not valid_ts.empty:
+                    last_date = valid_ts.max().date()
+                    df_log = df_log[df_log['Timestamp'].dt.date == last_date]
+                else:
+                    df_log = pd.DataFrame(columns=df_log.columns) # Vaciar si no hay fechas válidas
         elif time_filter != "All-Time":
             days_map = {"7 Days": 7, "15 Days": 15, "1 Month": 30, "3 Months": 90, "6 Months": 180, "1 Year": 365}
             cutoff_date = datetime.now() - timedelta(days=days_map[time_filter])
