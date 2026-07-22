@@ -66,7 +66,7 @@ def get_file_path(filename):
 def load_data():
     modules = ['MCL', 'MGC', 'MES', 'MNQ_DAY', 'MNQ_NIGHT']
     df_list = []
-    macro_dict = {} # NUEVO: Diccionario para almacenar el dataset macro puro en RAM
+    macro_dict = {} # Diccionario para almacenar el dataset macro puro en RAM
     
     for mod in modules:
         micro_path = get_file_path(f"{mod}_micro_trades.csv")
@@ -130,7 +130,6 @@ def load_data():
                 'Bucket R2': d.get('bucket_r2', 'C')
             })
     
-    # NUEVO: Retornamos el macro_dict
     return df_master, pd.DataFrame(config_rows), risk_data, system_forecast, macro_dict
 
 # Desempaquetamos los 5 valores
@@ -290,7 +289,6 @@ def render_regime_metrics(df_c, df_m, regime_id):
 # =========================================================================
 st.sidebar.title("OmniSwarm Quant")
 st.sidebar.markdown("---")
-# NUEVO: Agregado "Macro Regime" a la navegación
 nav_category = st.sidebar.radio("Navigation", ["HOME", "Risk Management", "Trade Log", "Modules", "Macro Regime"])
 st.sidebar.markdown("---")
 if st.sidebar.button("Refresh Data"):
@@ -583,6 +581,7 @@ elif nav_category == "Modules":
     df_c_mod = df_config[df_config['Module'] == selected_module].copy()
     
     f_data = system_forecast.get(selected_module, {})
+    pred_r = "?"
     if f_data:
         pred_r = f_data.get('predicted_regime_tomorrow', '?')
         prob = f_data.get('probability', 0)
@@ -611,7 +610,14 @@ elif nav_category == "Modules":
             df_t2 = df_c_mod.copy()
             df_t2['Bucket_Rank'] = df_t2['Bucket'].map({'A': 1, 'B': 2, 'C': 3})
             df_t2 = df_t2.sort_values(by=['Bucket_Rank', 'WR Target'], ascending=[True, False])
-            cols_t2 = ['Engine', 'Bucket', 'TT Target', 'WR Target', 'TT Global', 'WR Global', 'Diag']
+            
+            # Dinámicamente asignar el "Last 5 Target" basado en el régimen predicho
+            if str(pred_r) in ["0", "1", "2"]:
+                df_t2['Last 5 Target'] = df_t2[f'Last 5 R{int(pred_r)}']
+            else:
+                df_t2['Last 5 Target'] = "N/A"
+
+            cols_t2 = ['Engine', 'Bucket', 'TT Target', 'WR Target', 'Last 5 Target', 'Diag']
             st.markdown(render_html_table(df_t2[cols_t2], bucket_cols=['Bucket']), unsafe_allow_html=True)
             
     with tab3:
@@ -622,7 +628,7 @@ elif nav_category == "Modules":
             df_sub = df_regime[df_regime[f'Bucket R{regime_id}'] == bucket_label]
             if not df_sub.empty:
                 st.markdown(f"#### {title}")
-                cols_sub = ['Engine', f'Bucket R{regime_id}', f'TT R{regime_id}', f'WR R{regime_id}', f'Last 5 R{regime_id}', 'TT Global', 'WR Global']
+                cols_sub = ['Engine', f'Bucket R{regime_id}', f'TT R{regime_id}', f'WR R{regime_id}', f'Last 5 R{regime_id}', 'Diag']
                 df_sub = df_sub[cols_sub].sort_values(by=f'WR R{regime_id}', ascending=False)
                 st.markdown(render_html_table(df_sub, bucket_cols=[f'Bucket R{regime_id}']), unsafe_allow_html=True)
         
