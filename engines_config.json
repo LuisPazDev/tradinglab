@@ -3,7 +3,7 @@
         "module": "MCL",
         "engine_name": "Asia_Brk_L",
         "bucket": "C",
-        "reason": "T\u00f3xico en R\u00e9gimen (WR < 62.5%)",
+        "reason": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)",
         "wr_global": 65.0,
         "total_trades_global": 20,
         "predicted_regime_evaluated": 2,
@@ -12,12 +12,15 @@
         "r0_wr": 100.0,
         "r0_trades": 1,
         "bucket_r0": "C",
+        "reason_r0": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r1_wr": 66.7,
         "r1_trades": 6,
         "bucket_r1": "B",
+        "reason_r1": "Falta Madurez Sniper (<15 TT) | WR < 70.0%",
         "r2_wr": 61.5,
         "r2_trades": 13,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)"
     },
     "MCL::Asia_Brk_S": {
         "module": "MCL",
@@ -32,12 +35,15 @@
         "r0_wr": 0.0,
         "r0_trades": 0,
         "bucket_r0": "C",
+        "reason_r0": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r1_wr": 76.9,
         "r1_trades": 13,
         "bucket_r1": "B",
+        "reason_r1": "Falta Madurez Sniper (<15 TT)",
         "r2_wr": 57.1,
         "r2_trades": 14,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "Freno Terminal (3L Activas en R\u00e9gimen)"
     },
     "MCL::Lon_Brk_L": {
         "module": "MCL",
@@ -52,12 +58,15 @@
         "r0_wr": 0.0,
         "r0_trades": 0,
         "bucket_r0": "C",
+        "reason_r0": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r1_wr": 54.5,
         "r1_trades": 11,
         "bucket_r1": "C",
+        "reason_r1": "Freno Terminal (3L Activas en R\u00e9gimen)",
         "r2_wr": 87.5,
         "r2_trades": 24,
-        "bucket_r2": "A"
+        "bucket_r2": "A",
+        "reason_r2": "Sniper"
     },
     "MCL::Lon_Brk_S": {
         "module": "MCL",
@@ -72,12 +81,15 @@
         "r0_wr": 100.0,
         "r0_trades": 1,
         "bucket_r0": "C",
+        "reason_r0": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r1_wr": 68.4,
         "r1_trades": 19,
-        "bucket_r1": "A",
+        "bucket_r1": "B",
+        "reason_r1": "WR < 70.0%",
         "r2_wr": 88.9,
         "r2_trades": 9,
-        "bucket_r2": "B"
+        "bucket_r2": "B",
+        "reason_r2": "Falta Madurez Sniper (<15 TT)"
     },
     "MCL::PM_Fade_L": {
         "module": "MCL",
@@ -92,18 +104,21 @@
         "r0_wr": 100.0,
         "r0_trades": 2,
         "bucket_r0": "C",
+        "reason_r0": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r1_wr": 85.7,
         "r1_trades": 14,
         "bucket_r1": "B",
+        "reason_r1": "Falta Madurez Sniper (<15 TT)",
         "r2_wr": 0.0,
         "r2_trades": 1,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "Inmadurez Extrema (<5 TT en R\u00e9gimen)"
     },
     "MCL::Pit_Brk_S": {
         "module": "MCL",
         "engine_name": "Pit_Brk_S",
         "bucket": "C",
-        "reason": "T\u00f3xico en R\u00e9gimen (WR < 62.5%)",
+        "reason": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)",
         "wr_global": 66.7,
         "total_trades_global": 69,
         "predicted_regime_evaluated": 2,
@@ -112,18 +127,21 @@
         "r0_wr": 100.0,
         "r0_trades": 1,
         "bucket_r0": "C",
+        "reason_r0": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r1_wr": 68.5,
         "r1_trades": 54,
-        "bucket_r1": "A",
+        "bucket_r1": "B",
+        "reason_r1": "WR < 70.0%",
         "r2_wr": 57.1,
         "r2_trades": 14,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)"
     },
     "MCL::Pit_Fade_L": {
         "module": "MCL",
         "engine_name": "Pit_Fade_L",
         "bucket": "C",
-        "reason": "T\u00f3xico en R\u00e9gimen (WR < 62.5%)",
+        "reason": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)",
         "wr_global": 63.6,
         "total_trades_global": 22,
         "predicted_regime_evaluated": 2,
@@ -132,12 +150,15 @@
         "r0_wr": 66.7,
         "r0_trades": 3,
         "bucket_r0": "C",
+        "reason_r0": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r1_wr": 66.7,
         "r1_trades": 12,
         "bucket_r1": "B",
+        "reason_r1": "Falta Madurez Sniper (<15 TT) | WR < 70.0%",
         "r2_wr": 57.1,
         "r2_trades": 7,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)"
     },
     "MES::AE_L": {
         "module": "MES",
@@ -152,12 +173,15 @@
         "r0_wr": 100.0,
         "r0_trades": 2,
         "bucket_r0": "C",
+        "reason_r0": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r1_wr": 100.0,
         "r1_trades": 3,
         "bucket_r1": "C",
+        "reason_r1": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r2_wr": 75.0,
         "r2_trades": 4,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "Inmadurez Extrema (<5 TT en R\u00e9gimen)"
     },
     "MES::AM10_Swp_L": {
         "module": "MES",
@@ -172,18 +196,21 @@
         "r0_wr": 66.7,
         "r0_trades": 6,
         "bucket_r0": "B",
+        "reason_r0": "Falta Madurez Sniper (<15 TT) | WR < 70.0%",
         "r1_wr": 100.0,
         "r1_trades": 3,
         "bucket_r1": "C",
+        "reason_r1": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r2_wr": 83.3,
         "r2_trades": 6,
-        "bucket_r2": "B"
+        "bucket_r2": "B",
+        "reason_r2": "Falta Madurez Sniper (<15 TT)"
     },
     "MES::AM10_Swp_S": {
         "module": "MES",
         "engine_name": "AM10_Swp_S",
         "bucket": "C",
-        "reason": "T\u00f3xico en R\u00e9gimen (WR < 62.5%)",
+        "reason": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)",
         "wr_global": 66.7,
         "total_trades_global": 30,
         "predicted_regime_evaluated": 2,
@@ -192,12 +219,15 @@
         "r0_wr": 75.0,
         "r0_trades": 12,
         "bucket_r0": "B",
+        "reason_r0": "Falta Madurez Sniper (<15 TT)",
         "r1_wr": 83.3,
         "r1_trades": 6,
         "bucket_r1": "B",
+        "reason_r1": "Falta Madurez Sniper (<15 TT)",
         "r2_wr": 50.0,
         "r2_trades": 12,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)"
     },
     "MES::Apex_S": {
         "module": "MES",
@@ -212,12 +242,15 @@
         "r0_wr": 83.3,
         "r0_trades": 12,
         "bucket_r0": "B",
+        "reason_r0": "Falta Madurez Sniper (<15 TT)",
         "r1_wr": 100.0,
         "r1_trades": 1,
         "bucket_r1": "C",
+        "reason_r1": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r2_wr": 16.7,
         "r2_trades": 6,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "Freno Terminal (3L Activas en R\u00e9gimen)"
     },
     "MES::Gap_Fade_L": {
         "module": "MES",
@@ -232,12 +265,15 @@
         "r0_wr": 46.7,
         "r0_trades": 15,
         "bucket_r0": "C",
+        "reason_r0": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)",
         "r1_wr": 100.0,
         "r1_trades": 4,
         "bucket_r1": "C",
+        "reason_r1": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r2_wr": 94.1,
         "r2_trades": 17,
-        "bucket_r2": "A"
+        "bucket_r2": "A",
+        "reason_r2": "Sniper"
     },
     "MES::Gap_Fade_S": {
         "module": "MES",
@@ -252,12 +288,15 @@
         "r0_wr": 91.7,
         "r0_trades": 12,
         "bucket_r0": "B",
+        "reason_r0": "Falta Madurez Sniper (<15 TT)",
         "r1_wr": 66.7,
         "r1_trades": 9,
         "bucket_r1": "B",
+        "reason_r1": "Falta Madurez Sniper (<15 TT) | WR < 70.0%",
         "r2_wr": 72.7,
         "r2_trades": 11,
-        "bucket_r2": "B"
+        "bucket_r2": "B",
+        "reason_r2": "Falta Madurez Sniper (<15 TT)"
     },
     "MES::Grind_L": {
         "module": "MES",
@@ -272,12 +311,15 @@
         "r0_wr": 100.0,
         "r0_trades": 2,
         "bucket_r0": "C",
+        "reason_r0": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r1_wr": 75.0,
         "r1_trades": 8,
         "bucket_r1": "B",
+        "reason_r1": "Falta Madurez Sniper (<15 TT)",
         "r2_wr": 75.0,
         "r2_trades": 12,
-        "bucket_r2": "B"
+        "bucket_r2": "B",
+        "reason_r2": "Falta Madurez Sniper (<15 TT)"
     },
     "MES::Grind_S": {
         "module": "MES",
@@ -292,12 +334,15 @@
         "r0_wr": 100.0,
         "r0_trades": 4,
         "bucket_r0": "C",
+        "reason_r0": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r1_wr": 100.0,
         "r1_trades": 3,
         "bucket_r1": "C",
+        "reason_r1": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r2_wr": 0.0,
         "r2_trades": 1,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "Inmadurez Extrema (<5 TT en R\u00e9gimen)"
     },
     "MES::IB_Fade_L": {
         "module": "MES",
@@ -312,12 +357,15 @@
         "r0_wr": 72.7,
         "r0_trades": 22,
         "bucket_r0": "A",
+        "reason_r0": "Sniper",
         "r1_wr": 89.5,
         "r1_trades": 19,
         "bucket_r1": "A",
+        "reason_r1": "Sniper",
         "r2_wr": 71.4,
         "r2_trades": 14,
-        "bucket_r2": "B"
+        "bucket_r2": "B",
+        "reason_r2": "Falta Madurez Sniper (<15 TT)"
     },
     "MES::IB_Fade_S": {
         "module": "MES",
@@ -332,12 +380,15 @@
         "r0_wr": 66.7,
         "r0_trades": 3,
         "bucket_r0": "C",
+        "reason_r0": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r1_wr": 83.3,
         "r1_trades": 12,
         "bucket_r1": "B",
+        "reason_r1": "Falta Madurez Sniper (<15 TT)",
         "r2_wr": 81.8,
         "r2_trades": 11,
-        "bucket_r2": "B"
+        "bucket_r2": "B",
+        "reason_r2": "Falta Madurez Sniper (<15 TT)"
     },
     "MES::IB_L": {
         "module": "MES",
@@ -352,18 +403,21 @@
         "r0_wr": 0.0,
         "r0_trades": 0,
         "bucket_r0": "C",
+        "reason_r0": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r1_wr": 44.4,
         "r1_trades": 9,
         "bucket_r1": "C",
+        "reason_r1": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)",
         "r2_wr": 92.9,
         "r2_trades": 14,
-        "bucket_r2": "B"
+        "bucket_r2": "B",
+        "reason_r2": "Falta Madurez Sniper (<15 TT)"
     },
     "MES::M4_S": {
         "module": "MES",
         "engine_name": "M4_S",
-        "bucket": "B",
-        "reason": "Falta Madurez Sniper (<15 TT) | WR < 67.5%",
+        "bucket": "C",
+        "reason": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)",
         "wr_global": 72.0,
         "total_trades_global": 25,
         "predicted_regime_evaluated": 2,
@@ -372,12 +426,15 @@
         "r0_wr": 100.0,
         "r0_trades": 3,
         "bucket_r0": "C",
+        "reason_r0": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r1_wr": 72.7,
         "r1_trades": 11,
         "bucket_r1": "B",
+        "reason_r1": "Falta Madurez Sniper (<15 TT)",
         "r2_wr": 63.6,
         "r2_trades": 11,
-        "bucket_r2": "B"
+        "bucket_r2": "C",
+        "reason_r2": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)"
     },
     "MES::OR_Fake_S": {
         "module": "MES",
@@ -392,12 +449,15 @@
         "r0_wr": 0.0,
         "r0_trades": 0,
         "bucket_r0": "C",
+        "reason_r0": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r1_wr": 71.4,
         "r1_trades": 7,
         "bucket_r1": "B",
+        "reason_r1": "Falta Madurez Sniper (<15 TT)",
         "r2_wr": 0.0,
         "r2_trades": 1,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "Inmadurez Extrema (<5 TT en R\u00e9gimen)"
     },
     "MES::Retest_L_E": {
         "module": "MES",
@@ -412,12 +472,15 @@
         "r0_wr": 100.0,
         "r0_trades": 1,
         "bucket_r0": "C",
+        "reason_r0": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r1_wr": 88.9,
         "r1_trades": 9,
         "bucket_r1": "B",
+        "reason_r1": "Falta Madurez Sniper (<15 TT)",
         "r2_wr": 75.0,
         "r2_trades": 4,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "Inmadurez Extrema (<5 TT en R\u00e9gimen)"
     },
     "MGC::Asia_Bullet_L": {
         "module": "MGC",
@@ -432,12 +495,15 @@
         "r0_wr": 79.4,
         "r0_trades": 34,
         "bucket_r0": "A",
+        "reason_r0": "Sniper",
         "r1_wr": 50.0,
         "r1_trades": 10,
         "bucket_r1": "C",
+        "reason_r1": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)",
         "r2_wr": 76.6,
         "r2_trades": 47,
-        "bucket_r2": "A"
+        "bucket_r2": "A",
+        "reason_r2": "Sniper"
     },
     "MGC::Asia_Fade_S": {
         "module": "MGC",
@@ -452,12 +518,15 @@
         "r0_wr": 69.2,
         "r0_trades": 13,
         "bucket_r0": "C",
+        "reason_r0": "Freno Terminal (3L Activas en R\u00e9gimen)",
         "r1_wr": 50.0,
         "r1_trades": 2,
         "bucket_r1": "C",
+        "reason_r1": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r2_wr": 66.7,
         "r2_trades": 9,
-        "bucket_r2": "B"
+        "bucket_r2": "B",
+        "reason_r2": "Falta Madurez Sniper (<15 TT) | WR < 70.0%"
     },
     "MGC::COMEX_Swp_S_E": {
         "module": "MGC",
@@ -472,12 +541,15 @@
         "r0_wr": 50.0,
         "r0_trades": 2,
         "bucket_r0": "C",
+        "reason_r0": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r1_wr": 100.0,
         "r1_trades": 2,
         "bucket_r1": "C",
+        "reason_r1": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r2_wr": 87.5,
         "r2_trades": 8,
-        "bucket_r2": "B"
+        "bucket_r2": "B",
+        "reason_r2": "Falta Madurez Sniper (<15 TT)"
     },
     "MGC::LP_Brk_L": {
         "module": "MGC",
@@ -492,12 +564,15 @@
         "r0_wr": 100.0,
         "r0_trades": 3,
         "bucket_r0": "C",
+        "reason_r0": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r1_wr": 100.0,
         "r1_trades": 1,
         "bucket_r1": "C",
+        "reason_r1": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r2_wr": 70.8,
         "r2_trades": 24,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "Freno Terminal (3L Activas en R\u00e9gimen)"
     },
     "MGC::LP_Brk_S": {
         "module": "MGC",
@@ -512,18 +587,21 @@
         "r0_wr": 100.0,
         "r0_trades": 5,
         "bucket_r0": "B",
+        "reason_r0": "Falta Madurez Sniper (<15 TT)",
         "r1_wr": 100.0,
         "r1_trades": 3,
         "bucket_r1": "C",
+        "reason_r1": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r2_wr": 0.0,
         "r2_trades": 2,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "Inmadurez Extrema (<5 TT en R\u00e9gimen)"
     },
     "MGC::LP_Rev_L": {
         "module": "MGC",
         "engine_name": "LP_Rev_L",
         "bucket": "C",
-        "reason": "T\u00f3xico en R\u00e9gimen (WR < 62.5%)",
+        "reason": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)",
         "wr_global": 60.0,
         "total_trades_global": 55,
         "predicted_regime_evaluated": 0,
@@ -532,12 +610,15 @@
         "r0_wr": 61.4,
         "r0_trades": 44,
         "bucket_r0": "C",
+        "reason_r0": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)",
         "r1_wr": 42.9,
         "r1_trades": 7,
         "bucket_r1": "C",
+        "reason_r1": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)",
         "r2_wr": 75.0,
         "r2_trades": 4,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "Inmadurez Extrema (<5 TT en R\u00e9gimen)"
     },
     "MGC::LP_Rev_S": {
         "module": "MGC",
@@ -552,12 +633,15 @@
         "r0_wr": 0.0,
         "r0_trades": 0,
         "bucket_r0": "C",
+        "reason_r0": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r1_wr": 0.0,
         "r1_trades": 0,
         "bucket_r1": "C",
+        "reason_r1": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r2_wr": 70.6,
         "r2_trades": 17,
-        "bucket_r2": "A"
+        "bucket_r2": "A",
+        "reason_r2": "Sniper"
     },
     "MGC::Lon_BO_L_E": {
         "module": "MGC",
@@ -572,18 +656,21 @@
         "r0_wr": 100.0,
         "r0_trades": 4,
         "bucket_r0": "C",
+        "reason_r0": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r1_wr": 0.0,
         "r1_trades": 1,
         "bucket_r1": "C",
+        "reason_r1": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r2_wr": 90.0,
         "r2_trades": 10,
-        "bucket_r2": "B"
+        "bucket_r2": "B",
+        "reason_r2": "Falta Madurez Sniper (<15 TT)"
     },
     "MGC::Lon_BO_S_E": {
         "module": "MGC",
         "engine_name": "Lon_BO_S_E",
         "bucket": "B",
-        "reason": "WR < 67.5%",
+        "reason": "WR < 70.0%",
         "wr_global": 72.2,
         "total_trades_global": 36,
         "predicted_regime_evaluated": 0,
@@ -592,18 +679,21 @@
         "r0_wr": 65.2,
         "r0_trades": 23,
         "bucket_r0": "B",
+        "reason_r0": "WR < 70.0%",
         "r1_wr": 100.0,
         "r1_trades": 8,
         "bucket_r1": "B",
+        "reason_r1": "Falta Madurez Sniper (<15 TT)",
         "r2_wr": 60.0,
         "r2_trades": 5,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)"
     },
     "MGC::Lon_Viper_L": {
         "module": "MGC",
         "engine_name": "Lon_Viper_L",
         "bucket": "C",
-        "reason": "T\u00f3xico en R\u00e9gimen (WR < 62.5%)",
+        "reason": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)",
         "wr_global": 58.8,
         "total_trades_global": 34,
         "predicted_regime_evaluated": 0,
@@ -612,18 +702,21 @@
         "r0_wr": 58.3,
         "r0_trades": 12,
         "bucket_r0": "C",
+        "reason_r0": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)",
         "r1_wr": 100.0,
         "r1_trades": 1,
         "bucket_r1": "C",
+        "reason_r1": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r2_wr": 57.1,
         "r2_trades": 21,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)"
     },
     "MGC::Lon_Viper_S": {
         "module": "MGC",
         "engine_name": "Lon_Viper_S",
         "bucket": "B",
-        "reason": "Falta Madurez Sniper (<15 TT) | WR < 67.5%",
+        "reason": "Falta Madurez Sniper (<15 TT) | WR < 70.0%",
         "wr_global": 68.8,
         "total_trades_global": 16,
         "predicted_regime_evaluated": 0,
@@ -632,12 +725,15 @@
         "r0_wr": 66.7,
         "r0_trades": 12,
         "bucket_r0": "B",
+        "reason_r0": "Falta Madurez Sniper (<15 TT) | WR < 70.0%",
         "r1_wr": 50.0,
         "r1_trades": 2,
         "bucket_r1": "C",
+        "reason_r1": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r2_wr": 100.0,
         "r2_trades": 2,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "Inmadurez Extrema (<5 TT en R\u00e9gimen)"
     },
     "MGC::V2_Rev_L": {
         "module": "MGC",
@@ -652,12 +748,15 @@
         "r0_wr": 75.0,
         "r0_trades": 12,
         "bucket_r0": "B",
+        "reason_r0": "Falta Madurez Sniper (<15 TT)",
         "r1_wr": 50.0,
         "r1_trades": 6,
         "bucket_r1": "C",
+        "reason_r1": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)",
         "r2_wr": 0.0,
         "r2_trades": 0,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "Inmadurez Extrema (<5 TT en R\u00e9gimen)"
     },
     "MGC::V2_Rev_S": {
         "module": "MGC",
@@ -672,12 +771,15 @@
         "r0_wr": 100.0,
         "r0_trades": 4,
         "bucket_r0": "C",
+        "reason_r0": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r1_wr": 0.0,
         "r1_trades": 0,
         "bucket_r1": "C",
+        "reason_r1": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r2_wr": 70.4,
         "r2_trades": 27,
-        "bucket_r2": "A"
+        "bucket_r2": "A",
+        "reason_r2": "Sniper"
     },
     "MNQ_DAY::AE_L": {
         "module": "MNQ_DAY",
@@ -692,12 +794,15 @@
         "r0_wr": 86.7,
         "r0_trades": 60,
         "bucket_r0": "A",
+        "reason_r0": "Sniper",
         "r1_wr": 72.7,
         "r1_trades": 11,
         "bucket_r1": "B",
+        "reason_r1": "Falta Madurez Sniper (<15 TT)",
         "r2_wr": 50.0,
         "r2_trades": 22,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)"
     },
     "MNQ_DAY::AE_S": {
         "module": "MNQ_DAY",
@@ -712,12 +817,15 @@
         "r0_wr": 69.2,
         "r0_trades": 13,
         "bucket_r0": "C",
+        "reason_r0": "Freno Terminal (3L Activas en R\u00e9gimen)",
         "r1_wr": 76.9,
         "r1_trades": 13,
         "bucket_r1": "B",
+        "reason_r1": "Falta Madurez Sniper (<15 TT)",
         "r2_wr": 100.0,
         "r2_trades": 5,
-        "bucket_r2": "B"
+        "bucket_r2": "B",
+        "reason_r2": "Falta Madurez Sniper (<15 TT)"
     },
     "MNQ_DAY::Box_L": {
         "module": "MNQ_DAY",
@@ -732,18 +840,21 @@
         "r0_wr": 88.2,
         "r0_trades": 17,
         "bucket_r0": "A",
+        "reason_r0": "Sniper",
         "r1_wr": 0.0,
         "r1_trades": 0,
         "bucket_r1": "C",
+        "reason_r1": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r2_wr": 40.0,
         "r2_trades": 5,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)"
     },
     "MNQ_DAY::Box_S": {
         "module": "MNQ_DAY",
         "engine_name": "Box_S",
         "bucket": "C",
-        "reason": "T\u00f3xico en R\u00e9gimen (WR < 62.5%)",
+        "reason": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)",
         "wr_global": 65.1,
         "total_trades_global": 43,
         "predicted_regime_evaluated": 0,
@@ -752,12 +863,15 @@
         "r0_wr": 60.5,
         "r0_trades": 38,
         "bucket_r0": "C",
+        "reason_r0": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)",
         "r1_wr": 100.0,
         "r1_trades": 3,
         "bucket_r1": "C",
+        "reason_r1": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r2_wr": 100.0,
         "r2_trades": 2,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "Inmadurez Extrema (<5 TT en R\u00e9gimen)"
     },
     "MNQ_DAY::Creep_S": {
         "module": "MNQ_DAY",
@@ -772,12 +886,15 @@
         "r0_wr": 50.0,
         "r0_trades": 2,
         "bucket_r0": "C",
+        "reason_r0": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r1_wr": 81.2,
         "r1_trades": 16,
         "bucket_r1": "A",
+        "reason_r1": "Sniper",
         "r2_wr": 80.0,
         "r2_trades": 20,
-        "bucket_r2": "A"
+        "bucket_r2": "A",
+        "reason_r2": "Sniper"
     },
     "MNQ_DAY::Ext_ORB_L": {
         "module": "MNQ_DAY",
@@ -792,12 +909,15 @@
         "r0_wr": 72.7,
         "r0_trades": 22,
         "bucket_r0": "A",
+        "reason_r0": "Sniper",
         "r1_wr": 100.0,
         "r1_trades": 3,
         "bucket_r1": "C",
+        "reason_r1": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r2_wr": 14.3,
         "r2_trades": 7,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)"
     },
     "MNQ_DAY::Ext_ORB_S": {
         "module": "MNQ_DAY",
@@ -812,18 +932,21 @@
         "r0_wr": 83.3,
         "r0_trades": 6,
         "bucket_r0": "B",
+        "reason_r0": "Falta Madurez Sniper (<15 TT)",
         "r1_wr": 100.0,
         "r1_trades": 1,
         "bucket_r1": "C",
+        "reason_r1": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r2_wr": 100.0,
         "r2_trades": 7,
-        "bucket_r2": "B"
+        "bucket_r2": "B",
+        "reason_r2": "Falta Madurez Sniper (<15 TT)"
     },
     "MNQ_DAY::Gap_L": {
         "module": "MNQ_DAY",
         "engine_name": "Gap_L",
         "bucket": "C",
-        "reason": "T\u00f3xico en R\u00e9gimen (WR < 62.5%)",
+        "reason": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)",
         "wr_global": 58.3,
         "total_trades_global": 12,
         "predicted_regime_evaluated": 0,
@@ -832,12 +955,15 @@
         "r0_wr": 50.0,
         "r0_trades": 10,
         "bucket_r0": "C",
+        "reason_r0": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)",
         "r1_wr": 0.0,
         "r1_trades": 0,
         "bucket_r1": "C",
+        "reason_r1": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r2_wr": 100.0,
         "r2_trades": 2,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "Inmadurez Extrema (<5 TT en R\u00e9gimen)"
     },
     "MNQ_DAY::Grind_L": {
         "module": "MNQ_DAY",
@@ -852,18 +978,21 @@
         "r0_wr": 79.2,
         "r0_trades": 24,
         "bucket_r0": "A",
+        "reason_r0": "Sniper",
         "r1_wr": 60.0,
         "r1_trades": 5,
         "bucket_r1": "C",
+        "reason_r1": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)",
         "r2_wr": 50.0,
         "r2_trades": 4,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "Inmadurez Extrema (<5 TT en R\u00e9gimen)"
     },
     "MNQ_DAY::Grind_S": {
         "module": "MNQ_DAY",
         "engine_name": "Grind_S",
         "bucket": "B",
-        "reason": "Falta Madurez Sniper (<15 TT) | WR < 67.5%",
+        "reason": "Falta Madurez Sniper (<15 TT) | WR < 70.0%",
         "wr_global": 71.4,
         "total_trades_global": 14,
         "predicted_regime_evaluated": 0,
@@ -872,12 +1001,15 @@
         "r0_wr": 66.7,
         "r0_trades": 12,
         "bucket_r0": "B",
+        "reason_r0": "Falta Madurez Sniper (<15 TT) | WR < 70.0%",
         "r1_wr": 0.0,
         "r1_trades": 0,
         "bucket_r1": "C",
+        "reason_r1": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r2_wr": 100.0,
         "r2_trades": 2,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "Inmadurez Extrema (<5 TT en R\u00e9gimen)"
     },
     "MNQ_DAY::IB_L": {
         "module": "MNQ_DAY",
@@ -892,12 +1024,15 @@
         "r0_wr": 78.7,
         "r0_trades": 47,
         "bucket_r0": "A",
+        "reason_r0": "Sniper",
         "r1_wr": 66.7,
         "r1_trades": 3,
         "bucket_r1": "C",
+        "reason_r1": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r2_wr": 71.4,
         "r2_trades": 7,
-        "bucket_r2": "B"
+        "bucket_r2": "B",
+        "reason_r2": "Falta Madurez Sniper (<15 TT)"
     },
     "MNQ_DAY::Late_S": {
         "module": "MNQ_DAY",
@@ -912,18 +1047,21 @@
         "r0_wr": 85.7,
         "r0_trades": 7,
         "bucket_r0": "B",
+        "reason_r0": "Falta Madurez Sniper (<15 TT)",
         "r1_wr": 62.2,
         "r1_trades": 37,
         "bucket_r1": "C",
+        "reason_r1": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)",
         "r2_wr": 100.0,
         "r2_trades": 4,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "Inmadurez Extrema (<5 TT en R\u00e9gimen)"
     },
     "MNQ_DAY::M4_S": {
         "module": "MNQ_DAY",
         "engine_name": "M4_S",
-        "bucket": "A",
-        "reason": "Sniper",
+        "bucket": "B",
+        "reason": "WR < 70.0%",
         "wr_global": 75.0,
         "total_trades_global": 44,
         "predicted_regime_evaluated": 0,
@@ -931,13 +1069,16 @@
         "total_trades_in_regime": 32,
         "r0_wr": 68.8,
         "r0_trades": 32,
-        "bucket_r0": "A",
+        "bucket_r0": "B",
+        "reason_r0": "WR < 70.0%",
         "r1_wr": 0.0,
         "r1_trades": 0,
         "bucket_r1": "C",
+        "reason_r1": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r2_wr": 91.7,
         "r2_trades": 12,
-        "bucket_r2": "B"
+        "bucket_r2": "B",
+        "reason_r2": "Falta Madurez Sniper (<15 TT)"
     },
     "MNQ_DAY::PH_Brk_L": {
         "module": "MNQ_DAY",
@@ -952,12 +1093,15 @@
         "r0_wr": 66.7,
         "r0_trades": 3,
         "bucket_r0": "C",
+        "reason_r0": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r1_wr": 66.7,
         "r1_trades": 3,
         "bucket_r1": "C",
+        "reason_r1": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r2_wr": 0.0,
         "r2_trades": 0,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "Inmadurez Extrema (<5 TT en R\u00e9gimen)"
     },
     "MNQ_DAY::PH_Rev_L": {
         "module": "MNQ_DAY",
@@ -972,18 +1116,21 @@
         "r0_wr": 83.3,
         "r0_trades": 12,
         "bucket_r0": "B",
+        "reason_r0": "Falta Madurez Sniper (<15 TT)",
         "r1_wr": 81.8,
         "r1_trades": 11,
         "bucket_r1": "B",
+        "reason_r1": "Falta Madurez Sniper (<15 TT)",
         "r2_wr": 61.1,
         "r2_trades": 18,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)"
     },
     "MNQ_DAY::PH_Rev_S": {
         "module": "MNQ_DAY",
         "engine_name": "PH_Rev_S",
         "bucket": "B",
-        "reason": "WR < 67.5%",
+        "reason": "WR < 70.0%",
         "wr_global": 67.5,
         "total_trades_global": 40,
         "predicted_regime_evaluated": 0,
@@ -992,18 +1139,21 @@
         "r0_wr": 65.4,
         "r0_trades": 26,
         "bucket_r0": "B",
+        "reason_r0": "WR < 70.0%",
         "r1_wr": 69.2,
         "r1_trades": 13,
         "bucket_r1": "B",
+        "reason_r1": "Falta Madurez Sniper (<15 TT) | WR < 70.0%",
         "r2_wr": 100.0,
         "r2_trades": 1,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "Inmadurez Extrema (<5 TT en R\u00e9gimen)"
     },
     "MNQ_DAY::Retest_L_E": {
         "module": "MNQ_DAY",
         "engine_name": "Retest_L_E",
         "bucket": "B",
-        "reason": "WR < 67.5%",
+        "reason": "WR < 70.0%",
         "wr_global": 69.6,
         "total_trades_global": 23,
         "predicted_regime_evaluated": 0,
@@ -1012,12 +1162,15 @@
         "r0_wr": 65.0,
         "r0_trades": 20,
         "bucket_r0": "B",
+        "reason_r0": "WR < 70.0%",
         "r1_wr": 0.0,
         "r1_trades": 0,
         "bucket_r1": "C",
+        "reason_r1": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r2_wr": 100.0,
         "r2_trades": 3,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "Inmadurez Extrema (<5 TT en R\u00e9gimen)"
     },
     "MNQ_NIGHT::AsianGrind_L": {
         "module": "MNQ_NIGHT",
@@ -1032,12 +1185,15 @@
         "r0_wr": 83.3,
         "r0_trades": 6,
         "bucket_r0": "B",
+        "reason_r0": "Falta Madurez Sniper (<15 TT)",
         "r1_wr": 81.8,
         "r1_trades": 11,
         "bucket_r1": "B",
+        "reason_r1": "Falta Madurez Sniper (<15 TT)",
         "r2_wr": 50.0,
         "r2_trades": 2,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "Inmadurez Extrema (<5 TT en R\u00e9gimen)"
     },
     "MNQ_NIGHT::Frank_L": {
         "module": "MNQ_NIGHT",
@@ -1052,12 +1208,15 @@
         "r0_wr": 71.4,
         "r0_trades": 7,
         "bucket_r0": "B",
+        "reason_r0": "Falta Madurez Sniper (<15 TT)",
         "r1_wr": 100.0,
         "r1_trades": 3,
         "bucket_r1": "C",
+        "reason_r1": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r2_wr": 100.0,
         "r2_trades": 3,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "Inmadurez Extrema (<5 TT en R\u00e9gimen)"
     },
     "MNQ_NIGHT::Judas_L": {
         "module": "MNQ_NIGHT",
@@ -1072,12 +1231,15 @@
         "r0_wr": 83.3,
         "r0_trades": 12,
         "bucket_r0": "B",
+        "reason_r0": "Falta Madurez Sniper (<15 TT)",
         "r1_wr": 75.0,
         "r1_trades": 8,
         "bucket_r1": "B",
+        "reason_r1": "Falta Madurez Sniper (<15 TT)",
         "r2_wr": 71.4,
         "r2_trades": 7,
-        "bucket_r2": "B"
+        "bucket_r2": "B",
+        "reason_r2": "Falta Madurez Sniper (<15 TT)"
     },
     "MNQ_NIGHT::P6_L": {
         "module": "MNQ_NIGHT",
@@ -1092,12 +1254,15 @@
         "r0_wr": 50.0,
         "r0_trades": 2,
         "bucket_r0": "C",
+        "reason_r0": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r1_wr": 100.0,
         "r1_trades": 3,
         "bucket_r1": "C",
+        "reason_r1": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r2_wr": 100.0,
         "r2_trades": 3,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "Inmadurez Extrema (<5 TT en R\u00e9gimen)"
     },
     "MNQ_NIGHT::P6_S": {
         "module": "MNQ_NIGHT",
@@ -1112,12 +1277,15 @@
         "r0_wr": 72.7,
         "r0_trades": 22,
         "bucket_r0": "A",
+        "reason_r0": "Sniper",
         "r1_wr": 83.3,
         "r1_trades": 18,
         "bucket_r1": "A",
+        "reason_r1": "Sniper",
         "r2_wr": 80.0,
         "r2_trades": 10,
-        "bucket_r2": "B"
+        "bucket_r2": "B",
+        "reason_r2": "Falta Madurez Sniper (<15 TT)"
     },
     "MNQ_NIGHT::Pre_Brk_S": {
         "module": "MNQ_NIGHT",
@@ -1132,12 +1300,15 @@
         "r0_wr": 53.3,
         "r0_trades": 15,
         "bucket_r0": "C",
+        "reason_r0": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)",
         "r1_wr": 62.5,
         "r1_trades": 16,
-        "bucket_r1": "B",
+        "bucket_r1": "C",
+        "reason_r1": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)",
         "r2_wr": 91.7,
         "r2_trades": 12,
-        "bucket_r2": "B"
+        "bucket_r2": "B",
+        "reason_r2": "Falta Madurez Sniper (<15 TT)"
     },
     "MNQ_NIGHT::Pre_Rev_L": {
         "module": "MNQ_NIGHT",
@@ -1152,12 +1323,15 @@
         "r0_wr": 100.0,
         "r0_trades": 6,
         "bucket_r0": "B",
+        "reason_r0": "Falta Madurez Sniper (<15 TT)",
         "r1_wr": 61.5,
         "r1_trades": 13,
         "bucket_r1": "C",
+        "reason_r1": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)",
         "r2_wr": 80.0,
         "r2_trades": 5,
-        "bucket_r2": "B"
+        "bucket_r2": "B",
+        "reason_r2": "Falta Madurez Sniper (<15 TT)"
     },
     "MNQ_NIGHT::Pre_Rev_S": {
         "module": "MNQ_NIGHT",
@@ -1171,13 +1345,16 @@
         "total_trades_in_regime": 1,
         "r0_wr": 62.5,
         "r0_trades": 8,
-        "bucket_r0": "B",
+        "bucket_r0": "C",
+        "reason_r0": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)",
         "r1_wr": 75.0,
         "r1_trades": 8,
         "bucket_r1": "B",
+        "reason_r1": "Falta Madurez Sniper (<15 TT)",
         "r2_wr": 100.0,
         "r2_trades": 1,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "Inmadurez Extrema (<5 TT en R\u00e9gimen)"
     },
     "MNQ_NIGHT::Tokyo_L": {
         "module": "MNQ_NIGHT",
@@ -1192,12 +1369,15 @@
         "r0_wr": 36.4,
         "r0_trades": 11,
         "bucket_r0": "C",
+        "reason_r0": "Freno Terminal (3L Activas en R\u00e9gimen)",
         "r1_wr": 76.9,
         "r1_trades": 13,
         "bucket_r1": "B",
+        "reason_r1": "Falta Madurez Sniper (<15 TT)",
         "r2_wr": 100.0,
         "r2_trades": 3,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "Inmadurez Extrema (<5 TT en R\u00e9gimen)"
     },
     "MNQ_NIGHT::Tokyo_S": {
         "module": "MNQ_NIGHT",
@@ -1212,12 +1392,15 @@
         "r0_wr": 100.0,
         "r0_trades": 2,
         "bucket_r0": "C",
+        "reason_r0": "Inmadurez Extrema (<5 TT en R\u00e9gimen)",
         "r1_wr": 57.1,
         "r1_trades": 7,
         "bucket_r1": "C",
+        "reason_r1": "T\u00f3xico en R\u00e9gimen (WR < 65.0%)",
         "r2_wr": 100.0,
         "r2_trades": 1,
-        "bucket_r2": "C"
+        "bucket_r2": "C",
+        "reason_r2": "Inmadurez Extrema (<5 TT en R\u00e9gimen)"
     },
     "_SYSTEM_FORECAST_": {
         "MCL": {
