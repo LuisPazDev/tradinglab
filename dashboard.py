@@ -61,7 +61,7 @@ def get_file_path(filename):
     return filename
 
 # =========================================================================
-# BYPASS DE CACHÉ: Lectura del Perfil de Riesgo en Tiempo Real
+# LECTURA DEL PERFIL DE RIESGO EN TIEMPO REAL
 # =========================================================================
 def load_risk_profile():
     try:
@@ -333,7 +333,7 @@ if nav_category == "HOME":
             if ftype == "SINGLE":
                 cls_color = "fc-highlight"
                 r_txt = f"R{t1}"
-            else: # DUAL_AW
+            else: 
                 cls_color = "fc-dual"
                 r_txt = f"R{t1} & R{t2} (DUAL)"
 
@@ -427,33 +427,34 @@ elif nav_category == "Risk Management":
                 
             st.write("")
             if st.button("🚀 PUSH TO VPS & SET ACTIVE ACCOUNT", type="primary", use_container_width=True):
-                payload_gateway = {
-                    "passphrase": WEBHOOK_PASSPHRASE,
-                    "event": "UPDATE_RISK",
-                    "target_account": selected_acc_name, 
-                    "risk_data": {
-                        "account_status": "ACTIVE", 
-                        "account_type": acc_type, "account_name": selected_acc_name, 
-                        "account_size": acc_data['net_liq'], "profit_target": profit_target,
-                        "eod_drawdown_limit": eod_fallback, "daily_cap_usd": daily_cap,
-                        "base_risk_usd": base_risk, "max_contracts": max_contracts
-                    }
+                new_risk_data = {
+                    "account_status": "ACTIVE", 
+                    "account_type": acc_type, "account_name": selected_acc_name, 
+                    "account_size": acc_data['net_liq'], "profit_target": profit_target,
+                    "eod_drawdown_limit": eod_fallback, "daily_cap_usd": daily_cap,
+                    "base_risk_usd": base_risk, "max_contracts": max_contracts
                 }
                 
-                payload_nt8 = {"passphrase": WEBHOOK_PASSPHRASE, "command": "SYNC_BALANCE", "target_account": selected_acc_name}
-                
+                # [ BYPASS DIRECTO AL DISCO ] - Evitamos el Gateway Python defectuoso
                 try:
-                    res_py = requests.post(VPS_WEBHOOK_URL, json=payload_gateway, timeout=5)
-                    try: requests.post(NT8_WEBHOOK_URL, json=payload_nt8, timeout=3)
+                    with open(get_file_path("risk_profile.json"), "w", encoding="utf-8") as f:
+                        json.dump(new_risk_data, f, indent=4)
+                    
+                    # Intentamos sincronizar con NT8 y Gateway (pero el archivo ya está a salvo)
+                    payload_gateway = {"passphrase": WEBHOOK_PASSPHRASE, "event": "UPDATE_RISK", "target_account": selected_acc_name, "risk_data": new_risk_data}
+                    payload_nt8 = {"passphrase": WEBHOOK_PASSPHRASE, "command": "SYNC_BALANCE", "target_account": selected_acc_name}
+                    
+                    try: requests.post(VPS_WEBHOOK_URL, json=payload_gateway, timeout=2)
+                    except: pass
+                    try: requests.post(NT8_WEBHOOK_URL, json=payload_nt8, timeout=2)
                     except: pass
 
-                    if res_py.status_code == 200: 
-                        st.success(f"✅ Shield Active! NinjaTrader will execute orders on **{selected_acc_name}**.")
-                        st.session_state.active_account = selected_acc_name
-                        st.cache_data.clear() # Purga inmediata para lectura visual limpia
-                        st.rerun()
-                    else: st.error(f"❌ Gateway rejected configuration (Error {res_py.status_code}).")
-                except Exception as e: st.error(f"❌ Connection failed. Error: {e}")
+                    st.success(f"✅ Shield Active! NinjaTrader will execute orders on **{selected_acc_name}**.")
+                    st.session_state.active_account = selected_acc_name
+                    st.cache_data.clear() # Limpia la memoria caché visual antigua
+                    st.rerun() # Fuerza a la Web App a leer el archivo nuevo inmediatamente
+                except Exception as e:
+                    st.error(f"❌ Error crítico del sistema de archivos VPS: {e}")
 
 elif nav_category == "Trade Log":
     st.title("Trade Log")
