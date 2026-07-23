@@ -132,7 +132,7 @@ def load_data():
                 'Bucket': d.get('bucket', 'C'),
                 
                 'Risk Scalar': d.get('risk_scalar', 0.0),
-                'EV (R)': d.get('expected_value_r', 0.0),
+                'EV (R)': d.get('expected_value_r', d.get('expected_value_usd', 0.0)),
                 'Bayes WR': d.get('wr_bayes_weighted', 0.0),
                 
                 'TT Global': d.get('total_trades_global', 0),
@@ -332,7 +332,7 @@ if nav_category == "HOME":
     else: st.error(f"Execution Locked | Status: {status}")
     
     if system_forecast:
-        st.markdown("### 🔮 Markov Predictive Forecast (V3.2 Quant)")
+        st.markdown("### 🔮 Markov Predictive Forecast (V3.4 Quant)")
         cols = st.columns(len(system_forecast))
         for i, (mod, data) in enumerate(system_forecast.items()):
             ftype = data.get("forecast_type", "SINGLE")
@@ -372,7 +372,7 @@ if nav_category == "HOME":
             'TT R1', 'WR R1', 'Bucket R1', 
             'TT R2', 'WR R2', 'Bucket R2'
         ]
-        df_home = df_home[cols_home]
+        df_home = df_home[[c for c in cols_home if c in df_home.columns]]
         
         html_home = render_html_table(df_home, bucket_cols=['Bucket R0', 'Bucket R1', 'Bucket R2'])
         st.markdown(html_home, unsafe_allow_html=True)
@@ -615,7 +615,7 @@ elif nav_category == "Macro Regime":
                     st.success(f"**Markov Accuracy in selected period:** {accuracy:.1f}%")
                 
                 cols_hist = ['Date', 'Actual Regime', 'ML Forecasted Regime', 'Match?']
-                st.markdown(render_html_table(df_hist[cols_hist]), unsafe_allow_html=True)
+                st.markdown(render_html_table(df_hist[[c for c in cols_hist if c in df_hist.columns]]), unsafe_allow_html=True)
             else:
                 st.warning("No macro records found for this timeframe.")
 
@@ -634,11 +634,11 @@ elif nav_category == "Macro Regime":
                 if ftype == "SINGLE":
                     hud_style = "module-hud"
                     r_txt = f"<span style='color: #00C853; font-weight: 700;'>R{t1}</span>"
-                    status_txt = "Quant Single Lineup (Kelly Sweet Spot &ge; 67%)"
+                    status_txt = "Quant Single Lineup (Kelly Sweet Spot &ge; 66.6% or Dominant Majority)"
                 else:
                     hud_style = "module-hud module-hud-dual"
                     r_txt = f"<span style='color: #CCA700; font-weight: 700;'>R{t1} & R{t2} (DUAL)</span>"
-                    status_txt = "Quant Dual Blend (Uncertainty < 67%)"
+                    status_txt = "Quant Dual Shield (Intersectional All-Weather Protection)"
                 
                 st.markdown(f"""
                 <div class="{hud_style}">
@@ -700,36 +700,44 @@ elif nav_category == "Modules":
         if not df_c_mod.empty:
             df_t1 = df_c_mod.copy().sort_values(by='TT Global', ascending=False)
             cols_t1 = ['Engine', 'TT Global', 'WR Global', 'Last 5', 'TT R0', 'WR R0', 'Bucket R0', 'TT R1', 'WR R1', 'Bucket R1', 'TT R2', 'WR R2', 'Bucket R2']
-            st.markdown(render_html_table(df_t1[cols_t1], bucket_cols=['Bucket R0', 'Bucket R1', 'Bucket R2']), unsafe_allow_html=True)
+            st.markdown(render_html_table(df_t1[[c for c in cols_t1 if c in df_t1.columns]], bucket_cols=['Bucket R0', 'Bucket R1', 'Bucket R2']), unsafe_allow_html=True)
     
     with tab2:
         st.markdown("### Tactical Execution Plan (Next Session)")
         if not df_c_mod.empty and f_data:
             df_t2 = df_c_mod.copy()
-            df_t2['Bucket_Rank'] = df_t2['Bucket'].map({'A': 1, 'B': 2, 'C': 3})
+            df_t2['Bucket_Rank'] = df_t2['Bucket'].map({'A': 1, 'B': 2, 'C': 3}).fillna(3)
             
             if ftype == "SINGLE":
-                df_t2 = df_t2.sort_values(by=['Bucket_Rank', 'Risk Scalar', f'WR R{t1}'], ascending=[True, False, False])
-                df_t2['Last 5 Target'] = df_t2[f'Last 5 R{t1}']
+                sort_wr_col = f'WR R{t1}' if f'WR R{t1}' in df_t2.columns else 'WR Global'
+                df_t2 = df_t2.sort_values(by=['Bucket_Rank', 'Risk Scalar', sort_wr_col], ascending=[True, False, False])
+                if f'Last 5 R{t1}' in df_t2.columns:
+                    df_t2['Last 5 Target'] = df_t2[f'Last 5 R{t1}']
+                else:
+                    df_t2['Last 5 Target'] = df_t2['Last 5']
                 cols_t2 = ['Engine', 'Bucket', 'Risk Scalar', 'EV (R)', f'TT R{t1}', f'WR R{t1}', 'Last 5 Target', 'Diag']
             else: 
-                df_t2 = df_t2.sort_values(by=['Bucket_Rank', 'Risk Scalar', f'WR R{t1}'], ascending=[True, False, False])
+                sort_wr_col = f'WR R{t1}' if f'WR R{t1}' in df_t2.columns else 'WR Global'
+                df_t2 = df_t2.sort_values(by=['Bucket_Rank', 'Risk Scalar', sort_wr_col], ascending=[True, False, False])
                 cols_t2 = ['Engine', 'Bucket', 'Risk Scalar', 'EV (R)', f'TT R{t1}', f'WR R{t1}', f'TT R{t2}', f'WR R{t2}', 'Diag']
 
-            st.markdown(render_html_table(df_t2[cols_t2], bucket_cols=['Bucket']), unsafe_allow_html=True)
+            st.markdown(render_html_table(df_t2[[c for c in cols_t2 if c in df_t2.columns]], bucket_cols=['Bucket']), unsafe_allow_html=True)
             
     with tab3:
         st.markdown("### Forensic Multi-Regime Analysis")
         t_r0, t_r1, t_r2 = st.tabs(["[ Regime 0 ]", "[ Regime 1 ]", "[ Regime 2 ]"])
         
         def render_sub_bucket_table(df_regime, regime_id, bucket_label, title):
-            df_sub = df_regime[df_regime[f'Bucket R{regime_id}'] == bucket_label].copy()
+            bucket_col = f'Bucket R{regime_id}'
+            if bucket_col not in df_regime.columns: return
+            df_sub = df_regime[df_regime[bucket_col] == bucket_label].copy()
             if not df_sub.empty:
                 st.markdown(f"#### {title}")
-                df_sub['Diag'] = df_sub[f'Diag R{regime_id}']
-                cols_sub = ['Engine', f'Bucket R{regime_id}', f'TT R{regime_id}', f'WR R{regime_id}', f'Last 5 R{regime_id}', 'Diag']
-                df_sub = df_sub[cols_sub].sort_values(by=f'WR R{regime_id}', ascending=False)
-                st.markdown(render_html_table(df_sub, bucket_cols=[f'Bucket R{regime_id}']), unsafe_allow_html=True)
+                df_sub['Diag'] = df_sub.get(f'Diag R{regime_id}', '')
+                cols_sub = ['Engine', bucket_col, f'TT R{regime_id}', f'WR R{regime_id}', f'Last 5 R{regime_id}', 'Diag']
+                sort_col = f'WR R{regime_id}' if f'WR R{regime_id}' in df_sub.columns else 'Engine'
+                df_sub = df_sub[[c for c in cols_sub if c in df_sub.columns]].sort_values(by=sort_col, ascending=False)
+                st.markdown(render_html_table(df_sub, bucket_cols=[bucket_col]), unsafe_allow_html=True)
         
         for idx, t_tab in enumerate([t_r0, t_r1, t_r2]):
             with t_tab:
