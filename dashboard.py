@@ -132,7 +132,7 @@ def load_data():
                 'Bucket': d.get('bucket', 'C'),
                 
                 'Risk Scalar': d.get('risk_scalar', 0.0),
-                'EV ($)': d.get('expected_value_usd', 0.0),
+                'EV (R)': d.get('expected_value_r', 0.0),
                 'Bayes WR': d.get('wr_bayes_weighted', 0.0),
                 
                 'TT Global': d.get('total_trades_global', 0),
@@ -187,7 +187,7 @@ def render_html_table(df, bucket_cols=None):
     for col in df.columns:
         if 'WR' in col: format_dict[col] = "{:.1f}%"
         elif 'Scalar' in col: format_dict[col] = "{:.2f}"
-        elif 'EV' in col: format_dict[col] = "${:,.2f}"
+        elif 'EV' in col: format_dict[col] = "{:.2f}R"
 
     styled = df.style.set_properties(**{'text-align': 'center'})
     
@@ -332,7 +332,7 @@ if nav_category == "HOME":
     else: st.error(f"Execution Locked | Status: {status}")
     
     if system_forecast:
-        st.markdown("### 🔮 Markov Predictive Forecast (V3.1 Quant)")
+        st.markdown("### 🔮 Markov Predictive Forecast (V3.2 Quant)")
         cols = st.columns(len(system_forecast))
         for i, (mod, data) in enumerate(system_forecast.items()):
             ftype = data.get("forecast_type", "SINGLE")
@@ -446,7 +446,6 @@ elif nav_category == "Risk Management":
                     "base_risk_usd": base_risk, "max_contracts": max_contracts
                 }
                 
-                # [ ESCUDO ANTI-COLISIÓN ] - Uso de safe_json_write para evitar WinError 32
                 if safe_json_write(get_file_path("risk_profile.json"), new_risk_data):
                     payload_gateway = {"passphrase": WEBHOOK_PASSPHRASE, "event": "UPDATE_RISK", "target_account": selected_acc_name, "risk_data": new_risk_data}
                     payload_nt8 = {"passphrase": WEBHOOK_PASSPHRASE, "command": "SYNC_BALANCE", "target_account": selected_acc_name}
@@ -461,7 +460,7 @@ elif nav_category == "Risk Management":
                     st.cache_data.clear() 
                     st.rerun() 
                 else:
-                    st.error("❌ Error crítico: No se pudo escribir el archivo (Disk Lock). Intenta de nuevo en 1 segundo.")
+                    st.error("❌ Critical Error: Could not write file (Disk Lock). Try again in 1 second.")
 
 elif nav_category == "Trade Log":
     st.title("Trade Log")
@@ -639,7 +638,7 @@ elif nav_category == "Macro Regime":
                 else:
                     hud_style = "module-hud module-hud-dual"
                     r_txt = f"<span style='color: #CCA700; font-weight: 700;'>R{t1} & R{t2} (DUAL)</span>"
-                    status_txt = "Quant Dual Blend (Incertidumbre < 67%)"
+                    status_txt = "Quant Dual Blend (Uncertainty < 67%)"
                 
                 st.markdown(f"""
                 <div class="{hud_style}">
@@ -712,10 +711,10 @@ elif nav_category == "Modules":
             if ftype == "SINGLE":
                 df_t2 = df_t2.sort_values(by=['Bucket_Rank', 'Risk Scalar', f'WR R{t1}'], ascending=[True, False, False])
                 df_t2['Last 5 Target'] = df_t2[f'Last 5 R{t1}']
-                cols_t2 = ['Engine', 'Bucket', 'Risk Scalar', 'EV ($)', f'TT R{t1}', f'WR R{t1}', 'Last 5 Target', 'Diag']
+                cols_t2 = ['Engine', 'Bucket', 'Risk Scalar', 'EV (R)', f'TT R{t1}', f'WR R{t1}', 'Last 5 Target', 'Diag']
             else: 
                 df_t2 = df_t2.sort_values(by=['Bucket_Rank', 'Risk Scalar', f'WR R{t1}'], ascending=[True, False, False])
-                cols_t2 = ['Engine', 'Bucket', 'Risk Scalar', 'EV ($)', f'TT R{t1}', f'WR R{t1}', f'TT R{t2}', f'WR R{t2}', 'Diag']
+                cols_t2 = ['Engine', 'Bucket', 'Risk Scalar', 'EV (R)', f'TT R{t1}', f'WR R{t1}', f'TT R{t2}', f'WR R{t2}', 'Diag']
 
             st.markdown(render_html_table(df_t2[cols_t2], bucket_cols=['Bucket']), unsafe_allow_html=True)
             
