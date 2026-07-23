@@ -111,6 +111,12 @@ def load_data():
                 'Module': d.get('module', 'N/A'), 
                 'Engine': d.get('engine_name', k), 
                 'Bucket': d.get('bucket', 'C'),
+                
+                # INTEGRACIÓN V3.1 QUANT (Risk Scalar, Bayes, EV)
+                'Risk Scalar': d.get('risk_scalar', 0.0),
+                'EV ($)': d.get('expected_value_usd', 0.0),
+                'Bayes WR': d.get('wr_bayes_weighted', 0.0),
+                
                 'TT Global': d.get('total_trades_global', 0),
                 'WR Global': d.get('wr_global', 0.0),
                 'Diag': d.get('reason', ''),
@@ -158,7 +164,14 @@ def highlight_buckets(val):
 def render_html_table(df, bucket_cols=None):
     if df.empty: return ""
     if bucket_cols is None: bucket_cols = []
-    format_dict = {col: "{:.1f}%" for col in df.columns if 'WR' in col}
+    
+    # Renderizador Multi-Formato V3.1
+    format_dict = {}
+    for col in df.columns:
+        if 'WR' in col: format_dict[col] = "{:.1f}%"
+        elif 'Scalar' in col: format_dict[col] = "{:.2f}"
+        elif 'EV' in col: format_dict[col] = "${:,.2f}"
+
     styled = df.style.set_properties(**{'text-align': 'center'})
     
     for col in bucket_cols:
@@ -302,13 +315,14 @@ if nav_category == "HOME":
     else: st.error(f"Execution Locked | Status: {status}")
     
     if system_forecast:
-        st.markdown("### 🔮 Markov Predictive Forecast (V2.4)")
+        st.markdown("### 🔮 Markov Predictive Forecast (V3.1 Quant)")
         cols = st.columns(len(system_forecast))
         for i, (mod, data) in enumerate(system_forecast.items()):
             ftype = data.get("forecast_type", "SINGLE")
             p1 = data.get("probability", 0)
             t1 = data.get("top1", "?")
             t2 = data.get("top2", "?")
+            ent = data.get("shannon_entropy", 0.0)
             
             if ftype == "SINGLE":
                 cls_color = "fc-highlight"
@@ -321,7 +335,7 @@ if nav_category == "HOME":
                 st.markdown(f"""
                 <div class="forecast-card">
                     <div class="fc-title">[ {mod} ]</div>
-                    <div class="fc-data">TARGET: <span class="{cls_color}">{r_txt}</span> | P1: {p1}%</div>
+                    <div class="fc-data">TARGET: <span class="{cls_color}">{r_txt}</span> | P1: {p1}% | H: {ent}</div>
                 </div>
                 """, unsafe_allow_html=True)
         st.write("")
@@ -602,20 +616,20 @@ elif nav_category == "Macro Regime":
                 p1 = f_data.get('probability', 0)
                 t1 = f_data.get('top1', '?')
                 t2 = f_data.get('top2', '?')
+                ent = f_data.get('shannon_entropy', 0.0)
                 
-                # Integración Visual All-Weather adaptada a V2.4
                 if ftype == "SINGLE":
                     hud_style = "module-hud"
                     r_txt = f"<span style='color: #00C853; font-weight: 700;'>R{t1}</span>"
-                    status_txt = "Standard Lineup (Kelly Sweet Spot &ge; 67%)"
+                    status_txt = "Quant Single Lineup (Kelly Sweet Spot &ge; 67%)"
                 else:
                     hud_style = "module-hud module-hud-dual"
                     r_txt = f"<span style='color: #CCA700; font-weight: 700;'>R{t1} & R{t2} (DUAL)</span>"
-                    status_txt = "Defensive Shield Active (Incertidumbre < 67%)"
+                    status_txt = "Quant Dual Blend (Incertidumbre < 67%)"
                 
                 st.markdown(f"""
                 <div class="{hud_style}">
-                    [ MARKET INERTIA ] &nbsp;&nbsp;TODAY: <b>R{today_r}</b> &nbsp;➔&nbsp; FORECAST: {r_txt}
+                    [ MARKET INERTIA ] &nbsp;&nbsp;TODAY: <b>R{today_r}</b> &nbsp;➔&nbsp; FORECAST: {r_txt} (P1: {p1}% | H: {ent})
                     <br><span style="font-size: 0.9rem; font-weight: 400; color:#A0A0A0;">{status_txt}</span>
                 </div>
                 """, unsafe_allow_html=True)
@@ -647,6 +661,7 @@ elif nav_category == "Modules":
         p1 = f_data.get('probability', 0)
         t1 = f_data.get('top1', 0)
         t2 = f_data.get('top2', 0)
+        ent = f_data.get('shannon_entropy', 0.0)
         
         if ftype == "SINGLE":
             hud_style = "module-hud"
@@ -657,7 +672,7 @@ elif nav_category == "Modules":
 
         st.markdown(f"""
         <div class="{hud_style}">
-            [ NEXT SESSION FORECAST ] &nbsp;&nbsp;🎯 TARGET: {r_txt} &nbsp;&nbsp;|&nbsp;&nbsp; P1: {p1}%
+            [ NEXT SESSION FORECAST ] &nbsp;&nbsp;🎯 TARGET: {r_txt} &nbsp;&nbsp;|&nbsp;&nbsp; P1: {p1}% &nbsp;&nbsp;|&nbsp;&nbsp; H: {ent}
         </div>
         """, unsafe_allow_html=True)
         
@@ -675,19 +690,19 @@ elif nav_category == "Modules":
             st.markdown(render_html_table(df_t1[cols_t1], bucket_cols=['Bucket R0', 'Bucket R1', 'Bucket R2']), unsafe_allow_html=True)
     
     with tab2:
-        st.markdown("### Execution Plan (Target Regime Evaluated)")
+        st.markdown("### Tactical Execution Plan (Next Session)")
         if not df_c_mod.empty and f_data:
             df_t2 = df_c_mod.copy()
             df_t2['Bucket_Rank'] = df_t2['Bucket'].map({'A': 1, 'B': 2, 'C': 3})
             
-            # Dinámica de Columnas Mutantes según el estado del Escudo
+            # Dinámica de V3.1: Incluye Risk Scalar y EV Bayesiano
             if ftype == "SINGLE":
-                df_t2 = df_t2.sort_values(by=['Bucket_Rank', f'WR R{t1}'], ascending=[True, False])
+                df_t2 = df_t2.sort_values(by=['Bucket_Rank', 'Risk Scalar', f'WR R{t1}'], ascending=[True, False, False])
                 df_t2['Last 5 Target'] = df_t2[f'Last 5 R{t1}']
-                cols_t2 = ['Engine', 'Bucket', f'TT R{t1}', f'WR R{t1}', 'Last 5 Target', 'Diag']
+                cols_t2 = ['Engine', 'Bucket', 'Risk Scalar', 'EV ($)', f'TT R{t1}', f'WR R{t1}', 'Last 5 Target', 'Diag']
             else: # DUAL_AW
-                df_t2 = df_t2.sort_values(by=['Bucket_Rank', f'WR R{t1}'], ascending=[True, False])
-                cols_t2 = ['Engine', 'Bucket', f'TT R{t1}', f'WR R{t1}', f'TT R{t2}', f'WR R{t2}', 'Diag']
+                df_t2 = df_t2.sort_values(by=['Bucket_Rank', 'Risk Scalar', f'WR R{t1}'], ascending=[True, False, False])
+                cols_t2 = ['Engine', 'Bucket', 'Risk Scalar', 'EV ($)', f'TT R{t1}', f'WR R{t1}', f'TT R{t2}', f'WR R{t2}', 'Diag']
 
             st.markdown(render_html_table(df_t2[cols_t2], bucket_cols=['Bucket']), unsafe_allow_html=True)
             
