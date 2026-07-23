@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
 import json
@@ -29,10 +29,14 @@ st.markdown("""
     .fc-title { font-size: 1rem; color: #A0A0A0; font-weight: 600; margin-bottom: 5px; }
     .fc-data { font-size: 1.1rem; color: #E0E0E0; font-weight: 400; }
     .fc-highlight { color: #00C853; font-weight: 700; }
+    .fc-dual { color: #CCA700; font-weight: 700; }
+    .fc-global { color: #2196F3; font-weight: 700; }
     
     .module-hud {
         background: linear-gradient(90deg, #1A1C23, #15161B); border-left: 4px solid #00C853; padding: 15px; border-radius: 6px; margin-bottom: 20px; color: #E0E0E0; font-size: 1.2rem; font-weight: 500;
     }
+    .module-hud-dual { border-left-color: #CCA700; }
+    .module-hud-global { border-left-color: #2196F3; }
 
     .table-container { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 10px; margin-bottom: 20px; border-radius: 8px; }
     .custom-table { border-collapse: collapse; width: 100%; min-width: 800px; margin: 0 auto; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 0.85rem; color: #E0E0E0; background-color: #1A1C23; border: 1px solid #2D303E; }
@@ -40,7 +44,6 @@ st.markdown("""
     .custom-table td { padding: 8px 12px; text-align: center !important; border-bottom: 1px solid #2D303E; white-space: nowrap; }
     .custom-table tr:hover { background-color: #2D303E; }
     
-    /* Pequeño ajuste para las tablas Macro que pueden ser más cortas */
     .macro-table .custom-table { min-width: 100%; }
     </style>
 """, unsafe_allow_html=True)
@@ -66,7 +69,7 @@ def get_file_path(filename):
 def load_data():
     modules = ['MCL', 'MGC', 'MES', 'MNQ_DAY', 'MNQ_NIGHT']
     df_list = []
-    macro_dict = {} # Diccionario para almacenar el dataset macro puro en RAM
+    macro_dict = {} 
     
     for mod in modules:
         micro_path = get_file_path(f"{mod}_micro_trades.csv")
@@ -76,7 +79,7 @@ def load_data():
             df_micro = pd.read_csv(micro_path)
             df_macro = pd.read_csv(macro_path)
             
-            macro_dict[mod] = df_macro.copy() # Guardamos la data macro para la nueva pestaña
+            macro_dict[mod] = df_macro.copy() 
             
             if not df_micro.empty and not df_macro.empty and 'Regime_Label' in df_macro.columns:
                 df_micro['Date'] = pd.to_datetime(df_micro['Date'], format='mixed', errors='coerce').dt.normalize()
@@ -120,19 +123,21 @@ def load_data():
                 'WR R0': d.get('r0_wr', 0.0),
                 'TT R0': d.get('r0_trades', 0),
                 'Bucket R0': d.get('bucket_r0', 'C'),
+                'Diag R0': d.get('reason_r0', ''), # [TAREA 3.2] Diag Aislado
                 
                 'WR R1': d.get('r1_wr', 0.0),
                 'TT R1': d.get('r1_trades', 0),
                 'Bucket R1': d.get('bucket_r1', 'C'),
+                'Diag R1': d.get('reason_r1', ''), # [TAREA 3.2] Diag Aislado
                 
                 'WR R2': d.get('r2_wr', 0.0),
                 'TT R2': d.get('r2_trades', 0),
-                'Bucket R2': d.get('bucket_r2', 'C')
+                'Bucket R2': d.get('bucket_r2', 'C'),
+                'Diag R2': d.get('reason_r2', '')  # [TAREA 3.2] Diag Aislado
             })
     
     return df_master, pd.DataFrame(config_rows), risk_data, system_forecast, macro_dict
 
-# Desempaquetamos los 5 valores
 df_master, df_config, risk_profile, system_forecast, macro_data_dict = load_data()
 
 # =========================================================================
@@ -306,12 +311,25 @@ if nav_category == "HOME":
         cols = st.columns(len(system_forecast))
         for i, (mod, data) in enumerate(system_forecast.items()):
             pred_r = data.get("predicted_regime_tomorrow", "?")
-            prob = data.get("probability", 0)
+            ftype = data.get("forecast_type", "SINGLE")
+            p1 = data.get("probability", 0)
+            
+            # [TAREA 3.2] Integración Visual All-Weather
+            if ftype == "SINGLE":
+                cls_color = "fc-highlight"
+                r_txt = f"R{pred_r}"
+            elif ftype == "DUAL_AW":
+                cls_color = "fc-dual"
+                r_txt = f"{pred_r} (DUAL)"
+            else:
+                cls_color = "fc-global"
+                r_txt = f"{pred_r} (GLOBAL)"
+
             with cols[i]:
                 st.markdown(f"""
                 <div class="forecast-card">
                     <div class="fc-title">[ {mod} ]</div>
-                    <div class="fc-data">TARGET: <span class="fc-highlight">R{pred_r}</span> | PROB: {prob}%</div>
+                    <div class="fc-data">TARGET: <span class="{cls_color}">{r_txt}</span> | P1: {p1}%</div>
                 </div>
                 """, unsafe_allow_html=True)
         st.write("")
@@ -430,6 +448,10 @@ elif nav_category == "Trade Log":
     if not df_master.empty:
         df_log = df_master[df_master['Engine'] != 'NO_TRADE'].copy()
         
+        # [TAREA 3.1] Deduplicación Visual para el Trade Log (Elimina choques EST vs CST)
+        df_log['Temp_Date'] = df_log['Timestamp'].dt.date
+        df_log = df_log.drop_duplicates(subset=['Temp_Date', 'Engine', 'Action', 'Is_Win'], keep='last')
+        
         if time_filter == "Last Session":
             if not df_log.empty:
                 valid_ts = df_log['Timestamp'].dropna()
@@ -492,89 +514,144 @@ elif nav_category == "Trade Log":
     else: st.error("Database is empty.")
 
 # =========================================================================
-# NUEVA PESTAÑA: MACRO REGIME INTELLIGENCE
+# [ TAREA 3.3 ] PESTAÑA: MACRO REGIME INTELLIGENCE (REINGENIERÍA)
 # =========================================================================
 elif nav_category == "Macro Regime":
     st.title("Macro Regime Intelligence")
-    st.markdown("Deep dive into Market Context, Sensor Anatomy, and Markov Probabilities.")
+    st.markdown("Deep dive into Market Dominance, ML Historical Accuracy, and Markov Probabilities.")
 
     selected_module = st.selectbox("Select Target Module:", ["MCL", "MGC", "MES", "MNQ_DAY", "MNQ_NIGHT"])
-
     df_macro = macro_data_dict.get(selected_module, pd.DataFrame())
 
     if not df_macro.empty:
-        # Aseguramos el formato de fecha para el timeline
-        df_macro['Date'] = pd.to_datetime(df_macro['Date'], format='mixed', errors='coerce').dt.date
-        df_macro = df_macro.sort_values('Date')
-
-        tab_anatomy, tab_timeline, tab_markov = st.tabs(["🧬 Regime Anatomy", "📅 Historical Timeline", "🔮 Markov Engine"])
-
-        with tab_anatomy:
-            st.markdown("### The DNA of Market Regimes")
-            st.markdown("Average sensor readings clustered by AI (K-Means).")
+        df_macro['Date_Obj'] = pd.to_datetime(df_macro['Date'], format='mixed', errors='coerce').dt.date
+        df_macro = df_macro.sort_values('Date_Obj').reset_index(drop=True)
+        
+        # -------------------------------------------------------------
+        # CÁLCULO DE LA PRECISIÓN HISTÓRICA ON-THE-FLY
+        # -------------------------------------------------------------
+        if 'Regime_Label' in df_macro.columns:
+            regimes_seq = df_macro['Regime_Label'].dropna().astype(int).tolist()
+            transitions = np.zeros((3,3))
+            for i in range(len(regimes_seq)-1):
+                transitions[regimes_seq[i]][regimes_seq[i+1]] += 1
             
-            # Filtramos solo las columnas numéricas que son sensores macro
-            sensor_cols = [c for c in df_macro.columns if c.startswith('Macro_')]
+            trans_probs = np.zeros((3,3))
+            for i in range(3):
+                row_sum = np.sum(transitions[i])
+                if row_sum > 0: trans_probs[i] = transitions[i] / row_sum
+                else: trans_probs[i] = [1/3, 1/3, 1/3]
             
-            if sensor_cols:
-                # Calculamos el promedio de los sensores para cada régimen y redondeamos para lectura limpia
-                anatomy_df = df_macro.groupby('Regime_Label')[sensor_cols].mean().reset_index()
-                anatomy_df['Regime_Label'] = anatomy_df['Regime_Label'].apply(lambda x: f"R{int(x)}")
-                anatomy_df = anatomy_df.round(2)
+            forecasts = ["N/A"]
+            matches = ["N/A"]
+            
+            for i in range(1, len(regimes_seq)):
+                prev_r = regimes_seq[i-1]
+                act_r = regimes_seq[i]
+                pred_r = int(np.argmax(trans_probs[prev_r]))
+                forecasts.append(f"R{pred_r}")
+                matches.append("✅" if pred_r == act_r else "❌")
                 
-                # Renderizamos en un div con clase para ajustar el ancho
-                html_anatomy = render_html_table(anatomy_df)
-                st.markdown(f'<div class="macro-table">{html_anatomy}</div>', unsafe_allow_html=True)
-            else:
-                st.warning("No macro sensors found in the dataset.")
+            df_macro['Actual Regime'] = df_macro['Regime_Label'].apply(lambda x: f"R{int(x)}")
+            df_macro['ML Forecasted Regime'] = forecasts
+            df_macro['Match?'] = matches
 
-        with tab_timeline:
-            st.markdown("### Recent Climatology (Last 15 Sessions)")
-            # Tomamos los últimos 15 días
-            recent_df = df_macro.tail(15).sort_values('Date', ascending=False).copy()
-            recent_df['Regime_Label'] = recent_df['Regime_Label'].apply(lambda x: f"R{int(x)}")
-            recent_df = recent_df.round(2)
+        # -------------------------------------------------------------
+        # PESTAÑAS (TABS)
+        # -------------------------------------------------------------
+        tab_dom, tab_hist, tab_markov = st.tabs(["👑 Regime Dominance", "📅 Historical Accuracy", "🔮 Markov Engine"])
+
+        with tab_dom:
+            st.markdown("### The Big Picture (All-Time Dominance)")
             
-            # Seleccionamos las columnas más relevantes para mostrar en el timeline
-            priority_sensors = ['Macro_VIX', 'Macro_Ses_RVol', 'Macro_Gap', 'Macro_Rng_Ratio']
-            display_cols = ['Date', 'Regime_Label'] + [c for c in sensor_cols if c in priority_sensors]
+            total_sessions = len(df_macro)
+            counts = df_macro['Regime_Label'].value_counts().to_dict()
+            c0 = counts.get(0, 0)
+            c1 = counts.get(1, 0)
+            c2 = counts.get(2, 0)
             
-            st.markdown(render_html_table(recent_df[display_cols], bucket_cols=[]), unsafe_allow_html=True)
+            st.metric("Total Historical Sessions Evaluated", total_sessions)
+            st.markdown("---")
+            
+            if total_sessions > 0:
+                c_a, c_b, c_c = st.columns(3)
+                c_a.metric("Regime 0 (R0)", f"{(c0/total_sessions*100):.1f}%", f"{c0} Sessions")
+                c_b.metric("Regime 1 (R1)", f"{(c1/total_sessions*100):.1f}%", f"{c1} Sessions")
+                c_c.metric("Regime 2 (R2)", f"{(c2/total_sessions*100):.1f}%", f"{c2} Sessions")
+
+        with tab_hist:
+            st.markdown("### Historical Accuracy (Forecast vs Reality)")
+            time_filter = st.radio("Timeframe (Macro)", ["Last Session", "7 Days", "15 Days", "1 Month", "3 Months", "6 Months", "All-Time"], horizontal=True)
+            
+            df_hist = df_macro.copy()
+            if time_filter == "Last Session":
+                last_date = df_hist['Date_Obj'].max()
+                df_hist = df_hist[df_hist['Date_Obj'] == last_date]
+            elif time_filter != "All-Time":
+                days_map = {"7 Days": 7, "15 Days": 15, "1 Month": 30, "3 Months": 90, "6 Months": 180}
+                cutoff_date = datetime.now().date() - timedelta(days=days_map[time_filter])
+                df_hist = df_hist[df_hist['Date_Obj'] >= cutoff_date]
+                
+            df_hist = df_hist.sort_values('Date_Obj', ascending=False)
+            
+            if not df_hist.empty:
+                valid_preds = df_hist[df_hist['Match?'] != "N/A"]
+                if not valid_preds.empty:
+                    accuracy = (len(valid_preds[valid_preds['Match?'] == "✅"]) / len(valid_preds)) * 100
+                    st.success(f"**Markov Accuracy in selected period:** {accuracy:.1f}%")
+                
+                cols_hist = ['Date', 'Actual Regime', 'ML Forecasted Regime', 'Match?']
+                st.markdown(render_html_table(df_hist[cols_hist]), unsafe_allow_html=True)
+            else:
+                st.warning("No macro records found for this timeframe.")
 
         with tab_markov:
-            st.markdown("### Markov Chain Diagnostics")
+            st.markdown("### Next Session Predictive Matrix")
             f_data = system_forecast.get(selected_module, {})
             
             if f_data:
                 today_r = f_data.get('today_regime', '?')
                 pred_r = f_data.get('predicted_regime_tomorrow', '?')
-                prob = f_data.get('probability', 0)
-                sess_counts = f_data.get('historical_sessions', {})
+                ftype = f_data.get('forecast_type', 'SINGLE')
+                p1 = f_data.get('probability', 0)
+                
+                # [TAREA 3.2] Integración Visual All-Weather en el HUB
+                if ftype == "SINGLE":
+                    hud_style = "module-hud"
+                    r_txt = f"<span style='color: #00C853; font-weight: 700;'>R{pred_r}</span>"
+                    status_txt = "Standard Lineup"
+                elif ftype == "DUAL_AW":
+                    hud_style = "module-hud module-hud-dual"
+                    r_txt = f"<span style='color: #CCA700; font-weight: 700;'>{pred_r} (DUAL)</span>"
+                    status_txt = "Defensive Shield Active"
+                else:
+                    hud_style = "module-hud module-hud-global"
+                    r_txt = f"<span style='color: #2196F3; font-weight: 700;'>{pred_r} (GLOBAL)</span>"
+                    status_txt = "Full Shield Active"
                 
                 st.markdown(f"""
-                <div class="module-hud">
-                    [ MARKET INERTIA ] &nbsp;&nbsp;TODAY: <b>R{today_r}</b> &nbsp;➔&nbsp; FORECAST: <span style='color: #00C853; font-weight: 700;'>R{pred_r}</span> ({prob}%)
+                <div class="{hud_style}">
+                    [ MARKET INERTIA ] &nbsp;&nbsp;TODAY: <b>R{today_r}</b> &nbsp;➔&nbsp; FORECAST: {r_txt} ({p1}%)
+                    <br><span style="font-size: 0.9rem; font-weight: 400; color:#A0A0A0;">{status_txt}</span>
                 </div>
                 """, unsafe_allow_html=True)
                 
-                st.markdown("#### Historical Distribution")
+                st.markdown("#### Top Probabilities for Tomorrow")
+                p1_v, p2_v, p3_v = f_data.get('p1', 0), f_data.get('p2', 0), f_data.get('p3', 0)
+                t1_v, t2_v, t3_v = f_data.get('top1', 0), f_data.get('top2', 0), f_data.get('top3', 0)
                 
-                # Los JSON guardan las llaves de enteros como strings ("0", "1", "2")
-                count_R0 = sess_counts.get("0", sess_counts.get(0, 0))
-                count_R1 = sess_counts.get("1", sess_counts.get(1, 0))
-                count_R2 = sess_counts.get("2", sess_counts.get(2, 0))
-                total_sess = count_R0 + count_R1 + count_R2
-                
-                if total_sess > 0:
-                    c1, c2, c3 = st.columns(3)
-                    c1.metric("R0 Dominance", f"{(count_R0/total_sess*100):.1f}%", f"{count_R0} sessions")
-                    c2.metric("R1 Dominance", f"{(count_R1/total_sess*100):.1f}%", f"{count_R1} sessions")
-                    c3.metric("R2 Dominance", f"{(count_R2/total_sess*100):.1f}%", f"{count_R2} sessions")
+                c_p1, c_p2, c_p3 = st.columns(3)
+                c_p1.metric(f"Rank 1 (R{t1_v})", f"{p1_v}%")
+                c_p2.metric(f"Rank 2 (R{t2_v})", f"{p2_v}%")
+                c_p3.metric(f"Rank 3 (R{t3_v})", f"{p3_v}%")
             else:
                 st.warning("No Markov forecast data available for this module.")
     else:
         st.error("No Macro Data found for this module. Ensure the ML Auditor has run successfully.")
 
+# =========================================================================
+# MODULES DASHBOARD
+# =========================================================================
 elif nav_category == "Modules":
     st.title("Modules Dashboard")
     selected_module = st.selectbox("Select Target Module:", ["MCL", "MGC", "MES", "MNQ_DAY", "MNQ_NIGHT"])
@@ -584,10 +661,22 @@ elif nav_category == "Modules":
     pred_r = "?"
     if f_data:
         pred_r = f_data.get('predicted_regime_tomorrow', '?')
-        prob = f_data.get('probability', 0)
+        ftype = f_data.get('forecast_type', 'SINGLE')
+        p1 = f_data.get('probability', 0)
+        
+        if ftype == "SINGLE":
+            hud_style = "module-hud"
+            r_txt = f"<span style='color: #00C853; font-weight: 700;'>R{pred_r}</span>"
+        elif ftype == "DUAL_AW":
+            hud_style = "module-hud module-hud-dual"
+            r_txt = f"<span style='color: #CCA700; font-weight: 700;'>{pred_r} (DUAL)</span>"
+        else:
+            hud_style = "module-hud module-hud-global"
+            r_txt = f"<span style='color: #2196F3; font-weight: 700;'>{pred_r} (GLOBAL)</span>"
+
         st.markdown(f"""
-        <div class="module-hud">
-            [ NEXT SESSION FORECAST ] &nbsp;&nbsp;🎯 TARGET: <span style='color: #00C853; font-weight: 700;'>R{pred_r}</span> &nbsp;&nbsp;|&nbsp;&nbsp; PROB: {prob}%
+        <div class="{hud_style}">
+            [ NEXT SESSION FORECAST ] &nbsp;&nbsp;🎯 TARGET: {r_txt} &nbsp;&nbsp;|&nbsp;&nbsp; PROB: {p1}%
         </div>
         """, unsafe_allow_html=True)
         
@@ -612,10 +701,10 @@ elif nav_category == "Modules":
             df_t2 = df_t2.sort_values(by=['Bucket_Rank', 'WR Target'], ascending=[True, False])
             
             # Dinámicamente asignar el "Last 5 Target" basado en el régimen predicho
-            if str(pred_r) in ["0", "1", "2"]:
+            if str(pred_r) in ["0", "1", "2"] and f_data.get('forecast_type') == "SINGLE":
                 df_t2['Last 5 Target'] = df_t2[f'Last 5 R{int(pred_r)}']
             else:
-                df_t2['Last 5 Target'] = "N/A"
+                df_t2['Last 5 Target'] = "ALL-WEATHER (Mixed)"
 
             cols_t2 = ['Engine', 'Bucket', 'TT Target', 'WR Target', 'Last 5 Target', 'Diag']
             st.markdown(render_html_table(df_t2[cols_t2], bucket_cols=['Bucket']), unsafe_allow_html=True)
@@ -625,9 +714,13 @@ elif nav_category == "Modules":
         t_r0, t_r1, t_r2 = st.tabs(["[ Regime 0 ]", "[ Regime 1 ]", "[ Regime 2 ]"])
         
         def render_sub_bucket_table(df_regime, regime_id, bucket_label, title):
-            df_sub = df_regime[df_regime[f'Bucket R{regime_id}'] == bucket_label]
+            df_sub = df_regime[df_regime[f'Bucket R{regime_id}'] == bucket_label].copy()
             if not df_sub.empty:
                 st.markdown(f"#### {title}")
+                
+                # [TAREA 3.2] Asignamos el DIAG aislado específico del régimen
+                df_sub['Diag'] = df_sub[f'Diag R{regime_id}']
+                
                 cols_sub = ['Engine', f'Bucket R{regime_id}', f'TT R{regime_id}', f'WR R{regime_id}', f'Last 5 R{regime_id}', 'Diag']
                 df_sub = df_sub[cols_sub].sort_values(by=f'WR R{regime_id}', ascending=False)
                 st.markdown(render_html_table(df_sub, bucket_cols=[f'Bucket R{regime_id}']), unsafe_allow_html=True)
