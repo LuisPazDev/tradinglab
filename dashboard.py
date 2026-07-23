@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
 import json
@@ -112,7 +112,6 @@ def load_data():
                 'Engine': d.get('engine_name', k), 
                 'Bucket': d.get('bucket', 'C'),
                 
-                # INTEGRACIÓN V3.1 QUANT (Risk Scalar, Bayes, EV)
                 'Risk Scalar': d.get('risk_scalar', 0.0),
                 'EV ($)': d.get('expected_value_usd', 0.0),
                 'Bayes WR': d.get('wr_bayes_weighted', 0.0),
@@ -165,7 +164,6 @@ def render_html_table(df, bucket_cols=None):
     if df.empty: return ""
     if bucket_cols is None: bucket_cols = []
     
-    # Renderizador Multi-Formato V3.1
     format_dict = {}
     for col in df.columns:
         if 'WR' in col: format_dict[col] = "{:.1f}%"
@@ -444,6 +442,9 @@ elif nav_category == "Risk Management":
                     if res_py.status_code == 200: 
                         st.success(f"✅ Shield Active! NinjaTrader will execute orders on **{selected_acc_name}**.")
                         st.session_state.active_account = selected_acc_name
+                        # ESCUDO ANTI-GLITCH VISUAL: Purga la caché y fuerza recarga inmediata
+                        st.cache_data.clear()
+                        st.rerun()
                     else: st.error(f"❌ Gateway rejected configuration (Error {res_py.status_code}).")
                 except Exception as e: st.error(f"❌ Connection failed. Error: {e}")
 
@@ -454,7 +455,6 @@ elif nav_category == "Trade Log":
     if not df_master.empty:
         df_log = df_master[df_master['Engine'] != 'NO_TRADE'].copy()
         
-        # Deduplicación Visual para el Trade Log (Elimina choques EST vs CST)
         df_log['Temp_Date'] = df_log['Timestamp'].dt.date
         df_log = df_log.drop_duplicates(subset=['Temp_Date', 'Engine', 'Action', 'Is_Win'], keep='last')
         
@@ -533,7 +533,6 @@ elif nav_category == "Macro Regime":
         df_macro['Date_Obj'] = pd.to_datetime(df_macro['Date'], format='mixed', errors='coerce').dt.date
         df_macro = df_macro.sort_values('Date_Obj').reset_index(drop=True)
         
-        # CÁLCULO DE LA PRECISIÓN HISTÓRICA ON-THE-FLY
         if 'Regime_Label' in df_macro.columns:
             regimes_seq = df_macro['Regime_Label'].dropna().astype(int).tolist()
             transitions = np.zeros((3,3))
@@ -695,12 +694,11 @@ elif nav_category == "Modules":
             df_t2 = df_c_mod.copy()
             df_t2['Bucket_Rank'] = df_t2['Bucket'].map({'A': 1, 'B': 2, 'C': 3})
             
-            # Dinámica de V3.1: Incluye Risk Scalar y EV Bayesiano
             if ftype == "SINGLE":
                 df_t2 = df_t2.sort_values(by=['Bucket_Rank', 'Risk Scalar', f'WR R{t1}'], ascending=[True, False, False])
                 df_t2['Last 5 Target'] = df_t2[f'Last 5 R{t1}']
                 cols_t2 = ['Engine', 'Bucket', 'Risk Scalar', 'EV ($)', f'TT R{t1}', f'WR R{t1}', 'Last 5 Target', 'Diag']
-            else: # DUAL_AW
+            else: 
                 df_t2 = df_t2.sort_values(by=['Bucket_Rank', 'Risk Scalar', f'WR R{t1}'], ascending=[True, False, False])
                 cols_t2 = ['Engine', 'Bucket', 'Risk Scalar', 'EV ($)', f'TT R{t1}', f'WR R{t1}', f'TT R{t2}', f'WR R{t2}', 'Diag']
 
