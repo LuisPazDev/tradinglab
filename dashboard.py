@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
 import json
@@ -30,13 +30,11 @@ st.markdown("""
     .fc-data { font-size: 1.1rem; color: #E0E0E0; font-weight: 400; }
     .fc-highlight { color: #00C853; font-weight: 700; }
     .fc-dual { color: #CCA700; font-weight: 700; }
-    .fc-global { color: #2196F3; font-weight: 700; }
     
     .module-hud {
         background: linear-gradient(90deg, #1A1C23, #15161B); border-left: 4px solid #00C853; padding: 15px; border-radius: 6px; margin-bottom: 20px; color: #E0E0E0; font-size: 1.2rem; font-weight: 500;
     }
     .module-hud-dual { border-left-color: #CCA700; }
-    .module-hud-global { border-left-color: #2196F3; }
 
     .table-container { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 10px; margin-bottom: 20px; border-radius: 8px; }
     .custom-table { border-collapse: collapse; width: 100%; min-width: 800px; margin: 0 auto; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 0.85rem; color: #E0E0E0; background-color: #1A1C23; border: 1px solid #2D303E; }
@@ -113,27 +111,24 @@ def load_data():
                 'Module': d.get('module', 'N/A'), 
                 'Engine': d.get('engine_name', k), 
                 'Bucket': d.get('bucket', 'C'),
-                'Target Regime': f"R{d.get('predicted_regime_evaluated', '?')}",
-                'WR Target': d.get('wr_predicted_regime', 0.0),
-                'WR Global': d.get('wr_global', 0.0),
-                'TT Target': d.get('total_trades_in_regime', 0),
                 'TT Global': d.get('total_trades_global', 0),
+                'WR Global': d.get('wr_global', 0.0),
                 'Diag': d.get('reason', ''),
                 
                 'WR R0': d.get('r0_wr', 0.0),
                 'TT R0': d.get('r0_trades', 0),
                 'Bucket R0': d.get('bucket_r0', 'C'),
-                'Diag R0': d.get('reason_r0', ''), # [TAREA 3.2] Diag Aislado
+                'Diag R0': d.get('reason_r0', ''),
                 
                 'WR R1': d.get('r1_wr', 0.0),
                 'TT R1': d.get('r1_trades', 0),
                 'Bucket R1': d.get('bucket_r1', 'C'),
-                'Diag R1': d.get('reason_r1', ''), # [TAREA 3.2] Diag Aislado
+                'Diag R1': d.get('reason_r1', ''),
                 
                 'WR R2': d.get('r2_wr', 0.0),
                 'TT R2': d.get('r2_trades', 0),
                 'Bucket R2': d.get('bucket_r2', 'C'),
-                'Diag R2': d.get('reason_r2', '')  # [TAREA 3.2] Diag Aislado
+                'Diag R2': d.get('reason_r2', '') 
             })
     
     return df_master, pd.DataFrame(config_rows), risk_data, system_forecast, macro_dict
@@ -307,23 +302,20 @@ if nav_category == "HOME":
     else: st.error(f"Execution Locked | Status: {status}")
     
     if system_forecast:
-        st.markdown("### 🔮 Markov Predictive Forecast")
+        st.markdown("### 🔮 Markov Predictive Forecast (V2.4)")
         cols = st.columns(len(system_forecast))
         for i, (mod, data) in enumerate(system_forecast.items()):
-            pred_r = data.get("predicted_regime_tomorrow", "?")
             ftype = data.get("forecast_type", "SINGLE")
             p1 = data.get("probability", 0)
+            t1 = data.get("top1", "?")
+            t2 = data.get("top2", "?")
             
-            # [TAREA 3.2] Integración Visual All-Weather
             if ftype == "SINGLE":
                 cls_color = "fc-highlight"
-                r_txt = f"R{pred_r}"
-            elif ftype == "DUAL_AW":
+                r_txt = f"R{t1}"
+            else: # DUAL_AW
                 cls_color = "fc-dual"
-                r_txt = f"{pred_r} (DUAL)"
-            else:
-                cls_color = "fc-global"
-                r_txt = f"{pred_r} (GLOBAL)"
+                r_txt = f"R{t1} & R{t2} (DUAL)"
 
             with cols[i]:
                 st.markdown(f"""
@@ -448,7 +440,7 @@ elif nav_category == "Trade Log":
     if not df_master.empty:
         df_log = df_master[df_master['Engine'] != 'NO_TRADE'].copy()
         
-        # [TAREA 3.1] Deduplicación Visual para el Trade Log (Elimina choques EST vs CST)
+        # Deduplicación Visual para el Trade Log (Elimina choques EST vs CST)
         df_log['Temp_Date'] = df_log['Timestamp'].dt.date
         df_log = df_log.drop_duplicates(subset=['Temp_Date', 'Engine', 'Action', 'Is_Win'], keep='last')
         
@@ -514,7 +506,7 @@ elif nav_category == "Trade Log":
     else: st.error("Database is empty.")
 
 # =========================================================================
-# [ TAREA 3.3 ] PESTAÑA: MACRO REGIME INTELLIGENCE (REINGENIERÍA)
+# PESTAÑA: MACRO REGIME INTELLIGENCE
 # =========================================================================
 elif nav_category == "Macro Regime":
     st.title("Macro Regime Intelligence")
@@ -527,9 +519,7 @@ elif nav_category == "Macro Regime":
         df_macro['Date_Obj'] = pd.to_datetime(df_macro['Date'], format='mixed', errors='coerce').dt.date
         df_macro = df_macro.sort_values('Date_Obj').reset_index(drop=True)
         
-        # -------------------------------------------------------------
         # CÁLCULO DE LA PRECISIÓN HISTÓRICA ON-THE-FLY
-        # -------------------------------------------------------------
         if 'Regime_Label' in df_macro.columns:
             regimes_seq = df_macro['Regime_Label'].dropna().astype(int).tolist()
             transitions = np.zeros((3,3))
@@ -556,9 +546,6 @@ elif nav_category == "Macro Regime":
             df_macro['ML Forecasted Regime'] = forecasts
             df_macro['Match?'] = matches
 
-        # -------------------------------------------------------------
-        # PESTAÑAS (TABS)
-        # -------------------------------------------------------------
         tab_dom, tab_hist, tab_markov = st.tabs(["👑 Regime Dominance", "📅 Historical Accuracy", "🔮 Markov Engine"])
 
         with tab_dom:
@@ -611,27 +598,24 @@ elif nav_category == "Macro Regime":
             
             if f_data:
                 today_r = f_data.get('today_regime', '?')
-                pred_r = f_data.get('predicted_regime_tomorrow', '?')
                 ftype = f_data.get('forecast_type', 'SINGLE')
                 p1 = f_data.get('probability', 0)
+                t1 = f_data.get('top1', '?')
+                t2 = f_data.get('top2', '?')
                 
-                # [TAREA 3.2] Integración Visual All-Weather en el HUB
+                # Integración Visual All-Weather adaptada a V2.4
                 if ftype == "SINGLE":
                     hud_style = "module-hud"
-                    r_txt = f"<span style='color: #00C853; font-weight: 700;'>R{pred_r}</span>"
-                    status_txt = "Standard Lineup"
-                elif ftype == "DUAL_AW":
-                    hud_style = "module-hud module-hud-dual"
-                    r_txt = f"<span style='color: #CCA700; font-weight: 700;'>{pred_r} (DUAL)</span>"
-                    status_txt = "Defensive Shield Active"
+                    r_txt = f"<span style='color: #00C853; font-weight: 700;'>R{t1}</span>"
+                    status_txt = "Standard Lineup (Kelly Sweet Spot &ge; 67%)"
                 else:
-                    hud_style = "module-hud module-hud-global"
-                    r_txt = f"<span style='color: #2196F3; font-weight: 700;'>{pred_r} (GLOBAL)</span>"
-                    status_txt = "Full Shield Active"
+                    hud_style = "module-hud module-hud-dual"
+                    r_txt = f"<span style='color: #CCA700; font-weight: 700;'>R{t1} & R{t2} (DUAL)</span>"
+                    status_txt = "Defensive Shield Active (Incertidumbre < 67%)"
                 
                 st.markdown(f"""
                 <div class="{hud_style}">
-                    [ MARKET INERTIA ] &nbsp;&nbsp;TODAY: <b>R{today_r}</b> &nbsp;➔&nbsp; FORECAST: {r_txt} ({p1}%)
+                    [ MARKET INERTIA ] &nbsp;&nbsp;TODAY: <b>R{today_r}</b> &nbsp;➔&nbsp; FORECAST: {r_txt}
                     <br><span style="font-size: 0.9rem; font-weight: 400; color:#A0A0A0;">{status_txt}</span>
                 </div>
                 """, unsafe_allow_html=True)
@@ -658,25 +642,22 @@ elif nav_category == "Modules":
     df_c_mod = df_config[df_config['Module'] == selected_module].copy()
     
     f_data = system_forecast.get(selected_module, {})
-    pred_r = "?"
     if f_data:
-        pred_r = f_data.get('predicted_regime_tomorrow', '?')
         ftype = f_data.get('forecast_type', 'SINGLE')
         p1 = f_data.get('probability', 0)
+        t1 = f_data.get('top1', 0)
+        t2 = f_data.get('top2', 0)
         
         if ftype == "SINGLE":
             hud_style = "module-hud"
-            r_txt = f"<span style='color: #00C853; font-weight: 700;'>R{pred_r}</span>"
-        elif ftype == "DUAL_AW":
-            hud_style = "module-hud module-hud-dual"
-            r_txt = f"<span style='color: #CCA700; font-weight: 700;'>{pred_r} (DUAL)</span>"
+            r_txt = f"<span style='color: #00C853; font-weight: 700;'>R{t1}</span>"
         else:
-            hud_style = "module-hud module-hud-global"
-            r_txt = f"<span style='color: #2196F3; font-weight: 700;'>{pred_r} (GLOBAL)</span>"
+            hud_style = "module-hud module-hud-dual"
+            r_txt = f"<span style='color: #CCA700; font-weight: 700;'>R{t1} & R{t2} (DUAL)</span>"
 
         st.markdown(f"""
         <div class="{hud_style}">
-            [ NEXT SESSION FORECAST ] &nbsp;&nbsp;🎯 TARGET: {r_txt} &nbsp;&nbsp;|&nbsp;&nbsp; PROB: {p1}%
+            [ NEXT SESSION FORECAST ] &nbsp;&nbsp;🎯 TARGET: {r_txt} &nbsp;&nbsp;|&nbsp;&nbsp; P1: {p1}%
         </div>
         """, unsafe_allow_html=True)
         
@@ -694,19 +675,20 @@ elif nav_category == "Modules":
             st.markdown(render_html_table(df_t1[cols_t1], bucket_cols=['Bucket R0', 'Bucket R1', 'Bucket R2']), unsafe_allow_html=True)
     
     with tab2:
-        st.markdown("### Execution Plan (Target Regime Only)")
-        if not df_c_mod.empty:
+        st.markdown("### Execution Plan (Target Regime Evaluated)")
+        if not df_c_mod.empty and f_data:
             df_t2 = df_c_mod.copy()
             df_t2['Bucket_Rank'] = df_t2['Bucket'].map({'A': 1, 'B': 2, 'C': 3})
-            df_t2 = df_t2.sort_values(by=['Bucket_Rank', 'WR Target'], ascending=[True, False])
             
-            # Dinámicamente asignar el "Last 5 Target" basado en el régimen predicho
-            if str(pred_r) in ["0", "1", "2"] and f_data.get('forecast_type') == "SINGLE":
-                df_t2['Last 5 Target'] = df_t2[f'Last 5 R{int(pred_r)}']
-            else:
-                df_t2['Last 5 Target'] = "ALL-WEATHER (Mixed)"
+            # Dinámica de Columnas Mutantes según el estado del Escudo
+            if ftype == "SINGLE":
+                df_t2 = df_t2.sort_values(by=['Bucket_Rank', f'WR R{t1}'], ascending=[True, False])
+                df_t2['Last 5 Target'] = df_t2[f'Last 5 R{t1}']
+                cols_t2 = ['Engine', 'Bucket', f'TT R{t1}', f'WR R{t1}', 'Last 5 Target', 'Diag']
+            else: # DUAL_AW
+                df_t2 = df_t2.sort_values(by=['Bucket_Rank', f'WR R{t1}'], ascending=[True, False])
+                cols_t2 = ['Engine', 'Bucket', f'TT R{t1}', f'WR R{t1}', f'TT R{t2}', f'WR R{t2}', 'Diag']
 
-            cols_t2 = ['Engine', 'Bucket', 'TT Target', 'WR Target', 'Last 5 Target', 'Diag']
             st.markdown(render_html_table(df_t2[cols_t2], bucket_cols=['Bucket']), unsafe_allow_html=True)
             
     with tab3:
@@ -717,10 +699,7 @@ elif nav_category == "Modules":
             df_sub = df_regime[df_regime[f'Bucket R{regime_id}'] == bucket_label].copy()
             if not df_sub.empty:
                 st.markdown(f"#### {title}")
-                
-                # [TAREA 3.2] Asignamos el DIAG aislado específico del régimen
                 df_sub['Diag'] = df_sub[f'Diag R{regime_id}']
-                
                 cols_sub = ['Engine', f'Bucket R{regime_id}', f'TT R{regime_id}', f'WR R{regime_id}', f'Last 5 R{regime_id}', 'Diag']
                 df_sub = df_sub[cols_sub].sort_values(by=f'WR R{regime_id}', ascending=False)
                 st.markdown(render_html_table(df_sub, bucket_cols=[f'Bucket R{regime_id}']), unsafe_allow_html=True)
