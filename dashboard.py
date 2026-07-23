@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 import json
 import os
+import time
 import requests
 from datetime import datetime, timedelta
 import numpy as np
@@ -61,19 +62,32 @@ def get_file_path(filename):
     return filename
 
 # =========================================================================
-# LECTURA DEL PERFIL DE RIESGO EN TIEMPO REAL
+# FILE SHIELDS (ANTI-COLLISION SYSTEM PARA STREAMLIT)
 # =========================================================================
-def load_risk_profile():
-    try:
-        with open(get_file_path("risk_profile.json"), "r", encoding="utf-8-sig") as f: 
-            return json.load(f)
-    except:
-        return {}
+def safe_json_read(filepath, retries=5, delay=0.05):
+    for _ in range(retries):
+        try:
+            if not os.path.exists(filepath): return {}
+            with open(filepath, "r", encoding="utf-8-sig") as f:
+                return json.load(f)
+        except (IOError, PermissionError, json.JSONDecodeError):
+            time.sleep(delay)
+    return {}
 
-risk_profile = load_risk_profile()
+def safe_json_write(filepath, data, retries=5, delay=0.05):
+    for _ in range(retries):
+        try:
+            with open(filepath, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=4)
+            return True
+        except (IOError, PermissionError):
+            time.sleep(delay)
+    return False
+
+risk_profile = safe_json_read(get_file_path("risk_profile.json"))
 
 # =========================================================================
-# DATA LOADING & PRE-PROCESSING (DATOS PESADOS CACHEADOS)
+# DATA LOADING & PRE-PROCESSING 
 # =========================================================================
 @st.cache_data(ttl=30)
 def load_data():
@@ -106,10 +120,7 @@ def load_data():
     else:
         df_master = pd.DataFrame()
 
-    config = {}
-    if os.path.exists(get_file_path("engines_config.json")):
-        with open(get_file_path("engines_config.json"), "r") as f: config = json.load(f)
-
+    config = safe_json_read(get_file_path("engines_config.json"))
     system_forecast = config.pop("_SYSTEM_FORECAST_", {})
 
     config_rows = []
@@ -435,12 +446,8 @@ elif nav_category == "Risk Management":
                     "base_risk_usd": base_risk, "max_contracts": max_contracts
                 }
                 
-                # [ BYPASS DIRECTO AL DISCO ] - Evitamos el Gateway Python defectuoso
-                try:
-                    with open(get_file_path("risk_profile.json"), "w", encoding="utf-8") as f:
-                        json.dump(new_risk_data, f, indent=4)
-                    
-                    # Intentamos sincronizar con NT8 y Gateway (pero el archivo ya está a salvo)
+                # [ ESCUDO ANTI-COLISIÓN ] - Uso de safe_json_write para evitar WinError 32
+                if safe_json_write(get_file_path("risk_profile.json"), new_risk_data):
                     payload_gateway = {"passphrase": WEBHOOK_PASSPHRASE, "event": "UPDATE_RISK", "target_account": selected_acc_name, "risk_data": new_risk_data}
                     payload_nt8 = {"passphrase": WEBHOOK_PASSPHRASE, "command": "SYNC_BALANCE", "target_account": selected_acc_name}
                     
@@ -451,10 +458,10 @@ elif nav_category == "Risk Management":
 
                     st.success(f"✅ Shield Active! NinjaTrader will execute orders on **{selected_acc_name}**.")
                     st.session_state.active_account = selected_acc_name
-                    st.cache_data.clear() # Limpia la memoria caché visual antigua
-                    st.rerun() # Fuerza a la Web App a leer el archivo nuevo inmediatamente
-                except Exception as e:
-                    st.error(f"❌ Error crítico del sistema de archivos VPS: {e}")
+                    st.cache_data.clear() 
+                    st.rerun() 
+                else:
+                    st.error("❌ Error crítico: No se pudo escribir el archivo (Disk Lock). Intenta de nuevo en 1 segundo.")
 
 elif nav_category == "Trade Log":
     st.title("Trade Log")
