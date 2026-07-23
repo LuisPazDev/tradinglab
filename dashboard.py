@@ -61,7 +61,19 @@ def get_file_path(filename):
     return filename
 
 # =========================================================================
-# DATA LOADING & PRE-PROCESSING 
+# BYPASS DE CACHÉ: Lectura del Perfil de Riesgo en Tiempo Real
+# =========================================================================
+def load_risk_profile():
+    try:
+        with open(get_file_path("risk_profile.json"), "r", encoding="utf-8-sig") as f: 
+            return json.load(f)
+    except:
+        return {}
+
+risk_profile = load_risk_profile()
+
+# =========================================================================
+# DATA LOADING & PRE-PROCESSING (DATOS PESADOS CACHEADOS)
 # =========================================================================
 @st.cache_data(ttl=30)
 def load_data():
@@ -98,10 +110,6 @@ def load_data():
     if os.path.exists(get_file_path("engines_config.json")):
         with open(get_file_path("engines_config.json"), "r") as f: config = json.load(f)
 
-    risk_data = {}
-    if os.path.exists(get_file_path("risk_profile.json")):
-        with open(get_file_path("risk_profile.json"), "r", encoding="utf-8-sig") as f: risk_data = json.load(f)
-
     system_forecast = config.pop("_SYSTEM_FORECAST_", {})
 
     config_rows = []
@@ -136,9 +144,9 @@ def load_data():
                 'Diag R2': d.get('reason_r2', '') 
             })
     
-    return df_master, pd.DataFrame(config_rows), risk_data, system_forecast, macro_dict
+    return df_master, pd.DataFrame(config_rows), system_forecast, macro_dict
 
-df_master, df_config, risk_profile, system_forecast, macro_data_dict = load_data()
+df_master, df_config, system_forecast, macro_data_dict = load_data()
 
 # =========================================================================
 # UTILITIES & STRICT HTML FORMATTING
@@ -442,8 +450,7 @@ elif nav_category == "Risk Management":
                     if res_py.status_code == 200: 
                         st.success(f"✅ Shield Active! NinjaTrader will execute orders on **{selected_acc_name}**.")
                         st.session_state.active_account = selected_acc_name
-                        # ESCUDO ANTI-GLITCH VISUAL: Purga la caché y fuerza recarga inmediata
-                        st.cache_data.clear()
+                        st.cache_data.clear() # Purga inmediata para lectura visual limpia
                         st.rerun()
                     else: st.error(f"❌ Gateway rejected configuration (Error {res_py.status_code}).")
                 except Exception as e: st.error(f"❌ Connection failed. Error: {e}")
