@@ -189,3 +189,4 @@ Date,Timestamp,Engine,Action,Is_Win,Trade_Exact_PnL,Duration_Bars,Micro_Rng,Micr
 2026-07-13,2026-07-13 21:59:00,Asia_Bullet_L,BUY,1,600,15,0.0,6.35,3.87
 2026-07-16,2026-07-16 12:16:00,V2_Rev_L,BUY,1,72,46,22.4,6.98,2.22
 2026-07-24,2026-07-24 04:43:00,Lon_Viper_L,BUY,1,525,16,20.2,3.75,1.76
+2026-07-24,2026-07-24 03:43:00.921,Lon_Viper_L,BUY,1,35.0,0,0.0,0.0,0.0
